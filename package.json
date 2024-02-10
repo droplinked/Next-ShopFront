@@ -14,7 +14,6 @@
     "@mui/icons-material": "^5.15.9",
     "@mui/joy": "^5.0.0-beta.27",
     "@mui/material": "^5.15.9",
-    "@svgr/webpack": "^8.1.0",
     "@tanstack/react-query": "^5.20.1",
     "axios": "^1.6.7",
     "class-variance-authority": "^0.7.0",
@@ -29,6 +28,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
