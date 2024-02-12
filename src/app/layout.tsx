@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "./(landing)/components/layout/navbar/navbar";
+import { AppThemeProvider } from "@/components/providers/theme/AppThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,8 +12,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="en">
-            <body className={inter.className}>{children}</body>
+        <html lang="en" suppressHydrationWarning>
+            <body className={inter.className}>
+                <AppThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange storageKey="droplinked-theme">
+                    {children}
+                </AppThemeProvider>
+            </body>
         </html>
     );
 }
