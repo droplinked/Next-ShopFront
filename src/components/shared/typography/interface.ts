@@ -1,1 +1,5 @@
-export interface AppTypography extends React.ButtonHTMLAttributes<HTMLParagraphElement> {}
+type VariantType = "default"
+export interface IAppTypography extends React.HTMLAttributes<HTMLParagraphElement> {
+    appClassName?: string;
+    appVariant?: VariantType
+}
