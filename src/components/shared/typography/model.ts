@@ -1,12 +1,13 @@
+import { Avenir } from "@/app/styles/fonts";
 import { cva } from "class-variance-authority";
-
 namespace appTypographyModel {
     export const variants = cva(
-        "text-secondary-foreground text-sm font-medium", 
+        "", 
         {
             variants: {
                 appVariant: {
-                    default: "",
+                    default: "text-sm font-medium",
+                    nav: `text-nav text-base font-medium ${Avenir.className}`
                 },
             },
             defaultVariants: {
