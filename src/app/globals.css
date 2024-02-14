@@ -19,7 +19,6 @@ body,
         --secondary: 0 0% 95%;
         --secondary-foreground: 0 0% 53%;
 
-
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
 
@@ -31,6 +30,8 @@ body,
 
         --error: 359 77% 57%;
 
+        --nav: 0 0% 77%;
+
         --border: 0 0% 87%;
     }
     .dark {
@@ -39,7 +40,7 @@ body,
 
         --primary: 0 0% 98%;
         --primary-foreground: 162 39% 21%;
-        
+
         --secondary: 0 0% 14.9%;
         --secondary-foreground: 267 36% 25%;
 

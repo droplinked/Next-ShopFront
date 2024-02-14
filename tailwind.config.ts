@@ -17,6 +17,7 @@ const config: Config = {
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
                 placeholder: "hsl(var(--placeholder))",
+                nav: "hsl(var(--nav))",
                 gray: { 100: "hsl(0 0% 95%)", 200: "hsl(0 0% 87%)", 300: "hsl(0 0% 86%)", 400: "hsl(0 0% 77%)", 500: "hsl(0 0% 53%)", 600: "hsl(0 0% 38%)", 700: "hsl(0 0% 24%)", 800: "hsl(0 0% 16%)", 850: "hsl(0 0% 15%)", 900: "hsl(0 0% 13%)", 1000: "hsl(0 0% 11%)" },
                 primary: {
                     DEFAULT: "hsl(var(--primary))",
