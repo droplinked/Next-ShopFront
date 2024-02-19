@@ -26,6 +26,7 @@
     "sonner": "^1.4.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
+    "yet-another-react-lightbox": "^3.17.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
