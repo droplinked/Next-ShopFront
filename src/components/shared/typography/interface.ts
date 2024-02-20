@@ -1,5 +1,8 @@
-type VariantType = "default" | "nav"
+type VariantType = "default" | "nav";
+type FontType = "avenir" | "roboto";
 export interface IAppTypography extends React.HTMLAttributes<HTMLParagraphElement> {
     appClassName?: string;
-    appVariant?: VariantType
+    appFont?: FontType;
+    appVariant?: VariantType;
+    price?: boolean;
 }
