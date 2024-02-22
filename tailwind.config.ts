@@ -7,7 +7,6 @@ const config: Config = {
         container: {
             center: true,
             padding: "72px",
-            
             screens: {
                 "2xl": "1400px",
             },
