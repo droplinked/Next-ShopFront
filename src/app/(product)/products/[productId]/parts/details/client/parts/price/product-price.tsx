@@ -8,12 +8,12 @@ function ProductPrice() {
     const discountPercentage = product?.ruleSet && !product?.ruleSet?.gated && ruleset && typeof ruleset.data?.discountPercentage === "number" && ruleset.data?.discountPercentage;
 
     return sku?.price ? (ruleset.loading ? (<AppSkeleton maxHeight="40px" />) : (
-            <div>
-                {!discountPercentage ? (<AppTypography price>{sku?.price.toFixed(2)}</AppTypography>) : (<>
+            <span>
+                {!discountPercentage ? (<AppTypography appClassName="text-4xl" price>{sku?.price.toFixed(2)}</AppTypography>) : (<>
                     <AppTypography price>{(sku?.price - (sku?.price / 100) * discountPercentage).toFixed(2)}</AppTypography>
                     <AppTypography appClassName="line-through opacity-70 text-sm">${sku?.price.toFixed(2)}</AppTypography>
                 </>)}
-            </div>
+            </span>
         )
     ) : null;
 }

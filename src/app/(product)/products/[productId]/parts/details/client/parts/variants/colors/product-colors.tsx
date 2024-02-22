@@ -1,8 +1,7 @@
 import { useContext, useMemo } from "react"
 import ProductContext from "../../../context"
 import productVariantsModel from "../model"
-import AppTypography from "@/components/shared/typography/AppTypography"
-import { cn } from "@/lib/utils/cn/cn"
+import VariantsLabel from "../parts/label/variants-label"
 
 function ProductColors() {
     const { states: { product, option: { color } }, methods: { updateOption } } = useContext(ProductContext)
@@ -10,11 +9,7 @@ function ProductColors() {
 
     return colors.length ? (
                 <div className="flex flex-col gap-6">
-                    <div className="flex gap-4">
-                        <AppTypography appClassName="text-base" >Color</AppTypography>
-                        <AppTypography appClassName="text-base">•</AppTypography>
-                        <AppTypography appClassName="text-base opacity-25">{color}</AppTypography>
-                    </div>
+                    <VariantsLabel label="Color" current={color || ""}/>
                     <div className="flex flex-wrap gap-2.5">{colors.map((el, key) => (<div key={key} className="border-[1.5px] border-border rounded-sm cursor-pointer bg-transparent p-1.5 w-12 h-12" style={{borderColor: el.caption === color && el.value}} onClick={() => updateOption('color', el.caption)}><div className="border rounded w-full h-full" style={{backgroundColor: el?.value}}/></div>))}</div>
                 </div>
             ) : null
