@@ -1,7 +1,16 @@
+import { fetchInstance } from "@/lib/apis/fetch-config";
 import { useRouter } from "next/router";
 
-const Products = () => {
-    return <div>Products</div>;
-};
+async function Products() {
+    const data = await fetchInstance("products");
+    return (
+        <div>
+            <h1>products</h1>
+            {data.data ? data?.data?.map((product: any) => {
+                <h1 className="text-black">{product.title}</h1>;
+            }): <div>loading</div>}
+        </div>
+    );
+}
 
-export default Products;
+export default Products
