@@ -4,7 +4,7 @@ import React, { useCallback, useEffect } from "react";
 
 const Initial = ({ data }: { data: any }) => {
     const { methods: { updateState }} = useAppStore();
-    const upd = useCallback(() => { updateState({ state: "shop", value: data }); console.log("updated") },[data]);
+    const upd = useCallback(() => { updateState({ state: "shop", value: data }) },[data]);
     useEffect(() => { upd() }, [data])
     return <></>;
 };
