@@ -1,7 +1,18 @@
-import { fetchInstance } from "@/lib/apis/fetch-config";
-import Navbar from "./components/layout/navbar/navbar";
+import { cn } from "@/lib/utils/cn/cn";
+import Banner from "./parts/banner/banner";
+import Explore from "./parts/explore/explore";
+import Initial from "./parts/initial/initial";
+import useAppShop from "@/functions/hooks/shop/useAppShop";
+import { app_vertical } from "@/lib/variables/variables";
 
 export default async function Home() {
-    const data = await fetchInstance('shop')
-    return <main className="min-h-screen flex p-5">Home</main>;
+    const { get } = useAppShop();
+    const data = await get();
+    return (
+        <main className={cn("container flex gap-8", app_vertical)}>
+            <Initial data={data} />
+            {data?.backgroundImage && data?.name && <Banner src={data?.backgroundImage} alt={data?.name} />}
+            <Explore/>
+        </main>
+    );
 }

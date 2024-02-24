@@ -1,4 +1,4 @@
-import { Avenir, roboto } from "@/app/styles/fonts";
+import { Avenir, roboto } from "@/styles/fonts";
 import { cva } from "class-variance-authority";
 namespace appTypographyModel {
     export const variants = cva("", {

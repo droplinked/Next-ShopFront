@@ -9,13 +9,14 @@ import AppTypography from "@/components/shared/typography/AppTypography";
 import { bindTrigger, usePopupState } from "material-ui-popup-state/hooks";
 import Image from "next/image";
 import { useMediaQuery } from "@mui/material";
-function ProductSlider({ media }: { media: { _id: string; url: string; isMain: "ture" | "false"; thumbnail: string }[] }) {
+import { ms } from "@/lib/utils/ms/ms";
+import { IProductMedia } from "@/types/interfaces/product/product";
+function ProductSlider({ media }: { media: IProductMedia[] }) {
     const [ImageSlider, setImageSlider] = useState(null);
     const popupState = usePopupState({ variant: "dialog", popupId: "demoMenu" });
-    // const matches = useMediaQuery("(min-width:1024px)") ? 4 : 3;
     return (
         <section className="flex flex-col justify-center items-center gap-5">
-            <AppMagnifier alt={"product image"} src={ImageSlider || media.find((el: any) => el.isMain === "true")?.url || ""} magnifierRadius={50} zoom={2} />
+            <AppMagnifier alt={"product image"} src={ImageSlider || ms(media)} magnifierRadius={50} zoom={2} />
             <div className="grid grid-cols-4 gap-5 md:gap-0 lg:gap-5">
                 {media && media?.length
                     ? media?.slice(0, 4).map((el: any, key: number) => (

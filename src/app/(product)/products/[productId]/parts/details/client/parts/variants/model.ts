@@ -1,4 +1,4 @@
-import { ISku } from "@/app/types/interfaces/product/product";
+import { ISku } from "@/types/interfaces/product/product";
 import { variantIDs } from "@/lib/variables/variables";
 
 namespace productVariantsModel{

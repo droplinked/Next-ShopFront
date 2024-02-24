@@ -1,4 +1,5 @@
 export interface ICart {
+    _id: string;
     status: string;
     shopID: string;
     ownerID: string;

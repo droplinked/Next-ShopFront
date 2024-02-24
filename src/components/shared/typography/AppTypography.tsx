@@ -6,7 +6,7 @@ const AppTypography = ({ children, appClassName, appVariant = "default", appFont
     const { variants } = appTypographyModel;
     return (
         <p className={cn(variants({ appVariant, appFont }), appClassName)} {...props}>
-            {price ? <p>$ {children} USD</p> :  children }
+            {price ? <>$ {children} USD</> :  children }
         </p>
     );
 };

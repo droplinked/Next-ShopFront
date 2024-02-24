@@ -1,4 +1,5 @@
 export interface IShop {
+    _id: string;
     name: string;
     ownerID: string;
     addressBookID: string;
@@ -45,6 +46,7 @@ interface IDNSData {
 }
 
 export const initialShop: IShop = {
+    _id: "",
     name: "",
     ownerID: "",
     addressBookID: "",

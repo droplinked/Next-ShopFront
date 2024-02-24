@@ -1,20 +1,16 @@
 import { cva } from "class-variance-authority";
 
 namespace appSkeletonModel {
-    export const random_paragraph = () => {
-        const width = Math.floor(Math.random() * (101 - 20) + 20).toString();
-        const count = Math.floor(Math.random() * (7 - 3) + 3);
-        const height = Math.floor(100 / count - 3).toString();
-        return { width, count, height };
-    };
+    const vars = ["h-1.5 max-w-36", "h-1.5 max-w-22", "h-1 max-w-32", "h-1 max-w-16", "h-1 max-w-36", "h-1.5 max-w-16", "h-1 max-w-20", "h-1 max-w-24", "h-1.5 max-w-11", "h-1 max-w-28", "h-1 max-w-14", "h-1.5 max-w-18", "h-1 max-w-22"];
+    export const _random_paragraph = (index: number, seed: number) => vars[parseInt((Math.imul(3423, seed) * (seed * index) % vars.length).toFixed(2))];
 
     export const variants = cva("bg-gray-300 animate-pulse", {
         variants: {
             appVariant: {
                 paragraph: "rounded",
-                line: "w-full h-2 rounded",
+                line: "h-2 rounded h-auto w-full",
                 circle: "w-10 h-10 rounded-full",
-                image: "w-full h-full rounded-lg",
+                image: "w-full h-full rounded-lg aspect-square",
             },
         },
         defaultVariants: {

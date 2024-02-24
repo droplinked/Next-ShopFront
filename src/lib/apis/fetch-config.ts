@@ -5,12 +5,7 @@ export async function fetchInstance(url: string, options?: RequestInit) {
         if (!API_KEY) throw new Error("Unauthorized!");
         return await fetch(`${BASE_API_URL}${url}`, {
             ...options,
-            headers: {
-                "Content-Type": "application/json",
-                // "Authorization": localStorage.jwt && `Bearer ${localStorage.jwt}`,
-                "x-shop-id": API_KEY,
-            },
-            body: options?.body && JSON.stringify(options?.body),
+            headers: { "Content-Type": "application/json", "x-shop-id": API_KEY },
         }).then(async (response) => {
             if (response?.status === 401) {
                 localStorage.clear();

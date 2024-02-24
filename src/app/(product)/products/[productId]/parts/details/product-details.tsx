@@ -1,4 +1,4 @@
-import { roboto } from "@/app/styles/fonts";
+import { roboto } from "@/styles/fonts";
 import { cn } from "@/lib/utils/cn/cn";
 import ProductClient from "./client/product-client";
 

@@ -5,7 +5,7 @@ import "./globals.css";
 import Header from "@/components/layout/header/Header";
 import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "droplinked",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={inter.className}>
+            <body>
                 <Header />
                 <Toaster position="bottom-center" />
                 <AppThemeProvider>{children}</AppThemeProvider>
