@@ -2,10 +2,12 @@ import { createContext } from "react";
 
 export interface IExploreState {
     search: string;
+    price: [number, number];
 }
 
 export const initialExploreState: IExploreState = {
     search: "",
+    price: [0, 1000],
 };
 
 interface IExploreContext {
