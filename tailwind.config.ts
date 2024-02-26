@@ -43,6 +43,9 @@ const config: Config = {
                     DEFAULT: "hsl(var(--destructive))",
                     foreground: "hsl(var(--destructive-foreground))",
                 },
+                link: {
+                    foreground: "hsl(var(--link-foreground))",
+                },
             },
             borderRadius: {
                 lg: "16px",

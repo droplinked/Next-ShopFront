@@ -8,11 +8,6 @@ namespace useCartModel {
         });
         return count
     }
-
-    export const removeCart = (cart: any, shopName: string) => Object.entries(cart).reduce((acc: any, [key, value]) => {
-        if (key !== shopName) acc[key] = value
-        return acc;
-    }, {})
 }
 
 export default useCartModel

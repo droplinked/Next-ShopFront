@@ -10,6 +10,7 @@ const states = (set: any): IAppStore => ({
     methods: {
         updateState: ({ state, value }: IUpdateState) => {
             set((prev: IAppStore) => ({ ...prev, states: { ...prev.states, [state]: value } }));
+            return value
         },
     },
 });

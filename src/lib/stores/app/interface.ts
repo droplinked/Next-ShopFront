@@ -13,6 +13,6 @@ export interface IAppStore {
         shop: IShop;
     };
     methods: {
-        updateState: (props: IUpdateState) => void;
+        updateState: (props: IUpdateState) => any;
     };
 }

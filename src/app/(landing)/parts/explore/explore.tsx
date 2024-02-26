@@ -14,7 +14,7 @@ const Explore = () => {
     return (
         <ExploreContext.Provider value={{ states: States, methods: { updateStates } }}>
             <div className="flex items-start justify-between md:flex-row w-full gap-6">
-                <div className="w-[20%] sticky top-0">
+                <div className="w-[20%] sticky top-24">
                     <ExploreSidebar />
                 </div>
                 <div className={cn(app_vertical, "gap-9 w-full min-w-[80%]")}>

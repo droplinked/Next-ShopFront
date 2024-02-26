@@ -5,7 +5,7 @@ import PriceSlider from './slider/price-slider'
 
 const ExploreSidebar = () => {
   return (
-    <form className={cn('border rounded-sm p-6 gap-6 sticky left-0 top-20 w-full h-80', app_vertical)}>
+    <form className={cn('border rounded-sm p-6 gap-6', app_vertical)}>
       <PriceSlider/>
     </form>
   )

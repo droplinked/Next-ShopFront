@@ -6,21 +6,17 @@ import DialogTitle from "@mui/material/DialogTitle";
 import PopupState, { bindDialog, bindTrigger } from "material-ui-popup-state";
 import { IAppDialog } from "./interface";
 
-const AppDialog = ({ children, elements: { trigger, header }}: IAppDialog) => {
+const AppDialog = ({ trigger, children, ...props }: IAppDialog) => {
     return (
         <PopupState variant="dialog" popupId="droplinked-popup-dialog">
             {(dialogState) => (
                 <>
                     <div {...bindTrigger(dialogState)}>{trigger}</div>
-                    <Dialog {...bindDialog(dialogState)} keepMounted>
-                        <DialogTitle>{header}</DialogTitle>
-                        <DialogContent>{children}</DialogContent>
-                        <DialogActions></DialogActions>
-                    </Dialog>
+                    <Dialog {...bindDialog(dialogState)} keepMounted {...props}>{children}</Dialog>
                 </>
             )}
         </PopupState>
     );
 };
 
-export default AppDialog
+export default AppDialog;
