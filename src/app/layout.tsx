@@ -4,8 +4,6 @@ import { Toaster } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
 import "./globals.css";
 
-// const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
     title: "droplinked",
     description: "Powering the Next Generation of Commerce",

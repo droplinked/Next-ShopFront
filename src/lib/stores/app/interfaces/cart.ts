@@ -3,18 +3,30 @@ export interface ICart {
     status: string;
     shopID: string;
     ownerID: string;
-    checkoutAddressID: string;
+    address: ICartAddress;
+    shippings: ICartShippings[];
+    email: string;
     items: ICartItem[];
-    paymentIntent: PaymentIntent;
-    shipmentRates: ShipmentRates;
-    selectedShipmentRate: number;
-    selectedShipmentRateID: string;
-    shipmentData: ShipmentData;
-    availableShipmentRates: string[];
-    selectedShipmentRates: number;
-    selectedShipmentRateIDs: string[];
-    shipmentInformation: string[];
-    totalCart: ITotalCart
+    paymentIntent: any;
+    totalCart: ITotalCart;
+}
+
+export interface ICartShippings {
+    groupId: string;
+    type: string;
+    data: ICartShippingData[];
+}
+export interface ICartShippingData {
+    id: string;
+    title: string;
+    price: number;
+    delivery_estimation: string;
+    selected: boolean;
+}
+
+export interface ISelectedShipmentRate {
+    type: string;
+    rate: number;
 }
 
 interface ICartItemOption {
@@ -53,20 +65,39 @@ export interface ICartItem {
     totals: ICartItemTotals;
 }
 
-export interface ITotalCart{
+export enum GIFTCARD_ENUM {
+    CREDIT = "CREDIT",
+    DISCOUNT = "DISCOUNT",
+}
+
+export interface IGiftCard {
+    _id: string;
+    balance: number;
+    code: string;
+    totalBalance: number;
+    amountToBeReduced: number;
+    type: GIFTCARD_ENUM;
+}
+
+export interface ITotalCart {
     subtotal: number;
     shipping: number;
     estimatedTaxes: number;
-    giftCard: {
-        type: any,
-        amount: 0
-    },
+    giftCard: IGiftCard;
     totalPayment: number;
 }
 
-
-interface PaymentIntent {}
-
-interface ShipmentRates {}
-
-interface ShipmentData {}
+export interface ICartAddress {
+    _id?: string;
+    firstName: string;
+    lastName: string;
+    addressLine1: string;
+    addressLine2: string;
+    country: string;
+    city: string;
+    state: string;
+    zip: string;
+    ownerID?: string;
+    addressType?: string;
+    easyPostAddressID?: string;
+}

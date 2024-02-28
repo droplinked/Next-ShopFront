@@ -39,6 +39,17 @@ const config: Config = {
                     DEFAULT: "hsl(var(--secondary))",
                     foreground: "hsl(var(--secondary-foreground))",
                 },
+
+                disabled: {
+                    DEFAULT: "hsl(var(--disabled))",
+                    foreground: "hsl(var(--disabled-foreground))",
+                },
+
+                "disabled-outlined": {
+                    DEFAULT: "hsl(var(--disabled-outlined-border))",
+                    foreground: "hsl(var(--disabled-outlined-foreground))",
+                },
+
                 destructive: {
                     DEFAULT: "hsl(var(--destructive))",
                     foreground: "hsl(var(--destructive-foreground))",
@@ -63,10 +74,23 @@ const config: Config = {
                         opacity: "1",
                     },
                 },
+                "dots": {
+                    "0%, 100%": {
+                        transform: "translateY(-25%)",
+                        animationTimingFunction: "cubic-bezier(0.8, 0, 1, 1)",
+                        opacity: "1",
+                    },
+                    "50%": {
+                        transform: "none",
+                        animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
+                        opacity: "0.5",
+                    },
+                },
             },
         },
         animation: {
             "slide-down": "slide-down 2s ease-out",
+            "dots": "dots 1s infinite",
         },
     },
     plugins: [require("tailwindcss-animate")],

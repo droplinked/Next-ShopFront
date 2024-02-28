@@ -7,11 +7,13 @@ import Min from "./icons/min.svg";
 import Plus from "./icons/plus.svg";
 import Merch from "./icons/merch.svg";
 import Close from "./icons/close.svg";
+import Arrow from "./icons/arrow.svg";
 
 const AppIcons = {
     CartLight,
     Search,
     Slash,
+    Arrow,
     Merch,
     Close,
     User,

@@ -5,6 +5,7 @@ export interface IAppButton extends React.DetailedHTMLProps<React.ButtonHTMLAttr
     appVariant?: VariantType;
     appClassName?: string;
     appSize?: SizeType;
+    loading?: boolean
     appFont?: FontType;
     hasIcon?: boolean;
 }
