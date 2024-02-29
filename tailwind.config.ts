@@ -113,9 +113,9 @@ const config: Config = {
                         opacity: "0.5",
                     },
                 },
-                shimmer: {
-                    "100%": {
-                        transform: "translateX(100%)",
+                pulse: {
+                    "50%": {
+                        opacity: ".5",
                     },
                 },
             },
@@ -123,7 +123,8 @@ const config: Config = {
         animation: {
             "slide-down": "slide-down 2s ease-out",
             dots: "dots 1s infinite",
-            shimmer: "shimmer 2s infinite"
+            shimmer: "shimmer 2s infinite",
+            pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         },
     },
     plugins: [require("tailwindcss-animate")],
