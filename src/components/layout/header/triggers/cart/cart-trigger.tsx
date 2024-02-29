@@ -26,7 +26,7 @@ const CartTrigger = () => {
                 <div className={cn(app_vertical, 'gap-6 p-4 rounded-sm border border-border')}>{cart?.items?.length ? cart?.items?.map((item)=> <div key={item?._id} className="w-full"><EachCartItem  item={item}/><AppSeparator appClassName='my-6 w-full'/></div>) : <EmptyCart/>}</div>
                 {cart?.items?.length && <footer className={cn(app_vertical, 'w-full sticky bottom-0 pb-6 bg-background gap-6')}>
                     <div className={cn(app_center, 'justify-between w-full')}><AppTypography appClassName="text-sm font-normal">Total Cart</AppTypography><AppTypography price appClassName="text-xl font-medium">{cart?.totalCart?.subtotal}</AppTypography></div>
-                    <form onSubmit={() => ""} className="flex justify-center items-center w-full gap-6">
+                    <form onSubmit={(e) => {e.preventDefault()}} className="flex justify-center items-center w-full gap-6">
                         <div className="min-w-fit"><AppButton type="submit" appClassName="rounded-sm w-full text-base font-normal" appVariant="outlined" appSize="md">Clear</AppButton></div>
                         <Link href={'/checkout'} className="flex items-center justify-center w-full py-3 px-4 border-none bg-foreground text-background rounded-sm"><AppTypography>Checkout</AppTypography></Link>
                     </form>

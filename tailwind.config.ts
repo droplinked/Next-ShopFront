@@ -50,6 +50,33 @@ const config: Config = {
                     foreground: "hsl(var(--disabled-outlined-foreground))",
                 },
 
+                hovered: {
+                    DEFAULT: "hsl(var(--hovered))",
+                    foreground: "hsl(var(--hovered-foreground))",
+                },
+
+                "hovered-outlined": {
+                    DEFAULT: "hsl(var(--hovered-outlined))",
+                },
+
+                focused: {
+                    DEFAULT: "hsl(var(--focused))",
+                    foreground: "hsl(var(--focused-foreground))",
+                },
+
+                "focused-outlined": {
+                    DEFAULT: "hsl(var(--focused-outlined))",
+                },
+
+                pressed: {
+                    DEFAULT: "hsl(var(--pressed))",
+                    foreground: "hsl(var(--pressed-foreground))",
+                },
+
+                "pressed-outlined": {
+                    DEFAULT: "hsl(var(--pressed-outlined))",
+                },
+
                 destructive: {
                     DEFAULT: "hsl(var(--destructive))",
                     foreground: "hsl(var(--destructive-foreground))",
@@ -74,7 +101,7 @@ const config: Config = {
                         opacity: "1",
                     },
                 },
-                "dots": {
+                dots: {
                     "0%, 100%": {
                         transform: "translateY(-25%)",
                         animationTimingFunction: "cubic-bezier(0.8, 0, 1, 1)",
@@ -86,11 +113,17 @@ const config: Config = {
                         opacity: "0.5",
                     },
                 },
+                shimmer: {
+                    "100%": {
+                        transform: "translateX(100%)",
+                    },
+                },
             },
         },
         animation: {
             "slide-down": "slide-down 2s ease-out",
-            "dots": "dots 1s infinite",
+            dots: "dots 1s infinite",
+            shimmer: "shimmer 2s infinite"
         },
     },
     plugins: [require("tailwindcss-animate")],

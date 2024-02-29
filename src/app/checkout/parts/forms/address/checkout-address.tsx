@@ -10,13 +10,20 @@ import useAppDebounce from "@/functions/hooks/debounce/useAppDebounce";
 import AppIcons from "@/assets/AppIcons";
 import { toast } from "sonner";
 import { AppButton, AppDropDownInput, AppInput, AppLinkButton } from "@/components/shared";
+import { resolve } from "path";
 
 const CheckoutAddress = () => {
-    const [locations, setLocations] = useState<{ countries: { name: string; id: number }[]; cities: { name: string; id: number, state_name: string }[] , search: string, loading: boolean}>({ countries: [], cities: [], search: "", loading: false });
+    const [locations, setLocations] = useState<{ countries: { name: string; id: number }[]; cities: { name: string; id: number, state_name: string }[] , search: string}>({ countries: [], cities: [], search: ""});
     const _debounced_city = useAppDebounce(locations.search);
     const { states: { cart: { address, email, _id } } } = useAppStore();
     const { submit_address } = useAppCheckout();
-    const { setValues, values, handleSubmit, isValid, dirty, handleChange } = useFormik({ initialValues: initial_address({ address, email }), validationSchema: address_schema, enableReinitialize: true, validateOnChange: true, onSubmit: async ({email, ...address}) =>{ setLocations((prev)=> ({...prev, loading: true})); return toast.promise(async () => await submit_address(address, email, _id), {loading: 'Verifing email and address...', success:() => {setLocations((prev)=> ({...prev, loading: false})); return `Address verified.`}, error: 'Address must be wrong' })}});
+    const { setValues, values, handleSubmit, isSubmitting,setSubmitting, isValid, dirty, handleChange } = useFormik({
+        initialValues: initial_address({ address, email }),
+        validationSchema: address_schema,
+        enableReinitialize: true,
+        validateOnChange: true,
+        onSubmit: ({ email, ...address }) => { toast.promise(submit_address(address, email, _id).finally(()=> setSubmitting(false)), { loading: "Verifing email and address...", success: `Address verified.`, error: "Address must be wrong" })},
+    });
     const _country_id = useMemo(() => locations?.countries?.find((el: any) => el.name === values.country)?.id || "" ,[values.country]);
     const _state_name = (city: string) => locations?.cities?.find((el: any) => el.name === city)?.state_name || "";
     const _get_countries = useCallback(() => get_countries_service({ name: "" }).then((res) => setLocations((prev) => ({ ...prev, countries: res.countries }))), [email]);
@@ -25,7 +32,7 @@ const CheckoutAddress = () => {
     useEffect(() => { !locations.countries.length && _get_countries() }, []);
     useEffect(() => { locations?.search && locations?.search !== "" && _country_id !== "" && _country_id &&  toast.promise(get_cities_service({name: _debounced_city || "", country_id: _country_id}).then(res => setLocations((prev)=> ({ ...prev, cities: res.cities, loading: false }))), {loading: "Trying to get cities..."}) }, [_debounced_city]);
     return (
-        <form onSubmit={(e) => {e.preventDefault(); return handleSubmit()}} className={cn(app_vertical, 'gap-6')}>
+        <form onSubmit={handleSubmit} className={cn(app_vertical, 'gap-6')}>
             <div className={cn(app_vertical, "border rounded-sm p-6 gap-6 w-full")}>
                 <AppInput name="email" label="Email Address" placeholder="Email Address" inputType="email" value={values.email} onChange={handleChange}/>
                 <div className={cn(app_center, "w-full gap-6")}>
@@ -42,8 +49,8 @@ const CheckoutAddress = () => {
                 </div>
             </div>
             <div className={cn(app_center, 'w-full justify-between')}>
-                <AppLinkButton  disabled={locations.loading} href={'/'} appButtonProps={{appVariant: "filled", appClassName: cn(app_center, 'rounded-sm py-3 px-4 text-sm font-normal')}}>Back to shop</AppLinkButton>
-                <AppButton disabled={!isValid || !dirty || locations.loading} loading={locations.loading} appClassName="py-3 pr-4 pl-9 rounded-sm" type="submit" hasIcon>Next<AppIcons.Arrow className={cn((!isValid || !dirty) ? "stroke-disabled-foreground" : "stroke-foreground")}/></AppButton>
+                <AppLinkButton disabled={isSubmitting} href={'/'} appButtonProps={{appVariant: "filled", appClassName: cn(app_center, 'rounded-sm py-3 px-4 text-sm font-normal')}}>Back to shop</AppLinkButton>
+                <AppButton disabled={!isValid || isSubmitting} loading={isSubmitting} appClassName={cn("py-3 pr-4 pl-4 rounded-sm", !isSubmitting && "pl-9" )} type="submit" hasIcon>Next<AppIcons.Arrow className={cn((!isValid || !dirty) ? "stroke-disabled-foreground" : "stroke-foreground")}/></AppButton>
             </div>
         </form>
     );

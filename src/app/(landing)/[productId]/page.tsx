@@ -9,7 +9,7 @@ type IProps = { params: { productId: string } };
 
 export async function generateMetadata({ params }: IProps): Promise<Metadata> {
     const product = await fetchInstance(`products/${params.productId}`);
-    return { title: product?.title };
+    return { title: `droplinked | ${product?.title}` };
 }
 
 export default async function Page({ params }: IProps) {

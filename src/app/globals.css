@@ -7,7 +7,7 @@ body,
 :root {
     height: 100%;
 }
-.container{
+.container {
     margin-top: 80px;
 }
 
@@ -30,6 +30,21 @@ body,
 
         --disabled-outlined-border: 0 0% 80%;
         --disabled-outlined-foreground: 0 0% 80%;
+
+        --hovered: 163 66% 42%;
+        --hovered-foreground: 163 66% 10%;
+
+        --hovered-outlined: 163 65% 49%;
+
+        --focused: 163 66% 42%;
+        --focused-foreground: 163 66% 10%;
+
+        --focused-outlined: 163 65% 49%;
+
+        --pressed: 163 66% 35%;
+        --pressed-foreground: 163 66% 10%;
+
+        --pressed-outlined: 163 65% 49%;
 
         --placeholder: 0 0% 69%;
 

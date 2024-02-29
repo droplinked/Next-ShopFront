@@ -5,4 +5,5 @@ export interface IAppSkeleton extends React.HTMLAttributes<HTMLDivElement> {
     appClassName?: string;
     count?: number;
     seed?: number;
+    hard?: boolean
 }

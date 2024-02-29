@@ -8,9 +8,11 @@ import Plus from "./icons/plus.svg";
 import Merch from "./icons/merch.svg";
 import Close from "./icons/close.svg";
 import Arrow from "./icons/arrow.svg";
+import Discount from "./icons/discount.svg";
 
 const AppIcons = {
     CartLight,
+    Discount,
     Search,
     Slash,
     Arrow,

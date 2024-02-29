@@ -9,6 +9,7 @@ export interface ICart {
     items: ICartItem[];
     paymentIntent: any;
     totalCart: ITotalCart;
+    canApplyGiftCard: boolean
 }
 
 export interface ICartShippings {
