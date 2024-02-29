@@ -5,20 +5,21 @@ import useAppCheckout from "@/functions/hooks/checkout/useAppCheckout";
 import checkoutPageModel from "./model";
 import CheckoutAddress from "./parts/forms/address/checkout-address";
 import CheckoutShipping from "./parts/forms/shipping/checkout-shipping";
+import L_Checkout from "@/components/loading/checkout";
 
 function CheckoutPage() {
     const [States, setStates] = useState<ICheckoutState>(initialCheckout);
     const { status } = useAppCheckout();
     const { currentStep } = checkoutPageModel;
     const updateStates = (key: string, value: any) => setStates((prev: ICheckoutState) => ({ ...prev, [key]: value }));
-    const steps = { address: { form: <CheckoutAddress/> }, shipping: { form: <CheckoutShipping/> }, payment: { form: <></> } };
+    const steps = { loading: {form: <L_Checkout/>} ,address: { form: <CheckoutAddress/> }, shipping: { form: <CheckoutShipping/> }, payment: { form: <></> } };
     useEffect(() => { updateStates('step', currentStep(status)) },[status])
     return (
         <CheckoutPageContext.Provider value={{ states: States, mehtods: { updateStates } }}>
-            <div className="container">
-                <div>{steps['shipping']?.form}</div>
+            <main className="container">
+                <div>{steps[States.step]?.form}</div>
                 {/* <div>summary</div> */}
-            </div>
+            </main>
         </CheckoutPageContext.Provider>
     );
 }

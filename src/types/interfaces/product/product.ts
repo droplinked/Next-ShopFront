@@ -67,8 +67,6 @@ export const initialSkuProps: ISku = {
     commission: 0,
 };
 
-export default initialProductProps;
-
 export interface IProduct {
     _id: string;
     ownerID: string;

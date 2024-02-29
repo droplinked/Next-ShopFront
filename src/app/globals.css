@@ -7,6 +7,9 @@ body,
 :root {
     height: 100%;
 }
+.container{
+    margin-top: 80px;
+}
 
 @layer base {
     :root {

@@ -1,14 +1,11 @@
+import { AppDotLabel, AppRadioInput, AppTypography } from "@/components/shared";
 import { IEachShippingRadio } from "./interface";
-import AppDotLabel from "@/components/shared/label/AppDotLabel";
 import { cn } from "@/lib/utils/cn/cn";
 import { app_center, app_vertical } from "@/lib/variables/variables";
-import AppTypography from "@/components/shared/typography/AppTypography";
-import './radio.css'
 
 const EachShippingRadio = ({ shippingData, ...props }: IEachShippingRadio) => {
     return (
-        <label>
-            <input type="radio" {...props} />
+        <AppRadioInput {...props}>
             <div className={cn(app_vertical, "w-full justify-start gap-2 -mt-1")}>
                 <div className={cn(app_center, "justify-between w-full")}>
                     <AppTypography appClassName="text-sm">{shippingData?.title.replace(/\([^)]*\)/g, "")}</AppTypography>
@@ -19,7 +16,7 @@ const EachShippingRadio = ({ shippingData, ...props }: IEachShippingRadio) => {
                     <AppDotLabel label={"Estimated delivery"} content={(/(?:Estimated delivery: )(\w+\s\d+(?:⁠–\d+)?)\b/g).exec(shippingData.title)![0]} appClassNames={{ container: cn(app_center, "gap-2"), title: "text-sm font-normal opacity-25", dot: "text-sm font-normal opacity-25", value: "text-sm font-normal opacity-100" }}/>
                 </div>
             </div>
-        </label>
+        </AppRadioInput>
     );
 };
 

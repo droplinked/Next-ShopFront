@@ -1,9 +1,8 @@
 "use client"
 import { add_to_cart_service, change_quantity_service, create_cart_service, get_cart_service } from "@/lib/apis/cart/service";
 import useAppStore from "@/lib/stores/app/appStore";
-import { IAddStepInfo, IAddToCart, IChangeQuantity } from "./interface";
-import { ICart } from "@/lib/stores/app/interfaces/cart";
-import { ICahngeQuantityService } from "@/lib/apis/cart/interface";
+import { IAddToCart, IChangeQuantity } from "./interface";
+import { ICart } from "@/types/interfaces/cart/cart";
 import { IAddAddressToCartService, IAddEmailToCartService, IAddShippingToCartService } from "@/lib/apis/checkout/interface";
 import { add_address_to_cart_service, add_email_to_cart_service, add_shipping_to_cart_service } from "@/lib/apis/checkout/service";
 

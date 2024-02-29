@@ -2,15 +2,14 @@
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
-import "yet-another-react-lightbox/styles.css";
-import "yet-another-react-lightbox/plugins/thumbnails.css";
-import AppMagnifier from "@/components/shared/magnifier/AppMagnifier";
-import AppTypography from "@/components/shared/typography/AppTypography";
 import { bindTrigger, usePopupState } from "material-ui-popup-state/hooks";
 import Image from "next/image";
-import { useMediaQuery } from "@mui/material";
 import { ms } from "@/lib/utils/ms/ms";
 import { IProductMedia } from "@/types/interfaces/product/product";
+import { AppMagnifier, AppTypography } from "@/components/shared";
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
+
 function ProductSlider({ media }: { media: IProductMedia[] }) {
     const [ImageSlider, setImageSlider] = useState(null);
     const popupState = usePopupState({ variant: "dialog", popupId: "demoMenu" });

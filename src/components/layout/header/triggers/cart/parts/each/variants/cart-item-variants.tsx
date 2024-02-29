@@ -1,5 +1,4 @@
-import AppTypography from "@/components/shared/typography/AppTypography";
-import React from "react";
+import { AppTypography } from "@/components/shared";
 
 const CartItemVariants = ({ label, value }: { label: "Color" | "Size"; value: string }) => {
     return (

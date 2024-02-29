@@ -1,7 +1,6 @@
-import AppTypography from "@/components/shared/typography/AppTypography";
 import { ListItemIcon, MenuItem } from "@mui/material";
-import React from "react";
 import { IAppMenuItem } from "./interface";
+import { AppTypography } from "../..";
 
 const AppMenuItem = ({ label, decoration, pressed }: IAppMenuItem) => {
     return (

@@ -2,9 +2,9 @@ import { useCallback, useContext, useEffect, useMemo } from "react";
 import ProductContext from "../../../context";
 import productVariantsModel from "../model";
 import { cn } from "@/lib/utils/cn/cn";
-import AppButton from "@/components/shared/button/AppButton";
 import { variantIDs } from "@/lib/variables/variables";
 import VariantsLabel from "../parts/label/variants-label";
+import { AppButton } from "@/components/shared";
 
 function ProductSizes() {
     const { skuIDsMatchColor, getOptions } = productVariantsModel;

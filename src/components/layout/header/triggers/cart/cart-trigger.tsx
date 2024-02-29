@@ -1,8 +1,5 @@
 "use client";
 import AppIcons from "@/assets/AppIcons";
-import AppIconButton from "@/components/shared/button/icon/AppIconButton";
-import { AppPopover } from "@/components/shared/popover/AppPopover";
-import AppTypography from "@/components/shared/typography/AppTypography";
 import useAppCart from "@/functions/hooks/cart/useAppCart";
 import useAppStore from "@/lib/stores/app/appStore";
 import { cn } from "@/lib/utils/cn/cn";
@@ -10,11 +7,10 @@ import { app_center, app_vertical } from "@/lib/variables/variables";
 import { usePopupState } from "material-ui-popup-state/hooks";
 import { useCallback, useEffect, useState } from "react";
 import EmptyCart from "./parts/empty/empty-cart";
-import { ICart } from "@/lib/stores/app/interfaces/cart";
+import { ICart } from "@/types/interfaces/cart/cart";
 import EachCartItem from "./parts/each/each-cart-item";
-import AppSeparator from "@/components/shared/separator/AppSeparator";
-import AppButton from "@/components/shared/button/AppButton";
 import Link from "next/link";
+import { AppButton, AppIconButton, AppPopover, AppSeparator, AppTypography } from "@/components/shared";
 
 const CartTrigger = () => {
     const popupState = usePopupState({ variant: "popover", popupId: "droplinked-popup-popover" });

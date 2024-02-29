@@ -1,5 +1,4 @@
-import AppTypography from "@/components/shared/typography/AppTypography";
-import React from "react";
+import { AppTypography } from "@/components/shared";
 
 const VariantsLabel = ({ label, current }: { label: "Color" | "Size"; current: string }) => {
     return (

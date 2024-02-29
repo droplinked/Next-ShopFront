@@ -1,4 +1,4 @@
-import React from "react";
+
 import { IAppSeparator } from "./interface";
 import { cn } from "@/lib/utils/cn/cn";
 

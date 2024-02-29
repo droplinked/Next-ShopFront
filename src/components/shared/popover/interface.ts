@@ -1,5 +1,4 @@
 import { PopoverProps } from "@mui/material";
-import { PopupState } from "material-ui-popup-state/hooks";
 
 type VerticalType = "top" | "center" | "bottom";
 type HorizontalType = "left" | "center" | "right";
@@ -12,6 +11,3 @@ export interface IAppPopoverState extends Omit<PopoverProps, 'open'> {
     transform?: { vertical: VerticalType; horizontal: HorizontalType };
 }
 
-export interface IAppPopover extends IAppPopoverState {
-    popupState: PopupState
-}

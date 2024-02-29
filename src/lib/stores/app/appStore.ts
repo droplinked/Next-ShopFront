@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { APP_DEVELOPMENT } from "@/lib/variables/variables";
-import { ICart } from "./interfaces/cart";
+import { ICart } from "@/types/interfaces/cart/cart";
 import { IAppStore, IUpdateState } from "./interface";
-import { IShop } from "./interfaces/shop";
+import { IShop } from "@/types/interfaces/shop/shop";
 
 const states = (set: any): IAppStore => ({
     states: { cart: {} as ICart, user: null, shop: {} as IShop },

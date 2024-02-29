@@ -1,4 +1,4 @@
-import initialProductProps, { IProduct, ISku, initialSkuProps } from "@/types/interfaces/product/product";
+import { IProduct, ISku, initialProductProps, initialSkuProps } from "@/types/interfaces/product/product";
 import { createContext } from "react";
 
 export interface IProductClientState {

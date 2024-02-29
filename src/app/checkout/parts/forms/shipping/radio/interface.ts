@@ -1,4 +1,4 @@
-import { ICartShippingData } from "@/lib/stores/app/interfaces/cart";
+import { ICartShippingData } from "@/types/interfaces/cart/cart";
 
 export interface IEachShippingRadio extends React.InputHTMLAttributes<HTMLInputElement>{
     shippingData: ICartShippingData

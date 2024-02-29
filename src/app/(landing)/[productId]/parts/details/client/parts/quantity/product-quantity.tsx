@@ -1,7 +1,6 @@
-import AppTypography from "@/components/shared/typography/AppTypography";
-import React, { useContext } from "react";
+import { useContext } from "react";
 import ProductContext from "../../context";
-import AppQuantity from "@/components/shared/quantity/AppQuantity";
+import { AppQuantity, AppTypography } from "@/components/shared";
 
 const ProductQuantity = () => {
     const { states: {option: { quantity }}, methods: { updateOption }} = useContext(ProductContext);

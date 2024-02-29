@@ -1,4 +1,3 @@
-import axiosInstance from "../axios-config";
 import { fetchInstance } from "../fetch-config";
 import { IAddToCartService, ICahngeQuantityService, IGetCartService } from "./interface";
 

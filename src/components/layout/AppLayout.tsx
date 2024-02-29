@@ -1,4 +1,4 @@
-import React from "react";
+
 import Header from "./header/header";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {

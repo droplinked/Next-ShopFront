@@ -1,7 +1,6 @@
-import AppQuantity from "@/components/shared/quantity/AppQuantity";
+import { AppQuantity } from "@/components/shared";
 import useAppCart from "@/functions/hooks/cart/useAppCart";
-import { ICartItem } from "@/lib/stores/app/interfaces/cart";
-import React from "react";
+import { ICartItem } from "@/types/interfaces/cart/cart";
 
 const CartItemQuantity = ({ options: { quantity }, skuID, _id }: Pick<ICartItem, "options" | "skuID" | "_id">) => {
     const { change } = useAppCart();

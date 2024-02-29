@@ -1,5 +1,5 @@
-import { ICart } from "./interfaces/cart";
-import { IShop } from "./interfaces/shop";
+import { ICart } from "@/types/interfaces/cart/cart";
+import { IShop } from "@/types/interfaces/shop/shop";
 
 export interface IUpdateState {
     state: string;

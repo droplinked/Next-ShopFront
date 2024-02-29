@@ -1,4 +1,4 @@
-import React from "react";
+
 import AppTypography from "../typography/AppTypography";
 import { IAppDotsLabel } from "./interface";
 

@@ -1,6 +1,4 @@
-import AppTypography from "@/components/shared/typography/AppTypography";
-import { cn } from "@/lib/utils/cn/cn";
-import { app_vertical } from "@/lib/variables/variables";
+import { AppTypography } from "@/components/shared";
 
 const EachItemCaption = ({ label, price }: { label: string; price: number }) => {
     return (
