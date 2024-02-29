@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import ExploreContext from "../context";
+import ExploreContext from "../../context";
 import { get_products_service } from "@/lib/apis/products/service";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { IPaginationProducts, initialPaginationProducts } from "./interface";

@@ -3,8 +3,7 @@ import ProductContext from "../../../context";
 import productVariantsModel from "../model";
 import { cn } from "@/lib/utils/cn/cn";
 import { variantIDs } from "@/lib/variables/variables";
-import VariantsLabel from "../parts/label/variants-label";
-import { AppButton } from "@/components/shared";
+import { AppButton, AppDotLabel } from "@/components/shared";
 
 function ProductSizes() {
     const { skuIDsMatchColor, getOptions } = productVariantsModel;
@@ -16,7 +15,7 @@ function ProductSizes() {
 
     return sizes.length ? (
         <div className="flex flex-col gap-6">
-            <VariantsLabel label="Size" current={size || ""} />
+            <AppDotLabel label={"Size"} content={size || ""} appClassNames={{}}/>
             <div className="flex flex-wrap gap-2.5">{sizes.map(el => <AppButton key={el._id} onClick={() => active(el.caption) && updateOption("size", el.caption)} appVariant="outlined" appClassName={cn( "font-normal text-base w-12 h-12 border border-border py-3 px-4 rounded-sm cursor-pointer min-w-", el.caption === size ? "bg-foreground text-background" : "bg-transparent text-foreground")}>{el.caption}</AppButton>)}</div>
         </div>
     ) : null;

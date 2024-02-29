@@ -1,6 +1,6 @@
 import { Slider } from "@mui/material";
 import React, { useContext } from "react";
-import ExploreContext from "../../context";
+import ExploreContext from "../../../context";
 import priceSliderModel from "./model";
 
 const PriceSlider = () => {

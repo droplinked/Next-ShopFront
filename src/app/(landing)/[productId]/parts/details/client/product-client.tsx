@@ -3,11 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import ProductContext, { IProductClientState, initialProductClientState } from "./context";
 import productClientModel from "./model";
 import { IProduct } from "@/types/interfaces/product/product";
-import ProductPrice from "./parts/price/product-price";
-import ProductColors from "./parts/variants/colors/product-colors";
-import ProductSizes from "./parts/variants/sizes/product-sizes";
-import ProductQuantity from "./parts/quantity/product-quantity";
-import AddToCart from "./parts/add/add-to-cart";
+import { AddToCart, ProductColors, ProductPrice, ProductQuantity, ProductSizes } from "./parts";
 
 const ProductClient = ({ product }: { product: IProduct }) => {
     const [States, setStates] = useState<IProductClientState>(initialProductClientState);
@@ -20,13 +16,7 @@ const ProductClient = ({ product }: { product: IProduct }) => {
 
     return (
         <ProductContext.Provider value={{ states: States, methods: { updateOption, updateState } }}>
-            <div className="flex flex-col gap-9">
-                <ProductPrice />
-                <ProductColors/>
-                <ProductSizes/>
-                <ProductQuantity/>
-                <AddToCart/>
-            </div>
+            <div className="flex flex-col gap-9"><ProductPrice /><ProductColors/><ProductSizes/><ProductQuantity/><AddToCart/></div>
         </ProductContext.Provider>
     );
 };

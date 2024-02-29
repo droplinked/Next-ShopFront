@@ -1,9 +1,7 @@
 import { cn } from "@/lib/utils/cn/cn";
-import Banner from "./parts/banner/banner";
-import Explore from "./parts/explore/explore";
-import Initial from "./parts/initial/initial";
 import useAppShop from "@/functions/hooks/shop/useAppShop";
 import { app_vertical } from "@/lib/variables/variables";
+import { Banner, Explore, Initial } from "./parts";
 
 export default async function Home() {
     const { get } = useAppShop();

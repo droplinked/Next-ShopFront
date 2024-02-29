@@ -3,15 +3,12 @@ import AppIcons from "@/assets/AppIcons";
 import { useContext } from "react";
 import ProductContext from "../../context";
 import { AppButton } from "@/components/shared";
+import { toast } from "sonner";
 
-const AddToCart = () => {
+const ClientProductActions = () => {
     const { states: { sku, option: { quantity } } } = useContext(ProductContext);
     const { add } = useAppCart();
-    const submit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        await add({ skuID: sku._id, quantity });
-    }
-    
+    const submit = async (e: React.FormEvent<HTMLFormElement>) => toast.promise(async() =>{ e.preventDefault(); return await add({ skuID: sku._id, quantity }) }, {loading: "Adding product to your cart...", success: "Added to your cart!", error: "Something went wrong."}) ;
     return (
         <form onSubmit={submit} className="flex w-full gap-6">
             <div className="min-w-fit"><AppButton appClassName="rounded-sm w-full" hasIcon appVariant="outlined" appSize="lg"><AppIcons.Merch />Mint to Merch</AppButton></div>
@@ -20,4 +17,4 @@ const AddToCart = () => {
     );
 };
 
-export default AddToCart;
+export default ClientProductActions;
