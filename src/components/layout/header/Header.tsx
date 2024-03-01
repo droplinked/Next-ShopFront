@@ -1,5 +1,5 @@
 import AppIcons from "@/assets/AppIcons";
-import droplinked from "@/assets/icons/drop.png";
+import droplinked from "@/assets/icons/droplinked.png";
 import Image from "next/image";
 import CartTrigger from "./triggers/cart/cart-trigger";
 import Link from "next/link";

@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CheckoutPageContext, { ICheckoutState, initialCheckout } from "./context";
 import useAppCheckout from "@/functions/hooks/checkout/useAppCheckout";
 import checkoutPageModel from "./model";

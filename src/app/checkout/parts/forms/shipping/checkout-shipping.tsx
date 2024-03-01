@@ -7,7 +7,7 @@ import EachShippingRadio from "./radio/each-shipping-radio";
 import ShippingGroupProducts from "./products/shipping-group-products";
 import { toast } from "sonner";
 import useAppCart from "@/functions/hooks/cart/useAppCart";
-import { initial_shipping } from "../schema/schema";
+import { initial_shipping } from "../../parts/schema/schema";
 import { AppButton, AppLinkButton } from "@/components/shared";
 import { IShippingRates } from "@/lib/apis/checkout/interface";
 

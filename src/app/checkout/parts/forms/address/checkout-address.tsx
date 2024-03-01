@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { address_schema, initial_address } from "../schema/schema";
+import { address_schema, initial_address } from "../../parts/schema/schema";
 import useAppStore from "@/lib/stores/app/appStore";
 import useAppCheckout from "@/functions/hooks/checkout/useAppCheckout";
 import { app_center, app_vertical } from "@/lib/variables/variables";

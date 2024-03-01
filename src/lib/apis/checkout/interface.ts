@@ -37,3 +37,9 @@ export interface IGetCountriesList extends _IGetLocationsList {}
 export interface IGetCitiesList extends _IGetLocationsList {
     country_id: number;
 }
+
+
+export interface IApplyGiftCardService {
+    cartId: string;
+    code: string;
+}
