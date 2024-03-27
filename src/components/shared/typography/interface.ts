@@ -5,4 +5,5 @@ export interface IAppTypography extends React.HTMLAttributes<HTMLParagraphElemen
     appFont?: FontType;
     appVariant?: VariantType;
     price?: boolean;
+    usd?: string;
 }

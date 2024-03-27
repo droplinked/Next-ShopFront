@@ -15,5 +15,7 @@ import AppMenuItem from "./menu/item/AppMenuItem";
 import AppQuantity from "./quantity/AppQuantity";
 import AppSeparator from "./separator/AppSeparator";
 import AppSkeleton from "./skeleton/AppSkeleton";
+import AppNumbered from "./summary/numbered/AppNumbered";
+import AppProductSummary from "./summary/AppProductSummary";
 import AppTypography from "./typography/AppTypography";
-export { AppButton, AppLinkButton, AppIconButton, AppCollapse, AppPopover, AppPopoverState, AppDialog, AppInput, AppRadioInput, AppDropDownInput, AppDotLabel, AppMagnifier, AppMenu, AppMenuItem, AppQuantity, AppSeparator, AppSkeleton, AppTypography };
+export { AppButton, AppLinkButton, AppIconButton, AppCollapse, AppPopover, AppPopoverState, AppDialog, AppInput, AppRadioInput, AppDropDownInput, AppDotLabel, AppMagnifier, AppMenu, AppMenuItem, AppQuantity, AppSeparator, AppSkeleton, AppNumbered, AppProductSummary, AppTypography };

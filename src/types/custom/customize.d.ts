@@ -1,0 +1,1 @@
+export type Partialize<T> = { [P in keyof T]?: T[P] }; 

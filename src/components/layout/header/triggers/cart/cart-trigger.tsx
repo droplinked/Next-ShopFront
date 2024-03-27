@@ -4,35 +4,45 @@ import useAppCart from "@/functions/hooks/cart/useAppCart";
 import useAppStore from "@/lib/stores/app/appStore";
 import { cn } from "@/lib/utils/cn/cn";
 import { app_center, app_vertical } from "@/lib/variables/variables";
-import { usePopupState } from "material-ui-popup-state/hooks";
-import { useCallback, useEffect, useState } from "react";
+import { bindToggle, usePopupState } from "material-ui-popup-state/hooks";
+import React, { useCallback, useEffect, useState } from "react";
 import EmptyCart from "./parts/empty/empty-cart";
-import { ICart } from "@/types/interfaces/cart/cart";
 import EachCartItem from "./parts/each/each-cart-item";
 import Link from "next/link";
-import { AppButton, AppIconButton, AppPopover, AppSeparator, AppTypography } from "@/components/shared";
+import { AppButton, AppDialog, AppIconButton, AppPopover, AppSeparator, AppTypography } from "@/components/shared";
+import { TransitionProps } from "@mui/material/transitions";
+import { Slide } from "@mui/material";
+import AppShow from "@/components/shared/show/AppShow";
+
+const Transition = React.forwardRef(function Transition(
+    props: TransitionProps & {
+        children: React.ReactElement<any, any>;
+    },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const CartTrigger = () => {
-    const popupState = usePopupState({ variant: "popover", popupId: "droplinked-popup-popover" });
-    const {states: { cart }} = useAppStore()
-    const { get } = useAppCart()
-    const getCart = useCallback(async() => cart?._id && await get(cart?._id), [cart?.items]);
-    useEffect(()=> { getCart() }, [])
-
+    const dialogState = usePopupState({ variant: "dialog", popupId: "droplinked-dialog-state" });
+    const { states: { cart } } = useAppStore();
+    const { get } = useAppCart();
+    const getCart = useCallback(async () => cart?._id && (await get(cart?._id)), [cart?.items]);
+    useEffect(() => { getCart() }, []);
     return (
-        <AppPopover trigger={<AppIconButton><AppIcons.Cart /></AppIconButton>} popupState={popupState} anchor={{ vertical: "bottom", horizontal: "left" }} transform={{ vertical: "top", horizontal: "right" }}>
-            <section className={cn(app_vertical, "w-full py-6 px-7 gap-6 rounded-lg bg-background max-w-[420px]")}>
-                <header className={cn(app_center, "w-full justify-between text-xl sticky top-0 pt-6 bg-background")}><AppTypography appClassName="text-lg">My Cart</AppTypography><AppIcons.Close onClick={popupState.close} className="cursor-pointer" /></header>
-                <div className={cn(app_vertical, 'gap-6 p-4 rounded-sm border border-border')}>{cart?.items?.length ? cart?.items?.map((item)=> <div key={item?._id} className="w-full"><EachCartItem  item={item}/><AppSeparator appClassName='my-6 w-full'/></div>) : <EmptyCart/>}</div>
-                {cart?.items?.length && <footer className={cn(app_vertical, 'w-full sticky bottom-0 pb-6 bg-background gap-6')}>
-                    <div className={cn(app_center, 'justify-between w-full')}><AppTypography appClassName="text-sm font-normal">Total Cart</AppTypography><AppTypography price appClassName="text-xl font-medium">{cart?.totalCart?.subtotal}</AppTypography></div>
-                    <form onSubmit={(e) => {e.preventDefault()}} className="flex justify-center items-center w-full gap-6">
-                        <div className="min-w-fit"><AppButton type="submit" appClassName="rounded-sm w-full text-base font-normal" appVariant="outlined" appSize="md">Clear</AppButton></div>
-                        <Link href={'/checkout'} className="flex items-center justify-center w-full py-3 px-4 border-none bg-foreground text-background rounded-sm"><AppTypography>Checkout</AppTypography></Link>
-                    </form>
-                </footer>}
-            </section>
-        </AppPopover>
+        <AppDialog
+            props={{
+                dialogState: dialogState,
+                trigger: <AppIconButton {...bindToggle(dialogState)}><AppIcons.Cart /></AppIconButton>,
+                title: { children: <header className={cn(app_center, "w-full justify-between text-xl sticky top-0 bg-background")}><AppTypography appClassName="text-lg">My Cart</AppTypography><AppIcons.Close onClick={dialogState.close} className="cursor-pointer" /></header> },
+                content: { children: <div className={cn(app_vertical, "gap-6 p-4 rounded-sm border border-border")}><AppShow show={{when: cart?.items?.length, then: cart?.items?.map((item) => <div key={item?._id} className="w-full"><EachCartItem item={item} /><AppSeparator appClassName="my-6 w-full" /></div>), else: <EmptyCart />}}/></div> },
+                actions: { children: <AppShow show={{ when: cart?.items?.length, then: <footer className={cn(app_vertical, "w-full sticky bottom-0 pb-6 bg-background gap-6")}><div className={cn(app_center, "justify-between w-full")}><AppTypography appClassName="text-sm font-normal">Total Cart</AppTypography><AppTypography price appClassName="text-xl font-medium">{cart?.totalCart?.subtotal}</AppTypography></div><form onSubmit={(e) => {e.preventDefault() }} className="flex justify-center items-center w-full gap-6"><div className="min-w-fit"><AppButton type="submit" appClassName="rounded-sm w-full text-base font-normal" appVariant="outlined" appSize="md">Clear</AppButton></div><Link href={"/checkout"} className="flex items-center justify-center w-full py-3 px-4 border-none bg-foreground text-background rounded-sm"><AppTypography>Checkout</AppTypography></Link></form></footer> }}/>},
+            }}
+            aria-labelledby="cart-dialog-title"
+            TransitionComponent={Transition}
+            slotProps={{ backdrop: { timeout: 500, sx: { backgroundColor: "rgba(0,0,0,0.3)", backdropFilter: "blur(0.5px)" } } }  } 
+            sx={{ "& .MuiDialog-paper": { display: "flex", paddingY: "24px", paddingX: "28px", gap: "24px", borderRadius: "16px", backgroundColor: "white", borderLeft: "1px solid rgba(0,0,0,0.12)", boxShadow: "0px 0px 20px 0px rgba(0, 0, 0, 0.2)", backdropFilter: "blur(10px)", width: "100%", maxWidth: "420px", height: "100%", overflowY: "auto", position: "fixed", right: 0, top: 0 } }}
+        />
     );
 };
 

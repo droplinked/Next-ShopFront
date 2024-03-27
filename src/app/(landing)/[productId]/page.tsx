@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: IProps): Promise<Metadata> {
 export default async function Page({ params }: IProps) {
     const data = await fetchInstance(`products/${params.productId}`);
     return (
-        <main className="container px-8 flex items-start md:flex-row flex-col justify-center w-full gap-12">
+        <main className="container px-8 flex items-start md:flex-row flex-col justify-center w-full gap-12 mt-20">
             <div className="min-w-full md:min-w-[40%] sticky left-0 top-24"><ProductSlider media={data?.media} /></div>
             <div className="flex flex-col gap-9 min-w-full md:min-w-[60%]"><ProductDetails product={data} /><AppSeparator /><ProductDescription description={data?.description || ""} /></div>
         </main>

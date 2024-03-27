@@ -16,7 +16,7 @@ export interface IAddAddressToCartService {
 }
 
 export interface IAddShippingToCartService {
-    cartId: string
+    cartId: string;
     rates: IShippingRates[];
 }
 
@@ -38,8 +38,12 @@ export interface IGetCitiesList extends _IGetLocationsList {
     country_id: number;
 }
 
-
 export interface IApplyGiftCardService {
     cartId: string;
     code: string;
+}
+
+export interface IStripeClientSecretService {
+    cartId: string;
+    email: string;
 }

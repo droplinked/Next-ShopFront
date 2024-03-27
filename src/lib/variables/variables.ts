@@ -7,3 +7,8 @@ export const variantIDs = { color: { _id: "62a989ab1f2c2bbc5b1e7153" }, size: { 
 export const app_vertical = "flex flex-col items-center justify-center";
 export const app_center = "flex items-center justify-center";
 export const app_link = `underline text-link-foreground ${roboto.className}`;
+export const hide = {
+    below: { sm: "hidden md:block", md: "hidden lg:block", lg: "hidden xl:block", xl: "hidden 2xl:block", "2xl": "hidden 2xl:block" },
+    above: { sm: "sm:hidden", md: "md:hidden", lg: "lg:hidden", xl: "xl:hidden", "2xl": "2xl:hidden" },
+};
+export const link_style = `font-medium text-sm text-[#179EF8] underline`

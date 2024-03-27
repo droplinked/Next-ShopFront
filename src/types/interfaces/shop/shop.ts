@@ -1,3 +1,5 @@
+import { PaymentTypes } from "@/types/enums/web3/web3";
+
 export interface IShop {
     _id: string;
     name: string;
@@ -36,7 +38,14 @@ export interface IShop {
     apiKey: string;
     privateKey: string;
     hasCustomDomain: boolean;
+    paymentMethods: IPaymentMethods[];
     oauth2Client: any;
+}
+
+export interface IPaymentMethods {
+    type: keyof PaymentTypes;
+    isActive: boolean;
+    destinationAddress?: string;
 }
 
 interface IDNSData {
@@ -87,5 +96,6 @@ export const initialShop: IShop = {
     apiKey: "",
     privateKey: "",
     hasCustomDomain: false,
+    paymentMethods: [],
     oauth2Client: {},
 };

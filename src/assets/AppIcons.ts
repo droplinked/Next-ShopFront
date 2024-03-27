@@ -13,6 +13,7 @@ import Instagram from "./icons/instagram.svg";
 import Twitter from "./icons/twitter.svg";
 import Linkedin from "./icons/linkedin.svg";
 import Discount from "./icons/discount.svg";
+import Shield from "./icons/shield.svg";
 
-const AppIcons = { CartLight, Instagram, Discount, Linkedin, Twitter, Search, Slash, Arrow, Merch, Close, User, Plus, Glob, Cart, Min };
+const AppIcons = { CartLight, Instagram, Discount, Linkedin, Twitter, Search, Slash, Shield, Arrow, Merch, Close, User, Plus, Glob, Cart, Min };
 export default AppIcons;
