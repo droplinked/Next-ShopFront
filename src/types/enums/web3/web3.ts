@@ -10,5 +10,6 @@ enum FiatMethodsEnum { STRIPE = "STRIPE" }
 export enum WalletTypes { LEATHER = "LEATHER", CASPER = "CASPER", MULTIWALLET = "MULTIWALLET", XUMM = "XUMM", METAMASK = "METAMASK" }
 export type TypeOfPayment = typeof FiatEnum & typeof CryptoEnum;
 export type LoginTypes = typeof MetamaskEnum & typeof MultiWalletEnum & typeof CasperEnum & typeof LeatherEnum & typeof XummEnum & typeof UnisatEnum;
-export type PaymentTypes = typeof MetamaskEnum & typeof MultiWalletEnum & typeof LeatherEnum & typeof CasperEnum & typeof XummEnum & typeof FiatMethodsEnum;
+export type CryptoPaymentTypes = typeof MetamaskEnum & typeof CasperEnum
+export type PaymentTypes = CryptoPaymentTypes & typeof FiatMethodsEnum;
 export type M2MTypes = typeof MetamaskEnum & typeof MultiWalletEnum & typeof CasperEnum;

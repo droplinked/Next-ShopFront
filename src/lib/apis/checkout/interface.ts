@@ -1,3 +1,5 @@
+import { CryptoPaymentTypes } from "@/types/enums/web3/web3";
+
 export interface ICreateAddressService {
     firstName: string;
     lastName: string;
@@ -46,4 +48,19 @@ export interface IApplyGiftCardService {
 export interface IStripeClientSecretService {
     cartId: string;
     email: string;
+}
+
+export interface ICheckoutCryptoPaymentService {
+    cartId: string;
+    paymentType: keyof CryptoPaymentTypes;
+    token: string;
+    email?: string;
+    walletAddress: string;
+}
+
+export interface ISubmitOrderService {
+    chain: string;
+    deploy_hash: string;
+    cryptoAmount: string;
+    orderID: string;
 }

@@ -44,7 +44,12 @@ function useWeb3Hook() {
                 {CASPER: { label: "Casper Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
                 {ETH: { label: "ETH Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
                 {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
-                {UNSTOPPABLEDOMAIN: { label: "Unstoppable Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.UnstoppablePayment, dark: AppWalletIcons.UnstoppablePayment } } },
+                {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
+                {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
+                {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
+                {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
+                {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
+                {BINANCE: { label: "Binance Wallet", description: "Make payment directly using", icon: { light: AppWalletIcons.CasperPayment, dark: AppWalletIcons.CasperPayment } } },
             ],
         },
     ];

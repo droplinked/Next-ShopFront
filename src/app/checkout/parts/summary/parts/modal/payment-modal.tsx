@@ -17,7 +17,12 @@ const PaymentModal = ({ stripe }: { stripe: { client_secret: string | null, orde
         <div className={"flex p-9 gap-6 justify-center items-start"}>
             <div className={cn(app_vertical, "gap-9 items-start justify-between w-full self-stretch")}>
                 <Image src={droplinked} alt="Site Logo" className="h-12 object-contain" width={100} height={32} />
-                <AppShow show={{when: stripe?.client_secret && stripe?.orderID && stripe?.client_secret !== "" && stripe?.orderID !== "", then: <AppStripe clientSecret={stripe?.client_secret || ""} success={() => router.push(`/checkout/${stripe?.orderID}`)} cancel={() => {}} />}}/>
+                <AppShow
+                    show={{
+                        when: stripe?.client_secret && stripe?.orderID && stripe?.client_secret !== "" && stripe?.orderID !== "",
+                        then: <AppStripe clientSecret={stripe?.client_secret || ""} success={() => router.push(`/checkout/${stripe?.orderID}`)} cancel={() => {}} />,
+                    }}
+                />
             </div>
             <section className={cn(app_vertical, "p-12 gap-12 bg-[#F3F5FA] rounded-sm min-h-full self-stretch")}>
                 <article className={cn(app_vertical, "gap-6")}>
