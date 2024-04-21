@@ -10,4 +10,4 @@ export const get_cities_service = ({ name, country_id }: IGetCitiesList) => fetc
 export const apply_giftcard_service = ({...body}: IApplyGiftCardService) => fetchInstance(`apply/giftcard`, { method: "PATCH", body: JSON.stringify(body) });
 export const get_stripe_client_secret_service = ({cartId, ...body}: IStripeClientSecretService) => fetchInstance(`checkout/stripe/${cartId}`, {method: "POST", body: JSON.stringify(body)})
 export const checkout_crypto_payment_service = ({ cartId, paymentType, token, ...body}: ICheckoutCryptoPaymentService) => fetchInstance(`checkout/${cartId}/payment/${paymentType}/${token}`, {method: "POST", body: JSON.stringify(body)})
-export const submit_order_service = ({ chain, ...body }: ISubmitOrderService) => fetchInstance(`order/payment/${chain}`, {method: "POST", body: JSON.stringify(body)})
+export const submit_order_service = ({ chain, ...body }: ISubmitOrderService) => fetchInstance(`public/payment/${chain}`, {method: "POST", body: JSON.stringify(body)})

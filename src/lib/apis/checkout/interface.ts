@@ -61,6 +61,6 @@ export interface ICheckoutCryptoPaymentService {
 export interface ISubmitOrderService {
     chain: string;
     deploy_hash: string;
-    cryptoAmount: string;
+    cryptoAmount: number;
     orderID: string;
 }

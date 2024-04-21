@@ -40,7 +40,7 @@ const CheckoutSummary = () => {
                         <AppDialog
                             props={{
                                 dialogState: dialogState,
-                                trigger: <form onSubmit={(event) => submit(event, selected_method, updateStates).then(() => dialogState.open())} className="self-stretch"><AppButton type="submit" appClassName="w-full" appSize="lg" disabled={selected_method === ""} loading={payment_states.submitting}>Pay ${totalCart?.totalPayment} USD</AppButton></form>,
+                                trigger: <form onSubmit={(event) => submit(event, { selected_method }, updateStates, dialogState)} className="self-stretch"><AppButton type="submit" appClassName="w-full" appSize="lg" disabled={selected_method?.name === ""} loading={payment_states.submitting}>Pay ${totalCart?.totalPayment} USD</AppButton></form>,
                                 content: { children: <PaymentModal stripe={stripe} /> },
                             }}
                         />

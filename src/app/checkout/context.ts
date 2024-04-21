@@ -1,17 +1,17 @@
 import { Partialize } from "@/types/custom/customize";
-import { PaymentTypes } from "@/types/enums/web3/web3";
+import { PaymentTypes, TokenTypes } from "@/types/enums/web3/web3";
 import { createContext } from "react";
 
 export interface ICheckoutState {
     step: "loading" | "address" | "shipping" | "payment";
-    selected_method: keyof Partialize<PaymentTypes> | "";
+    selected_method: {name: keyof Partialize<PaymentTypes> | "", token: keyof Partialize<TokenTypes> | "", enum_number: number}
     stripe: { client_secret: string | null; orderID: string | null };
     submitting: boolean;
 }
 
 export const initialCheckout: ICheckoutState = {
     step: "loading",
-    selected_method: "",
+    selected_method: {name: "", token: "", enum_number: -1},
     stripe: { client_secret: null, orderID: null },
     submitting: false,
 };
