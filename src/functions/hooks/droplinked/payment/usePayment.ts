@@ -1,7 +1,5 @@
 import { checkout_crypto_payment_service, get_stripe_client_secret_service, submit_order_service } from "@/lib/apis/checkout/service";
 import useAppStore from "@/lib/stores/app/appStore";
-import { Partialize } from "@/types/custom/customize";
-import { CryptoPaymentTypes, PaymentTypes, TokenTypes } from "@/types/enums/web3/web3";
 import { FormEvent, useState, useTransition } from "react";
 import { getNetworkProvider } from "../utils/chains/chainProvider";
 import { Network } from "../utils/chains/Chains";
@@ -25,6 +23,7 @@ export function usePayment() {
         });
 
     const stripe = async (updateStates: (key: string, value: any) => void, dialogState: PopupState) => {
+        dialogState.open();
         await get_stripe_client_secret_service({ cartId: _id, email })
             .then((res) => updateStates("stripe", res))
             .finally(() => transition("submitting", false));
@@ -42,14 +41,12 @@ export function usePayment() {
         if(paymentType === "" || paymentType === "STRIPE") return
         const sender: string = await (await getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, "").walletLogin())[paymentType === "CASPER" ? "publicKey" : "address"];
         let checkout = await (await checkout_crypto_payment_service({ cartId: _id, paymentType, token, email, walletAddress: sender }));
-        console.log(checkout)
         if (checkout) {
             const paymentResult = getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, sender);
             const payment = await paymentResult?.payment(checkout?.paymentData);
-            console.log(payment, payment.cryptoAmount,parseInt(payment.cryptoAmount?.hex), parseInt(payment?.cryptoAmount?.hex).toString() )
             await submit_order_service({
-                chain: paymentType.toLowerCase(),
-                deploy_hash: payment.deploy_hash,
+                chain: paymentType?.toLowerCase(),
+                deploy_hash: payment?.deploy_hash,
                 orderID: checkout?.orderID,
                 cryptoAmount: parseInt(payment?.cryptoAmount),
             }).finally(() => {

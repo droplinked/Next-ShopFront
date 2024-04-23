@@ -54,23 +54,6 @@ function useWeb3Hook() {
             ],
         },
     ];
-    
-
-    
-    const serialized_payment_methods = useMemo(() => {
-        const updated_payments = payment.map((general_payment_type) => {
-            const updated_options = general_payment_type.options.map((option) => {
-                const method_key = Object.keys(option)[0];
-                const payment_method_match = paymentMethods.find((method) => method.type === method_key);
-                if (payment_method_match) return payment_method_match ? { [method_key]: { ...option[method_key as keyof typeof option], ...payment_method_match } } : option;
-            });
-            return { ...general_payment_type, options: updated_options };
-        });
-
-        return updated_payments;
-    }, [paymentMethods]); 
-    
-    
 
     return { login, payment };
 }

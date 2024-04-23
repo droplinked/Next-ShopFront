@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { ICheckoutStatus } from "./interface";
 import useAppStore from "@/lib/stores/app/appStore";
-import { IAddEmailToCartService, ICreateAddressService } from "@/lib/apis/checkout/interface";
-import { add_address_to_cart_service, add_email_to_cart_service, create_address_service } from "@/lib/apis/checkout/service";
+import { ICreateAddressService } from "@/lib/apis/checkout/interface";
+import { create_address_service } from "@/lib/apis/checkout/service";
 import useAppCart from "../cart/useAppCart";
-import { toast } from "sonner";
+
 
 function useAppCheckout() {
     const { states: {cart} } = useAppStore()
