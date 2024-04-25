@@ -46,7 +46,7 @@ NEXT_PUBLIC_APP_DEVELOPMENT="true"
 
 ## Landing Page Documentation
 
-The landing page is designed to display shop data followed by a list of products, dynamically fetched from separate APIs. Below is a breakdown of its components and functionalities:
+The landing page is designed to display shop data followed by a list of products, dynamically fetched from separate APIs.
 
 ### Fetching Data
 
