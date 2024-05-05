@@ -1,4 +1,5 @@
-import { PaymentTypes } from "@/types/enums/web3/web3";
+import { Partialize } from "@/types/custom/customize";
+import { PaymentTypes, TokenTypes } from "@/types/enums/web3/web3";
 
 export interface IShop {
     _id: string;
@@ -43,11 +44,18 @@ export interface IShop {
 }
 
 export interface IPaymentMethods {
-    type: keyof PaymentTypes;
+    _id: string;
     isActive: boolean;
+    type: keyof Partialize<PaymentTypes>;
     destinationAddress?: string;
+    chainId: string;
+    tokens: {
+        _id: string;
+        isActive: boolean;
+        tokenId: string;
+        type: keyof Partialize<TokenTypes>
+    }[]
 }
-
 interface IDNSData {
     domain_name: string;
     NS_records: string[];

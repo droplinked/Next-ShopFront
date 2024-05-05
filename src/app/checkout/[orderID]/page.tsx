@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: IProps): Promise<Metadata> {
 }
 
 export default async function Page({ params }: IProps) {
-    const order = await fetchInstance(`order/${params.orderID}`).then((res: IOrder) => res);
+    const order = await fetchInstance(`order/${params.orderID}`, {cache: "no-cache"}).then((res: IOrder) => res);
     const address_array = order?.details?.address?.split(", ");
     const {style, title} = deployHashModel.status_design(order?.details?.status) 
     return (
