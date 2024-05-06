@@ -155,6 +155,15 @@ export type IPaymentDroplinked = {
 ## usePayment Hook
 
 - **`crypto_payment`**: A function intended to handle cryptocurrency payments. It uses the **`selected_method`** from the checkout state to determine the payment method and processes the payment accordingly. It includes obtaining wallet addresses, initiating transactions, and managing the checkout and submission of orders.
+
+- install the @droplinked/wallet-connection package in your project.
+  ```bash
+  npm install @droplinked/wallet-connection
+  ```
+  After installing the package, import the necessary utilities into your file where you're defining the crypto_payment function. Import getNetworkProvider and Network from @droplinked/wallet-connection. You can do this as follows:
+  ```typescript
+  import { getNetworkProvider, Network } from "@droplinked/wallet-connection";
+  ```
     ```typescript
     const crypto_payment = async ({selected_method: {name: paymentType, enum_number, token}}: Pick<ICheckoutState, "selected_method">) => {
         if(paymentType === "" || paymentType === "STRIPE") return
