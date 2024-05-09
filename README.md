@@ -26,23 +26,19 @@ npm run dev
 ## Environment Variables
 
 1. Change the `.env-example` file to `.env` in the root directory of your project.
-3. A template of `.gitignore` is provided by default.
+2. A template of `.gitignore` is provided by default.
 
-#
+```plaintext
+NEXT_PUBLIC_BASE_API_URL=https://apiv3.droplinked.com/v1/
+NEXT_PUBLIC_API_KEY="your_api_key_goes_here"
+NEXT_PUBLIC_APP_DEVELOPMENT="true"
+```
 
 - **`NEXT_PUBLIC_BASE_API_URL`**: This variable specifies the base URL for the API endpoints. It should be set to `https://apiv3.droplinked.com/v1/`
 
 - **`NEXT_PUBLIC_API_KEY`**: This variable should be obtained from the dashboard. It represents the API key required to authenticate requests to the backend API.
 
 - **`NEXT_PUBLIC_APP_DEVELOPMENT`**: This variable should be set to either `"true"` or `"false"`. It determines whether the application is running in development mode or not. Setting it to `"true"` indicates a development environment, while setting it to `"false"` indicates a production environment.
-#
-
-Here's an example of how the `.env` file should look:
-```plaintext
-NEXT_PUBLIC_BASE_API_URL=https://apiv3.droplinked.com/v1/
-NEXT_PUBLIC_API_KEY="your_api_key_goes_here"
-NEXT_PUBLIC_APP_DEVELOPMENT="true"
-```
 
 ## Landing Page Documentation
 
@@ -77,12 +73,6 @@ export interface IGetProductsService{
 ### **Services**
 
 These functions interact with a backend APIs to perform CRUD operations on a shopping cart. Functions overview:
-
-- **`create_cart_service()`**: Initializes a new cart session by making a POST request to the /cart endpoint.
-- **`add_to_cart_service`**: Adds an item to a specified cart by sending a POST request to cart/${cartId} with the item details.
-- **`change_quantity_service`**: Updates the quantity of an item in the cart by sending a PATCH request to /cart/${cartId}.
-- **`get_cart_service`**: Retrieves the cart's current state by making a GET request to /cart/${cartId}.
-
 
 - **`create_cart_service()`**: Initializes a new cart session by making a POST request to the /cart endpoint.
 ```typescript
