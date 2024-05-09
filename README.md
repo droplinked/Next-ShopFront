@@ -27,6 +27,7 @@ npm run dev
 
 1. Change the `.env-example` file to `.env` in the root directory of your project.
 2. A template of `.gitignore` is provided by default.
+3. Here is an example:
 
 ```plaintext
 NEXT_PUBLIC_BASE_API_URL=https://apiv3.droplinked.com/v1/
