@@ -23,26 +23,23 @@ npm install
 npm run dev
 ```
 
-# Environment Variables
+## Environment Variables
 
-1. Create a `.env` file in the root directory of your project.
-2. Add the required environment variables along with their values to this file.
-3. Ensure that the `.env` file is included in your `.gitignore` to prevent sensitive information from being committed to version control.
-#
+1. Change the `.env-example` file to `.env` in the root directory of your project.
+2. A template of `.gitignore` is provided by default.
+3. Here is an example:
 
-- `NEXT_PUBLIC_BASE_API_URL`: This variable specifies the base URL for the API endpoints. It should be set to `https://apiv3.droplinked.com/v1/`
-
-- `NEXT_PUBLIC_API_KEY`: This variable should be obtained from the dashboard. It represents the API key required to authenticate requests to the backend API.
-
-- `NEXT_PUBLIC_APP_DEVELOPMENT`: This variable should be set to either `"true"` or `"false"`. It determines whether the application is running in development mode or not. Setting it to `"true"` indicates a development environment, while setting it to `"false"` indicates a production environment.
-#
-Here's an example of how the `.env` file should look:
 ```plaintext
 NEXT_PUBLIC_BASE_API_URL=https://apiv3.droplinked.com/v1/
 NEXT_PUBLIC_API_KEY="your_api_key_goes_here"
 NEXT_PUBLIC_APP_DEVELOPMENT="true"
 ```
 
+- **`NEXT_PUBLIC_BASE_API_URL`**: This variable specifies the base URL for the API endpoints. It should be set to `https://apiv3.droplinked.com/v1/`
+
+- **`NEXT_PUBLIC_API_KEY`**: This variable should be obtained from the dashboard. It represents the API key required to authenticate requests to the backend API.
+
+- **`NEXT_PUBLIC_APP_DEVELOPMENT`**: This variable should be set to either `"true"` or `"false"`. It determines whether the application is running in development mode or not. Setting it to `"true"` indicates a development environment, while setting it to `"false"` indicates a production environment.
 
 ## Landing Page Documentation
 
@@ -74,9 +71,9 @@ export interface IGetProductsService{
 
 ## Managing shopping cart operations:
 
-### **2. Services**
+### **Services**
 
-These functions interact with a backend API to perform CRUD operations on a shopping cart.
+These functions interact with a backend APIs to perform CRUD operations on a shopping cart. Functions overview:
 
 - **`create_cart_service()`**: Initializes a new cart session by making a POST request to the /cart endpoint.
 ```typescript
@@ -121,7 +118,7 @@ export interface IGetCartService {
 }
 ```
 
-### **2. Hook (`useAppCart`)**
+### **Hook (`useAppCart`)**
 
 This custom hook integrates the services, managing the state of the shopping cart using a store.
 
@@ -154,13 +151,10 @@ export type IPaymentDroplinked = {
 
 ## usePayment Hook
 
-- **`crypto_payment`**: A function intended to handle cryptocurrency payments. It uses the **`selected_method`** from the checkout state to determine the payment method and processes the payment accordingly. It includes obtaining wallet addresses, initiating transactions, and managing the checkout and submission of orders.
+- **`crypto_payment`**: A function that handles cryptocurrency payment process asynchronously. 
+  - It uses the **`selected_method`** from the checkout state to determine the payment method and processes the payment accordingly. It includes obtaining wallet addresses, initiating transactions, and managing the checkout and submission of orders.
 
-- install the @droplinked/wallet-connection package in your project.
-  ```bash
-  npm install @droplinked/wallet-connection
-  ```
-  After installing the package, import the necessary utilities into your file where you're defining the crypto_payment function. Import getNetworkProvider and Network from @droplinked/wallet-connection. You can do this as follows:
+  ```Import the necessary utilities into your file where you're defining the crypto_payment function. Import ${getNetworkProvider} and Network from @droplinked/wallet-connection. You can do this as follows:
   ```typescript
   import { getNetworkProvider, Network } from "@droplinked/wallet-connection";
   ```
