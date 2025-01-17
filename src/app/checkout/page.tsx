@@ -21,7 +21,7 @@ function CheckoutPage() {
     const steps = { loading: { form: <L_Checkout /> }, address: { form: <CheckoutAddress /> }, shipping: { form: <CheckoutShipping /> }, payment: { form: <CheckoutPayment></CheckoutPayment> } };
     useEffect(() => { cart?._id ? updateStates("step", currentStep(status)) : router.push("/") }, [cart.items]);
     return (
-        <CheckoutPageContext.Provider value={{ states: States, mehtods: { updateStates } }}>
+        <CheckoutPageContext.Provider value={{ states: States, methods: { updateStates } }}>
             {cart?._id && <main className="container flex items-start justify-between gap-12 pt-20">
                 <div className="min-w-[70%]">{steps[States.step]?.form}</div>
                 <div className="min-w-[30%] sticky left-0 top-24"><CheckoutSummary/></div>

@@ -4,7 +4,7 @@ import useAppStore from "@/lib/stores/app/appStore";
 import { IAddToCart, IChangeQuantity } from "./interface";
 import { ICart } from "@/types/interfaces/cart/cart";
 import { IAddAddressToCartService, IAddEmailToCartService, IAddShippingToCartService, IApplyGiftCardService } from "@/lib/apis/checkout/interface";
-import { add_address_to_cart_service, add_email_to_cart_service, add_shipping_to_cart_service, apply_giftcard_service } from "@/lib/apis/checkout/service";
+import { addAddressToCartService, addEmailToCartService, addShippingToCartService, applyGiftCardService } from "@/lib/apis/checkout/service";
 
 function useAppCart() {
     const { methods: { updateState }, states: { cart, shop, user }} = useAppStore();
@@ -29,7 +29,7 @@ function useAppCart() {
 
     const _add_email = (params: IAddEmailToCartService) =>
         new Promise<any>(async (resolve, reject) =>
-            add_email_to_cart_service(params)
+            addEmailToCartService(params)
                 .then((res) => resolve(_update(res)))
                 .catch((err) => reject(err))
         );
@@ -37,21 +37,21 @@ function useAppCart() {
     const add_address = (params: IAddAddressToCartService, email: string) =>
         new Promise<any>(async (resolve, reject) =>
             _add_email({ cartId: params.cartId, email })
-                .then((res) => add_address_to_cart_service(params))
+                .then((res) => addAddressToCartService(params))
                 .then((res) => resolve(_update(res)))
                 .catch((err) => reject(err))
         );
 
     const add_shipping = ({ cartId, rates }: IAddShippingToCartService) =>
         new Promise<any>(async (resolve, reject) =>
-            add_shipping_to_cart_service({ cartId, rates })
+            addShippingToCartService({ cartId, rates })
                 .then((res) => resolve(_update(res)))
                 .catch((err) => reject(err))
         );
 
     const add_gift = ({ ...params }: IApplyGiftCardService) =>
         new Promise<any>(async (resolve, reject) =>
-            apply_giftcard_service({ ...params })
+            applyGiftCardService({ ...params })
                 .then((res) => resolve(_update(res)))
                 .catch((err) => reject(err))
         );

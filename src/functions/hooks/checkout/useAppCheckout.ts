@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { ICheckoutStatus } from "./interface";
 import useAppStore from "@/lib/stores/app/appStore";
 import { ICreateAddressService } from "@/lib/apis/checkout/interface";
-import { create_address_service } from "@/lib/apis/checkout/service";
+import { createAddressService } from "@/lib/apis/checkout/service";
 import useAppCart from "../cart/useAppCart";
 
 
@@ -27,7 +27,7 @@ function useAppCheckout() {
                 params.country &&
                 params.city &&
                 params.state &&
-                create_address_service(params)
+                createAddressService (params)
                     .then((res) => resolve(add_address({ addressBookID: res?._id, cartId }, email)))
                     .catch((err) => reject(err))
         );
