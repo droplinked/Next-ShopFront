@@ -41,7 +41,6 @@ function useWeb3Hook() {
                     [serialized_method.type]: {
                         label: serialized_method.title,
                         token: serialized_method.token,
-                        ...display_options[serialized_method.type],
                     },
                 })),
             },
