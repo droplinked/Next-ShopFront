@@ -1,7 +1,22 @@
-import { fetchInstance } from "../fetch-config";
-import { IAddToCartService, ICahngeQuantityService, IGetCartService } from "./interface";
+import { fetchInstance } from '../fetch-config';
+import { IAddToCartService, IChangeQuantityService, IGetCartService } from './interface';
 
-export const create_cart_service = () => fetchInstance(`cart`, { method: "POST" });
-export const add_to_cart_service = ({ cartId, ...body }: IAddToCartService) => fetchInstance(`cart/${cartId}`, { method: "POST", body: JSON.stringify(body) });
-export const change_quantity_service = ({ cartId, ...body }: ICahngeQuantityService) => fetchInstance(`cart/${cartId}`, { method: "PATCH", body: JSON.stringify(body) });
-export const get_cart_service = ({ cartId }: IGetCartService) => fetchInstance(`cart/${cartId}`);
+// Create a new cart
+export const createCartService = () => {
+  return fetchInstance(`cart`, { method: 'POST' });
+};
+
+// Add an item to the cart
+export const addToCartService = ({ cartId, ...body }: IAddToCartService) => {
+  return fetchInstance(`cart/${cartId}`, { method: 'POST', body: JSON.stringify(body) });
+};
+
+// Update the quantity of an item in the cart
+export const changeQuantityService = ({ cartId, ...body }: IChangeQuantityService) => {
+  return fetchInstance(`cart/${cartId}`, { method: 'PATCH', body: JSON.stringify(body) });
+};
+
+// Fetch the cart by cartId
+export const getCartService = ({ cartId }: IGetCartService) => {
+  return fetchInstance(`cart/${cartId}`);
+};

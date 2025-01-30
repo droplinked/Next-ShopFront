@@ -25,8 +25,8 @@ export default async function Page({ params }: IProps) {
   console.log(order);
 
   return (
-    <main className="container flex items-start justify-between gap-12 pt-20">
-      <div className={cn(app_vertical, 'min-w-[70%] gap-6')}>
+    <main className="container flex flex-col lg:flex-row items-start justify-between gap-12 pt-20">
+      <div className={cn(app_vertical, 'w-full lg:min-w-[70%] gap-6')}>
         <OrderInformationLayout
           header="Order Information"
           rows={[
@@ -72,8 +72,8 @@ export default async function Page({ params }: IProps) {
         />
         
       </div>
-      <div className="min-w-[30%] sticky left-0 top-24">
-        <h1 className={cn('font-semibold text-base text-foreground text-left w-full', roboto.className)}>Order Summary</h1>
+      <div className="min-w-[30%] sticky left-0 top-24 p-6 gap-6  rounded-sm border">
+        <h1 className={cn('font-semibold text-base text-foreground text-left w-full mb-4', roboto.className)}>Order Summary</h1>
         <div className={cn(app_vertical, 'gap-6 w-full')}>
           {order?.items?.map(({ _id, size, color, quantity, price, image, title }) => (
             <AppProductSummary key={_id} details={{ size, color, quantity, priceItem: price, image, title }} />

@@ -6,7 +6,7 @@ export interface IAddToCartService {
     m2m_data?: IM2MProps;
 }
 
-export interface ICahngeQuantityService extends Omit<IAddToCartService, "m2m_data"> {
+export interface IChangeQuantityService extends Omit<IAddToCartService, "m2m_data"> {
     itemId: string;
 }
 

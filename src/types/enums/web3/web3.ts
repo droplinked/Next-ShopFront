@@ -27,16 +27,18 @@ enum MetamaskEnum {
   ETH = 'ETH'
 }
 enum TokenEnum {
-  USDT = 'USDT',
-  USDC = 'USDC',
-  BINANCE_PEG_BSC_USD = 'BINANCE_PEG_BSC_USD',
-  CSPR = 'CSPR',
-  MATIC = 'MATIC',
-  BNB = 'BNB',
-  XRP = 'XRP',
-  ETH = 'ETH',
-  MEW = 'MEW',
-  NEAR = 'NEAR'
+  ETH = "ETH",
+  RBNT = "RBNT",
+  SOL = "SOL",
+  USDC = "USDC",
+  USDT = "USDT",
+  MEW = "MEW",
+  BNB = "BNB",
+  MATIC = "MATIC",
+  CSPR = "CSPR",
+  PARAM = "PARAM",
+  BDC = "BDC",
+  BTC = "BTC"
 }
 export enum WalletTypes {
   MULTIWALLET = 'MULTIWALLET',

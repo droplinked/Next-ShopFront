@@ -1,14 +1,14 @@
-import { useMemo } from "react";
-import { ICheckoutStatus } from "./interface";
-import useAppStore from "@/lib/stores/app/appStore";
 import { ICreateAddressService } from "@/lib/apis/checkout/interface";
 import { createAddressService } from "@/lib/apis/checkout/service";
+import useAppStore from "@/lib/stores/app/appStore";
+import { useMemo } from "react";
 import useAppCart from "../cart/useAppCart";
+import { ICheckoutStatus } from "./interface";
 
 
 function useAppCheckout() {
     const { states: {cart} } = useAppStore()
-    const { add_address } = useAppCart();
+    const { addAddressToCart } = useAppCart();
 
     const has_digital = useMemo(() => (cart && cart?.items ? cart.items.filter((el) => el.product.type === "DIGITAL").length === cart.items.length : false), [cart]);
 
@@ -28,7 +28,7 @@ function useAppCheckout() {
                 params.city &&
                 params.state &&
                 createAddressService (params)
-                    .then((res) => resolve(add_address({ addressBookID: res?._id, cartId }, email)))
+                    .then((res) => resolve(addAddressToCart({ addressBookID: res?._id, cartId }, email)))
                     .catch((err) => reject(err))
         );
 

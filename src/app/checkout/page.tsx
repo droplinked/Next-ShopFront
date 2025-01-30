@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import CheckoutPageContext, { ICheckoutState, initialCheckout } from './context';
 import useAppCheckout from '@/functions/hooks/checkout/useAppCheckout';
 import checkoutPageModel from './model';
@@ -9,32 +10,43 @@ import L_Checkout from '@/components/loading/checkout';
 import CheckoutSummary from './parts/summary/checkout-summary';
 import CheckoutPayment from './parts/forms/payment/checkout-payment';
 import useAppStore from '@/lib/stores/app/appStore';
-import { useRouter } from 'next/navigation';
 
 function CheckoutPage() {
-  const [States, setStates] = useState<ICheckoutState>(initialCheckout);
+  const [states, setStates] = useState<ICheckoutState>(initialCheckout);
   const router = useRouter();
   const { status } = useAppCheckout();
-  const {states: { cart }} = useAppStore();
+  const {
+    states: { cart }
+  } = useAppStore();
   const { currentStep } = checkoutPageModel;
-  const updateStates = (key: string, value: any) => 
-    setStates((prev: ICheckoutState) => ({ ...prev, [key]: value }));
+
+  const updateStates = (key: string, value: any) => {
+    setStates((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Define steps and their corresponding forms
   const steps = {
     loading: { form: <L_Checkout /> },
     address: { form: <CheckoutAddress /> },
     shipping: { form: <CheckoutShipping /> },
-    payment: { form: <CheckoutPayment></CheckoutPayment> }
+    payment: { form: <CheckoutPayment /> }
   };
 
+  // Redirect if cart is empty, otherwise update the step
   useEffect(() => {
-    cart?._id ? updateStates('step', currentStep(status)) : router.push('/');
-  }, [cart.items]);
-  
+    if (!cart?._id) {
+      router.push('/');
+    } else {
+      updateStates('step', currentStep(status));
+    }
+  }, [cart?.items, status, router]);
+
+  // Render the checkout page
   return (
-    <CheckoutPageContext.Provider value={{ states: States, methods: { updateStates } }}>
+    <CheckoutPageContext.Provider value={{ states, methods: { updateStates } }}>
       {cart?._id && (
         <main className="container flex items-start justify-between gap-12 pt-20">
-          <div className="min-w-[70%]">{steps[States.step]?.form}</div>
+          <div className="min-w-[70%]">{steps[states.step]?.form}</div>
           <div className="min-w-[30%] sticky left-0 top-24">
             <CheckoutSummary />
           </div>

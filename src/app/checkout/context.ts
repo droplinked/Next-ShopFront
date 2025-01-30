@@ -2,13 +2,13 @@ import { Partialize } from "@/types/custom/customize";
 import { PaymentTypes, TokenTypes } from "@/types/enums/web3/web3";
 import { createContext } from "react";
 
-
 export interface ICheckoutState {
     step: "loading" | "address" | "shipping" | "payment";
     selected_method: {
-        name: keyof Partialize<PaymentTypes> | "";
-        token?: keyof Partialize<TokenTypes> | "";
+        name: any | "";
+        token?: keyof Partialize<TokenTypes> ;
         enum_number?: number;
+        chainId?: string;
     };
     stripe: { client_secret: string; orderID: string };
     submitting: boolean;
@@ -17,7 +17,7 @@ export interface ICheckoutState {
 // Initial state values
 export const initialCheckout: ICheckoutState = {
     step: "loading",
-    selected_method: { name: "", token: "", enum_number: -1 },
+    selected_method: { name: "", enum_number: -1 },
     stripe: { client_secret: "", orderID: "" },
     submitting: false,
 };
@@ -37,8 +37,7 @@ interface ICheckoutContext {
 const CheckoutPageContext = createContext<ICheckoutContext>({
     states: initialCheckout,
     methods: {
-        updateStates: () => {},
-        payment: async () => {},
+        updateStates: () => {}, // Default implementation for updateStates
     },
 });
 

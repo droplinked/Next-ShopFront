@@ -64,16 +64,12 @@ export const fetchStripePaymentDetails = async ({cartId, ...body}: IStripeClient
   conversionRate: number;
 }> => {
   try {
-    console.log('fetchStripePaymentDetails:', cartId, body);
     const response = await fetchInstance(`checkout/stripe/${cartId}`, {
       method: 'POST',
       body: JSON.stringify(body)
     });
-    console.log('response:', response);
   ;
-
     const { totalPrice, client_secret, orderID, currency, convertedAmount, conversionRate } = response;
-
     return {
       totalPrice,
       clientSecret: client_secret,
@@ -84,7 +80,7 @@ export const fetchStripePaymentDetails = async ({cartId, ...body}: IStripeClient
     };
   } catch (error) {
     console.error('Error in fetchStripePaymentDetails:', error);
-    throw error; // Propagate the error for further handling
+    throw error; 
   }
 };
 
