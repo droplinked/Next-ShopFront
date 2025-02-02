@@ -1,43 +1,108 @@
-import { checkout_crypto_payment_service, get_stripe_client_secret_service, submit_order_service } from "@/lib/apis/checkout/service";
-import useAppStore from "@/lib/stores/app/appStore";
-import { FormEvent, useState, useTransition } from "react";
-import { APP_DEVELOPMENT } from "@/lib/variables/variables";
-import { useRouter } from "next/navigation";
-import { ICheckoutState } from "@/app/checkout/context";
-import { PopupState } from "material-ui-popup-state/hooks";
-import { getNetworkProvider, Network } from "@droplinked/wallet-connection"
+import CheckoutPageContext, { ICheckoutState } from '@/app/checkout/context';
+import { checkoutCryptoPaymentService, fetchStripePaymentDetails, submitOrderService } from '@/lib/apis/checkout/service';
+import useAppStore from '@/lib/stores/app/appStore';
+import { APP_DEVELOPMENT } from '@/lib/variables/variables';
+import { Chain, ChainWallet, DropWeb3, Network, Web3Actions, PaymentTokens } from 'droplinked-web3';
+import { useRouter } from 'next/navigation';
+import { useContext, useState, useTransition } from 'react';
+
 export function usePayment() {
-    const { states: { cart: { _id, email } } } = useAppStore();
-    const router = useRouter();
-    const [payment_states, set_payment_states] = useState<{ submitting: boolean }>({ submitting: false });
-    const [pending, start_stransition] = useTransition();
-    const transition = (key: string, value: any) => start_stransition(() => { set_payment_states((prev) => ({ ...prev, [key]: value })) });
-    const submit = async (form_event: FormEvent<HTMLFormElement>, {selected_method}: Pick<ICheckoutState, "selected_method">, updateStates: (key: string, value: any) => void, dialogState: PopupState) => {
-        form_event.preventDefault();
-        if (selected_method?.name === "") return;
-        return await crypto_payment({selected_method})
-    }; 
+  const router = useRouter();
+  const [paymentState, setPaymentState] = useState({ submitting: false });
+  const [isPending, startTransition] = useTransition();
+  const { states: { cart }} = useAppStore();
+  const { methods } = useContext(CheckoutPageContext);
 
-    const crypto_payment = async ({selected_method: {name: paymentType, enum_number, token}}: Pick<ICheckoutState, "selected_method">) => {
-        if(paymentType === "") return
-        transition("submitting", true);
-        const sender: string = await (await getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, "")?.walletLogin())?.address
-        let checkout = await (await checkout_crypto_payment_service({ cartId: _id, paymentType, token, email, walletAddress: sender }));
-        if (checkout) {
-            const paymentResult = getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, sender);
-            const payment = await paymentResult?.payment(checkout?.paymentData);
-            await submit_order_service({
-                chain: paymentType?.toLowerCase(),
-                deploy_hash: payment?.deploy_hash,
-                orderID: checkout?.orderID,
-                cryptoAmount: parseInt(payment?.cryptoAmount),
-            }).finally(() => {
-                transition("submitting", false);
-                router.push(`/checkout/${checkout?.orderID}`);
-            });
+  const updatePaymentState = (key: string, value: any) => startTransition(() => setPaymentState((prev) => ({ ...prev, [key]: value })));
+
+  const processPayment = async ({ selected_method }: Pick<ICheckoutState, 'selected_method'>) => {
+    if (!selected_method?.name) return;
+
+    if (selected_method.name === 'STRIPE') {
+      return await processStripePayment();
+    }
+
+    return await processCryptoPayment({ selected_method });
+  };
+
+  const processStripePayment = async () => {
+    updatePaymentState('submitting', true);
+    try {
+      const { clientSecret, orderId } = await fetchStripePaymentDetails({
+        cartId: cart._id,
+        email: cart.email
+      });
+
+      methods.updateStates('stripe', { client_secret: clientSecret, orderID: orderId });
+      // router.push(`/checkout/${orderId}`);
+    } catch (error) {
+      console.error('Error during Stripe payment:', error);
+    } finally {
+      updatePaymentState('submitting', false);
+    }
+  };
+
+  const processCryptoPayment = async ({ selected_method: { name: walletType, token: token_type } }: Pick<ICheckoutState, 'selected_method'>) => {
+    if (!walletType) return;
+
+    const web3 = new DropWeb3(APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET);
+    updatePaymentState('submitting', true);
+
+    try {
+      const loginInstance = web3.web3Instance({
+        method: Web3Actions.LOGIN,
+        preferredWallet: ChainWallet.Metamask
+      });
+
+      const loginData = await loginInstance.walletLogin();
+      const sender: string = loginData?.address;
+
+      if (!sender) throw new Error('Wallet connection failed');
+
+      const checkoutResponse = await checkoutCryptoPaymentService({
+        cartId: cart._id,
+        paymentType: walletType,
+        token: token_type,
+        email: cart.email,
+        walletAddress: sender
+      });
+
+      if (checkoutResponse) {
+        const paymentInstance = web3.web3Instance({
+          method: Web3Actions.PAYMENT,
+          chain: Chain.BINANCE, // TODO: Update chain dynamically
+          preferredWallet: ChainWallet.Metamask,
+          userAddress: sender
+        });
+
+        if (token_type) {
+          const paymentResult = await paymentInstance.payment({
+            cartID: cart._id,
+            paymentToken: PaymentTokens[token_type],
+            paymentType: Chain.BINANCE
+          });
+
+          await submitOrderService({
+            chain: walletType.toLowerCase(),
+            deploy_hash: paymentResult?.transactionHash,
+            orderID: checkoutResponse?.orderID,
+            cryptoAmount: parseInt(paymentResult?.cryptoAmount)
+          });
+
+          router.push(`/checkout/${checkoutResponse?.orderID}`);
         }
-       
-    };
+      }
+    } catch (error) {
+      console.error('Error during crypto payment:', error);
+    } finally {
+      updatePaymentState('submitting', false);
+    }
+  };
 
-    return { submit, payment_states, crypto_payment };
+  return {
+    processPayment,
+    paymentState,
+    processCryptoPayment,
+    processStripePayment
+  };
 }
