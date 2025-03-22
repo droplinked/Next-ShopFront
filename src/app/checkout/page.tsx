@@ -1,15 +1,25 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import CheckoutPageContext, { ICheckoutState, initialCheckout } from './context';
 import useAppCheckout from '@/functions/hooks/checkout/useAppCheckout';
 import checkoutPageModel from './model';
 import CheckoutAddress from './parts/forms/address/checkout-address';
 import CheckoutShipping from './parts/forms/shipping/checkout-shipping';
 import L_Checkout from '@/components/loading/checkout';
-import CheckoutSummary from './parts/summary/checkout-summary';
-import CheckoutPayment from './parts/forms/payment/checkout-payment';
 import useAppStore from '@/lib/stores/app/appStore';
+
+// Dynamically import payment-related components
+const CheckoutSummary = dynamic(() => import('./parts/summary/checkout-summary'), {
+  ssr: false,
+  loading: () => <L_Checkout />
+});
+
+const CheckoutPayment = dynamic(() => import('./parts/forms/payment/checkout-payment'), {
+  ssr: false,
+  loading: () => <L_Checkout />
+});
 
 function CheckoutPage() {
   const [states, setStates] = useState<ICheckoutState>(initialCheckout);

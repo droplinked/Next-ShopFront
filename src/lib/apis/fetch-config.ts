@@ -8,7 +8,9 @@ export async function fetchInstance(url: string, options?: RequestInit) {
             headers: { "Content-Type": "application/json", "x-shop-id": API_KEY },
         }).then(async (response) => {
             if (response?.status === 401) {
-                localStorage.clear();
+                if (typeof window !== 'undefined') {
+                    localStorage.clear();
+                }
                 throw new Error("Unauthorized!");
             }
             if (!response.ok) {
