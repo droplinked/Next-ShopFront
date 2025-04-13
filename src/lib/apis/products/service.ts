@@ -1,4 +1,5 @@
-import { fetchInstance } from "../fetch-config";
-import { IGetProductsService } from "./interface";
+import { IGetProductsService } from './interface';
+
 export const get_products_service = ({ page, limit, filter }: IGetProductsService) =>
-    fetchInstance(`products?page=${page}${limit && `&limit=${limit}`}${filter && `&filter=title:${filter}`}`, { next: { revalidate: 3600 } });
+  fetch(`api/products?page=${page}${limit ? `&limit=${limit}` : ''}${filter ? `&filter=title:${filter}` : ''}`, { next: { revalidate: 3600 } })
+    .then(response => response.json());

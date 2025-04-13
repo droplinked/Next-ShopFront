@@ -1,4 +1,3 @@
-import { fetchInstance } from '../fetch-config';
 import {
   IAddAddressToCartService,
   IAddEmailToCartService,
@@ -7,50 +6,49 @@ import {
   ICheckoutCryptoPaymentService,
   ICreateAddressService,
   IGetCitiesList,
-  IGetCountriesList,
   IStripeClientSecretService,
   ISubmitOrderService
 } from './interface';
 
 // Address-related services
 export const createAddressService = (body: ICreateAddressService) =>
-  fetchInstance(`customer/address`, {
+  fetch(`/api/customer/address`, {
     method: 'POST',
     body: JSON.stringify(body)
   });
 
 export const addAddressToCartService = ({ cartId, ...body }: IAddAddressToCartService) =>
-  fetchInstance(`checkout/address/${cartId}`, {
+  fetch(`/api/checkout/address/${cartId}`, {
     method: 'POST',
     body: JSON.stringify(body)
   });
 
 export const addEmailToCartService = ({ cartId, ...body }: IAddEmailToCartService) =>
-  fetchInstance(`cart/email/${cartId}`, {
+  fetch(`/api/cart/${cartId}/email`, {
     method: 'PATCH',
     body: JSON.stringify(body)
   });
 
 export const addShippingToCartService = ({ cartId, rates }: IAddShippingToCartService) =>
-  fetchInstance(`checkout/shipping-rates/${cartId}`, {
+  fetch(`/api/checkout/shipping-rates/${cartId}`, {
     method: 'POST',
     body: JSON.stringify({ rates })
   });
 
 // Location-related services
-export const getCountriesService = ({ name }: IGetCountriesList) =>
-  fetchInstance(`locations/countries`, {
+export const getCountriesService = () =>
+  fetch(`/api/checkout/countries`, {
     next: { revalidate: 3600 }
   });
 
-export const getCitiesService = ({ name, country_id }: IGetCitiesList) =>
-  fetchInstance(`locations/cities?name=${name}&country_id=${country_id}`, {
+export const getCitiesService = ({ name, country_name }: IGetCitiesList) =>
+  fetch(`/api/checkout/cities?name=${name || ''}&country_name=${country_name || ''}`, {
     next: { revalidate: 3600 }
   });
 
 // Gift card service
 export const applyGiftCardService = (body: IApplyGiftCardService) =>
-  fetchInstance(`apply/giftcard`, {
+  fetch(`/api/checkout/giftcard`, {
     method: 'PATCH',
     body: JSON.stringify(body)
   });
@@ -64,12 +62,12 @@ export const fetchStripePaymentDetails = async ({cartId, ...body}: IStripeClient
   conversionRate: number;
 }> => {
   try {
-    const response = await fetchInstance(`checkout/stripe/${cartId}`, {
+    const response = await fetch(`/api/checkout/stripe/${cartId}`, {
       method: 'POST',
       body: JSON.stringify(body)
     });
-  ;
-    const { totalPrice, client_secret, orderID, currency, convertedAmount, conversionRate } = response;
+  
+    const { totalPrice, client_secret, orderID, currency, convertedAmount, conversionRate } = await response.json();
     return {
       totalPrice,
       clientSecret: client_secret,
@@ -85,13 +83,13 @@ export const fetchStripePaymentDetails = async ({cartId, ...body}: IStripeClient
 };
 
 export const checkoutCryptoPaymentService = ({ cartId, paymentType, token, ...body }: ICheckoutCryptoPaymentService) =>
-  fetchInstance(`checkout/${cartId}/payment/${paymentType}/${token}`, {
+  fetch(`/api/checkout/${cartId}/payment/${paymentType}/${token}`, {
     method: 'POST',
     body: JSON.stringify(body)
   });
 
 export const submitOrderService = ({ chain, ...body }: ISubmitOrderService) =>
-  fetchInstance(`public/payment/${chain}`, {
+  fetch(`/api/checkout/payment/${chain}`, {
     method: 'POST',
     body: JSON.stringify(body)
   });
