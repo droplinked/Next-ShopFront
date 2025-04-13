@@ -1,5 +1,5 @@
 import { AppThemeProvider } from "@/components/providers/theme/AppThemeProvider";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
 import "./globals.css";
@@ -7,6 +7,15 @@ import "./globals.css";
 export const metadata: Metadata = {
     title: "droplinked",
     description: "Powering the Next Generation of Commerce",
+};
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "white" },
+        { media: "(prefers-color-scheme: dark)", color: "black" }
+    ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
