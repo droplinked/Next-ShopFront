@@ -41,10 +41,19 @@ export const getCountriesService = () =>
     next: { revalidate: 3600 }
   });
 
-export const getCitiesService = ({ name, country_name }: IGetCitiesList) =>
-  fetch(`/api/checkout/cities?name=${name || ''}&country_name=${country_name || ''}`, {
+export const getCitiesService = ({ name, country_name }: IGetCitiesList) => {
+  // Build URL based on whether name parameter exists
+  let url = `/api/checkout/cities?country_name=${encodeURIComponent(country_name || '')}`;
+  
+  // Only add name parameter if it exists and is not empty
+  if (name && name.trim() !== '') {
+    url += `&name=${encodeURIComponent(name)}`;
+  }
+  
+  return fetch(url, {
     next: { revalidate: 3600 }
   });
+};
 
 // Gift card service
 export const applyGiftCardService = (body: IApplyGiftCardService) =>

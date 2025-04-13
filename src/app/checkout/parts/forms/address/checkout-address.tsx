@@ -15,14 +15,14 @@ import { AppButton, AppDropDownInput, AppInput, AppLinkButton } from '@/componen
 type Country = { name: string; id: number };
 type City = { name: string; id: number; state_name: string };
 type LocationState = {
-  allCountries: Country[];  // All countries from API
-  allCities: City[];        // All cities from API for selected country
-  filteredCountries: Country[]; // Filtered countries based on search
-  filteredCities: City[];   // Filtered cities based on search
+  allCountries: Country[];       // All countries from API
+  filteredCountries: Country[];  // Filtered countries based on search
+  cities: City[];                // Cities list from API (filtered by name if provided)
   countrySearch: string;
   citySearch: string;
   isLoadingCountries: boolean;
   isLoadingCities: boolean;
+  selectedCountry: string | null;
 };
 type SelectOption = { label: string; value: string };
 type CountriesResponse = { countries: Country[] };
@@ -32,13 +32,13 @@ const CheckoutAddress: React.FC = () => {
   // Initialize state with proper typing
   const [locations, setLocations] = useState<LocationState>({
     allCountries: [],
-    allCities: [],
     filteredCountries: [],
-    filteredCities: [],
+    cities: [],
     countrySearch: '',
     citySearch: '',
     isLoadingCountries: false,
-    isLoadingCities: false
+    isLoadingCities: false,
+    selectedCountry: null
   });
   
   const debouncedCitySearch = useAppDebounce(locations.citySearch);
@@ -72,17 +72,11 @@ const CheckoutAddress: React.FC = () => {
   
   const { setValues, values, handleSubmit, isSubmitting, isValid, dirty, handleChange } = formik;
   
-  // Memoized helper functions for better performance
-  const selectedCountryId = useMemo(
-    () => locations.allCountries.find(country => country.name === values.country)?.name || '',
-    [values.country, locations.allCountries]
-  );
-  
   // Helper functions
   const getStateNameByCity = useCallback(
     (cityName: string): string => 
-      locations.allCities.find(city => city.name === cityName)?.state_name || '',
-    [locations.allCities]
+      locations.cities.find(city => city.name === cityName)?.state_name || '',
+    [locations.cities]
   );
   
   // Fetch all countries once
@@ -105,20 +99,22 @@ const CheckoutAddress: React.FC = () => {
     }
   }, []);
   
-  // Fetch all cities for a selected country
-  const fetchAllCities = useCallback(async (countryId: string | number) => {
-    if (!countryId) return;
+  // Fetch cities for a selected country with optional name filter
+  const fetchCities = useCallback(async (countryName: string, searchTerm: string = '') => {
+    if (!countryName) return;
     
     try {
       setLocations(prev => ({ ...prev, isLoadingCities: true }));
       
-      const response = await getCitiesService({ country_id: countryId });
+      const response = await getCitiesService({ 
+        name: searchTerm,
+        country_name: countryName 
+      });
       const data = await response.json() as CitiesResponse;
       
       setLocations(prev => ({ 
         ...prev, 
-        allCities: data.cities,
-        filteredCities: data.cities,
+        cities: data.cities,
         isLoadingCities: false 
       }));
     } catch (error) {
@@ -148,44 +144,27 @@ const CheckoutAddress: React.FC = () => {
     }));
   }, [locations.allCountries]);
   
-  // Filter cities based on search input
-  const filterCities = useCallback((searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setLocations(prev => ({ 
-        ...prev, 
-        filteredCities: prev.allCities
-      }));
-      return;
-    }
-    
-    const lowerCaseSearch = searchTerm.toLowerCase();
-    const filtered = locations.allCities.filter(city => 
-      city.name.toLowerCase().includes(lowerCaseSearch) || 
-      city.state_name.toLowerCase().includes(lowerCaseSearch)
-    );
-    
-    setLocations(prev => ({ 
-      ...prev, 
-      filteredCities: filtered 
-    }));
-  }, [locations.allCities]);
-  
   const handleSelectCountry = useCallback((option: SelectOption) => {
+    const selectedCountryName = option.value;
+    
     setValues(prev => ({ 
       ...prev, 
-      country: option.value, 
+      country: selectedCountryName, 
       state: null, 
       city: null 
     }));
     
-    // Reset city data when country changes
+    // Reset city data and set selected country when country changes
     setLocations(prev => ({ 
       ...prev, 
-      allCities: [],
-      filteredCities: [],
-      citySearch: '' 
+      cities: [],
+      citySearch: '',
+      selectedCountry: selectedCountryName
     }));
-  }, [setValues]);
+    
+    // Fetch cities for the selected country
+    fetchCities(selectedCountryName, '');
+  }, [setValues, fetchCities]);
   
   const handleSelectCity = useCallback((option: SelectOption) => {
     const stateName = getStateNameByCity(option.value);
@@ -216,17 +195,12 @@ const CheckoutAddress: React.FC = () => {
     filterCountries(debouncedCountrySearch || '');
   }, [debouncedCountrySearch, filterCountries]);
   
-  // Load cities when country is selected
+  // Refresh cities when country is selected or city search term changes
   useEffect(() => {
-    if (selectedCountryId && !locations.allCities.length) {
-      fetchAllCities(selectedCountryId);
+    if (locations.selectedCountry) {
+      fetchCities(locations.selectedCountry, debouncedCitySearch || '');
     }
-  }, [selectedCountryId, locations.allCities.length, fetchAllCities]);
-  
-  // Filter cities when search term changes
-  useEffect(() => {
-    filterCities(debouncedCitySearch || '');
-  }, [debouncedCitySearch, filterCities]);
+  }, [locations.selectedCountry, debouncedCitySearch, fetchCities]);
   
   // Transform data for dropdown options
   const countryOptions = useMemo(() => 
@@ -238,13 +212,13 @@ const CheckoutAddress: React.FC = () => {
   );
   
   const cityOptions = useMemo(() => 
-    locations.filteredCities.length 
-      ? locations.filteredCities.map(city => ({ 
+    locations.cities.length 
+      ? locations.cities.map(city => ({ 
           value: city.name, 
           label: `${city.name} (${city.state_name})` 
         }))
       : [],
-    [locations.filteredCities]
+    [locations.cities]
   );
 
   return (

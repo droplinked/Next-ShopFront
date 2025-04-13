@@ -6,11 +6,21 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const name = url.searchParams.get('name') || '';
     const countryName = url.searchParams.get('country_name') || '';
+    const limit = 100; // Set a fixed limit for results
     
-    // Ensure name parameter is enclosed in quotes for the API
-    const quotedName = `"${name}"`;
+    // Build the API URL based on whether name exists
+    let apiUrl = '';
     
-    const data = await fetchInstance(`locations/cities?name=${encodeURIComponent(quotedName)}&country_name=${countryName}`, {
+    if (name && name.trim() !== '') {
+      // Include name parameter if it exists and is not empty
+      // Do not add quotes around the name parameter
+      apiUrl = `locations/cities?name=${encodeURIComponent(name)}&country_name=${encodeURIComponent(countryName)}&limit=${limit}`;
+    } else {
+      // Exclude name parameter entirely if it doesn't exist or is empty
+      apiUrl = `locations/cities?country_name=${encodeURIComponent(countryName)}&limit=${limit}`;
+    }
+    
+    const data = await fetchInstance(apiUrl, {
       next: { revalidate: 3600 }
     });
     
