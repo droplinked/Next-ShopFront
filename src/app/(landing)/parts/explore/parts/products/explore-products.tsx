@@ -10,25 +10,36 @@ import { AppTypography } from "@/components/shared";
 const ExploreProducts = () => {
     const { states: { search } } = useContext(ExploreContext);
     const [pagination, setPagination] = useState<IPaginationProducts>(initialPaginationProducts);
+    
     const _get = (page: number) =>
         new Promise<any>(
-            async (resolve, reject) =>
-                await get_products_service({ page, filter: search, limit: 20 })
-                    .then(({ data, ...pagination }) =>
-                        resolve(
-                            setPagination((prev: any) => {
-                                return {
-                                    ...prev,
-                                    loading: false,
-                                    ...pagination,
-                                    data: data ? [...prev.data, ...data.filter((el: any) => !prev.data.map((product: any) => product._id).includes(el._id))] : [],
-                                };
-                            })
-                        )
-                    )
-                    .catch((error) => reject(error))
+            async (resolve, reject) => {
+                try {
+                    const response = await get_products_service({ page, filter: search, limit: 20 });
+                    const { data, ...paginationInfo } = response;
+                    
+                    setPagination((prev: IPaginationProducts) => {
+                        return {
+                            ...prev,
+                            loading: false,
+                            ...paginationInfo,
+                            data: data ? [...prev.data, ...data.filter((el: any) => 
+                                !prev.data.map((product: any) => product._id).includes(el._id))] : [],
+                        };
+                    });
+                    resolve(response);
+                } catch (error) {
+                    console.error("Failed to fetch products:", error);
+                    setPagination(prev => ({ ...prev, loading: false }));
+                    reject(error);
+                }
+            }
         );
-    useEffect(() => { setPagination(initialPaginationProducts); _get(1);}, [search]);
+        
+    useEffect(() => { 
+        setPagination(initialPaginationProducts); 
+        _get(1);
+    }, [search]);
 
     return !pagination.loading ? (
         pagination.totalDocuments > 0 ? (
