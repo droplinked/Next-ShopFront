@@ -49,7 +49,7 @@ function CheckoutPage() {
     } else {
       updateStates('step', currentStep(status));
     }
-  }, [cart?.items, status, router]);
+  }, [cart?._id, cart?.items, status, router, currentStep]);
 
   // Render the checkout page
   return (

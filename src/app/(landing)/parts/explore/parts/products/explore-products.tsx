@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import ExploreContext from "../../context";
 import { get_products_service } from "@/lib/apis/products/service";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -11,7 +11,7 @@ const ExploreProducts = () => {
     const { states: { search } } = useContext(ExploreContext);
     const [pagination, setPagination] = useState<IPaginationProducts>(initialPaginationProducts);
     
-    const _get = (page: number) =>
+    const _get = useCallback((page: number) =>
         new Promise<any>(
             async (resolve, reject) => {
                 try {
@@ -34,12 +34,12 @@ const ExploreProducts = () => {
                     reject(error);
                 }
             }
-        );
+        ), [search]);
         
     useEffect(() => { 
         setPagination(initialPaginationProducts); 
         _get(1);
-    }, [search]);
+    }, [_get]);
 
     return !pagination.loading ? (
         pagination.totalDocuments > 0 ? (
