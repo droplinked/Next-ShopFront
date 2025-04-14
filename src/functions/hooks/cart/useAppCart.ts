@@ -1,16 +1,16 @@
 'use client';
 
-import { addToCartService, changeQuantityService, createCartService, getCartService } from '@/lib/apis/cart/service';
+import { addToCartService, changeQuantityService, createCartService, getCartService, updateCartDetailsService } from '@/lib/apis/cart/service';
 import useAppStore from '@/lib/stores/app/appStore';
 import { IAddToCart, IChangeQuantity } from './interface';
 import { ICart } from '@/types/interfaces/cart/cart';
-import { IAddAddressToCartService, IAddEmailToCartService, IAddShippingToCartService, IApplyGiftCardService } from '@/lib/apis/checkout/interface';
-import { addAddressToCartService, addEmailToCartService, addShippingToCartService, applyGiftCardService } from '@/lib/apis/checkout/service';
+import { IAddShippingToCartService, IApplyGiftCardService } from '@/lib/apis/checkout/interface';
+import { addShippingToCartService, applyGiftCardService } from '@/lib/apis/checkout/service';
 
 function useAppCart() {
   const {
     methods: { updateState },
-    states: { cart, shop, user }
+    states: { cart, shop }
   } = useAppStore();
 
   const _update = (data: any) => data && updateState({ state: 'cart', value: data });
@@ -30,18 +30,10 @@ function useAppCart() {
     quantity,
     ...(m2m_data && { m2m_data })
   });
-
-  const addEmailToCart = (params: IAddEmailToCartService) =>
+  
+  const addCartDetails = (cartId: string, email: string, addressId: string, note?: string) =>
     new Promise<any>(async (resolve, reject) =>
-      addEmailToCartService(params)
-        .then((res) => resolve(_update(res)))
-        .catch((err) => reject(err))
-    );
-
-  const addAddressToCart = (params: IAddAddressToCartService, email: string) =>
-    new Promise<any>(async (resolve, reject) =>
-      addEmailToCart({ cartId: params.cartId, email })
-        .then((res) => addAddressToCartService(params))
+      updateCartDetailsService({ cartId, email, addressId, note })
         .then((res) => resolve(_update(res)))
         .catch((err) => reject(err))
     );
@@ -84,7 +76,7 @@ function useAppCart() {
           .catch((err) => reject(err))
     );
 
-  return { addItemToCart, fetchCart, updateCartItemQuantity, addAddressToCart, addShippingToCart, applyGiftCardToCart };
+  return { addItemToCart, fetchCart, updateCartItemQuantity, addCartDetails, addShippingToCart, applyGiftCardToCart };
 }
 
 export default useAppCart;

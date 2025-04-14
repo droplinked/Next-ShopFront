@@ -8,7 +8,7 @@ import { ICheckoutStatus } from "./interface";
 
 function useAppCheckout() {
     const { states: {cart} } = useAppStore()
-    const { addAddressToCart } = useAppCart();
+    const { addCartDetails } = useAppCart();
 
     const has_digital = useMemo(() => (cart && cart?.items ? cart.items.filter((el) => el.product.type === "DIGITAL").length === cart.items.length : false), [cart]);
 
@@ -21,16 +21,44 @@ function useAppCheckout() {
         [cart, has_digital]
     );
 
-    const submit_address = (params: ICreateAddressService, email: string, cartId: string) =>
-        new Promise<any>(
-            async (resolve, reject) =>
-                params.country &&
-                params.city &&
-                params.state &&
-                createAddressService (params)
-                    .then((res) => resolve(addAddressToCart({ addressBookID: res?._id, cartId }, email)))
-                    .catch((err) => reject(err))
-        );
+    const submit_address = (params: ICreateAddressService, email: string, cartId: string, note?: string) =>
+      new Promise<any>(
+        async (resolve, reject) =>
+          params.country &&
+          params.city &&
+          params.state &&
+          createAddressService(params)
+            .then((response) => {
+              // First extract the JSON data from the response
+              return response.json()
+                .then(data => {
+                  console.log('Address submission successful:', {
+                    cartId,
+                    email,
+                    note,
+                    addressId: data?._id,
+                    addressDetails: data
+                  });
+                  
+                  // If address is valid, add it to the cart details
+                  if (data?._id) {
+                    addCartDetails(cartId, email, data?._id, " ");
+                  }
+                  
+                  resolve(data);
+                });
+            })
+            .catch((err) => {
+              console.error("Address submission failed:", {
+                error: err,
+                params,
+                email,
+                cartId,
+                note,
+              });
+              reject(err);
+            })
+      );
 
     return { status, has_digital, submit_address };
 }

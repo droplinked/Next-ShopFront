@@ -1,4 +1,4 @@
-import { IAddToCartService, IChangeQuantityService, IGetCartService } from './interface';
+import { IAddToCartService, IChangeQuantityService, IGetCartService, IUpdateCartDetailsService } from './interface';
 
 // Create a new cart
 export const createCartService = () => {
@@ -49,6 +49,21 @@ export const getCartService = ({ cartId }: IGetCartService) => {
   return fetch(`/api/cart/${cartId}`)
     .then(response => {
       if (!response.ok) throw new Error('Failed to fetch cart');
+      return response.json();
+    });
+};
+
+// Update cart details with email and address
+export const updateCartDetailsService = ({ cartId, ...body }:  IUpdateCartDetailsService ) => {
+  return fetch(`/api/cart/${cartId}/details`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to update cart details');
       return response.json();
     });
 };

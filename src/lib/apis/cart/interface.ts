@@ -14,6 +14,13 @@ export interface IGetCartService {
     cartId: string;
 }
 
+export interface IUpdateCartDetailsService {
+    cartId: string;
+    email: string;
+    addressId?: string;
+    note?: string;
+}
+
 export interface IM2MProps {
     m2m_position: string;
     print_url: string;
