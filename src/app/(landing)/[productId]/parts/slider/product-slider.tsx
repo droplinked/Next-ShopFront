@@ -6,7 +6,7 @@ import { bindTrigger, usePopupState } from "material-ui-popup-state/hooks";
 import Image from "next/image";
 import { ms } from "@/lib/utils/ms/ms";
 import { IProductMedia } from "@/types/interfaces/product/product";
-import { AppMagnifier, AppTypography } from "@/components/shared";
+import { AppMagnifier, AppTypography } from "@/components/ui";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 

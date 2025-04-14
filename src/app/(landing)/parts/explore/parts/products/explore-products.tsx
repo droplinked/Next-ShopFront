@@ -1,11 +1,11 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import ExploreContext from "../../context";
-import { get_products_service } from "@/lib/apis/products/service";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { IPaginationProducts, initialPaginationProducts } from "./interface";
 import ExploreEachItem from "./each/explore-each-item";
 import { L_Products } from "@/components/loading/landing";
-import { AppTypography } from "@/components/shared";
+import { AppTypography } from "@/components/ui";
+import { get_products_service } from "@/services/products/service";
 
 const ExploreProducts = () => {
     const { states: { search } } = useContext(ExploreContext);

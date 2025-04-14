@@ -1,10 +1,11 @@
-import { AppLinkButton, AppTypography } from "@/components/shared";
+import { AppLinkButton, AppTypography } from "@/components/ui";
 import useAppStore from "@/lib/stores/app/appStore";
 import { cn } from "@/lib/utils/cn/cn";
 import { app_center, app_vertical } from "@/lib/variables/variables";
 import { useFormik } from "formik";
 import React from "react";
-import EachPaymentRadio from "./parts/radio/each-payment-radio";
+import PaymentMethodOption from "./components/payment-method-option";
+
 
 const CheckoutPayment = () => {
     const {
@@ -34,7 +35,7 @@ const CheckoutPayment = () => {
                     <div className="flex flex-col gap-4 w-full px-6">
                         <AppTypography appClassName="font-medium text-base">Fiat</AppTypography>
                         {fiatPayments.map((method, index) => (
-                            <EachPaymentRadio key={index} method={method} />
+                            <PaymentMethodOption key={index} method={method} />
                         ))}
                     </div>
                 )}
@@ -44,7 +45,7 @@ const CheckoutPayment = () => {
                     <div className="flex flex-col gap-4  w-full px-6">
                         <AppTypography appClassName="font-medium text-base">Crypto</AppTypography>
                         {cryptoPayments.map((method, index) => (
-                            <EachPaymentRadio key={index} method={method} />
+                            <PaymentMethodOption key={index} method={method} />
                         ))}
                     </div>
                 )}

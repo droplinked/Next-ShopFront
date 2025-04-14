@@ -1,4 +1,4 @@
-import { AppCollapse } from "@/components/shared";
+import { AppCollapse } from "@/components/ui";
 
 const ProductDescription = ({ description }: { description: string }) => {
     return (

@@ -1,9 +1,9 @@
 'use server';
 
-import { fetchInstance } from '@/lib/apis/fetch-config';
 import { Metadata } from 'next';
-import { AppSeparator } from '@/components/shared';
 import { ProductDescription, ProductDetails, ProductSlider } from './parts';
+import { AppSeparator } from '@/components/ui';
+import { fetchInstance } from '@/lib/fetchInstance';
 
 type IProps = { params: { productId: string } };
 

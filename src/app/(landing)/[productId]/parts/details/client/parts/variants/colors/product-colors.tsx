@@ -1,7 +1,7 @@
 import { useContext, useMemo } from "react"
 import ProductContext from "../../../context"
 import productVariantsModel from "../model"
-import { AppDotLabel } from "@/components/shared"
+import { AppDotLabel } from "@/components/ui"
 
 function ProductColors() {
     const { states: { product, option: { color } }, methods: { updateOption } } = useContext(ProductContext)

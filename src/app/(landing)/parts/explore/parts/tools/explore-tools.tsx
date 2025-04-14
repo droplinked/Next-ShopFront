@@ -1,8 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import ExploreContext from "../../context";
-import useAppDebounce from "@/functions/hooks/debounce/useAppDebounce";
+import useAppDebounce from "@/state/hooks/debounce/useAppDebounce";
 import AppIcons from "@/assets/AppIcons";
-import { AppInput } from "@/components/shared";
+import { AppInput } from "@/components/ui";
 
 const ExploreTools = () => {
     const { methods: { updateStates } } = useContext(ExploreContext);

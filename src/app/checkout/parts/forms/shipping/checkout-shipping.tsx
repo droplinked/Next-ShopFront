@@ -1,14 +1,14 @@
 import AppIcons from '@/assets/AppIcons';
-import { AppButton, AppLinkButton } from '@/components/shared';
-import useAppCart from '@/functions/hooks/cart/useAppCart';
+import { AppButton, AppLinkButton } from '@/components/ui';
+import useAppCart from '@/state/hooks/cart/useAppCart';
 import useAppStore from '@/lib/stores/app/appStore';
 import { cn } from '@/lib/utils/cn/cn';
 import { app_center, app_vertical } from '@/lib/variables/variables';
 import { useFormik } from 'formik';
 import { toast } from 'sonner';
 import { initial_shipping } from '../../parts/schema/schema';
-import ShippingGroupProducts from './products/shipping-group-products';
-import EachShippingRadio from './radio/each-shipping-radio';
+import ShippingMethodOption from './components/shipping-method-option';
+import ShippingGroupProducts from './components/shipping-group-products';
 
 const CheckoutShipping = () => {
   const {states: { cart } } = useAppStore();
@@ -34,7 +34,7 @@ const CheckoutShipping = () => {
           <div key={shipping.groupId} className={cn(app_vertical, 'w-full gap-4')}>
             <ShippingGroupProducts groupId={shipping.groupId} />
             {shipping.data.map((data) => (
-              <EachShippingRadio
+              <ShippingMethodOption
                 key={`${data.id}`}
                 shippingData={data}
                 checked={values[index].shipmentId === data.id && values[index].groupId === shipping.groupId}

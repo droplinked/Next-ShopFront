@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import CheckoutPageContext, { ICheckoutState, initialCheckout } from './context';
-import useAppCheckout from '@/functions/hooks/checkout/useAppCheckout';
+import useAppCheckout from '@/state/hooks/checkout/useAppCheckout';
 import checkoutPageModel from './model';
 import CheckoutAddress from './parts/forms/address/checkout-address';
 import CheckoutShipping from './parts/forms/shipping/checkout-shipping';

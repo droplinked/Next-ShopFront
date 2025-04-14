@@ -1,4 +1,4 @@
-import { AppTypography } from "@/components/shared";
+import { AppTypography } from "@/components/ui";
 
 const EachItemCaption = ({ label, price }: { label: string; price: number }) => {
     return (

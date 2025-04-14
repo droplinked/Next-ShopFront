@@ -1,6 +1,6 @@
 import AppIcons from '@/assets/AppIcons';
-import { AppButton } from '@/components/shared';
-import useAppCart from '@/functions/hooks/cart/useAppCart';
+import { AppButton } from '@/components/ui';
+import useAppCart from '@/state/hooks/cart/useAppCart';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 import ProductContext from '../../context';

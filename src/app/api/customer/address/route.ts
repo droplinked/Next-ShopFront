@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchInstance } from '@/lib/fetchInstance';
-import { ICreateAddressService } from '@/lib/apis/checkout/interface';
+import { ICreateAddressService } from '@/services/checkout/interface';
+
 
 export async function POST(request: Request) {
   try {

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import ProductContext from "../../context";
-import { AppSkeleton, AppTypography } from "@/components/shared";
+import { AppSkeleton, AppTypography } from "@/components/ui";
 
 function ProductPrice() {
     const { states: { product, ruleset, sku } } = useContext(ProductContext);

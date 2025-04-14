@@ -1,15 +1,14 @@
 'use server';
 
-import { fetchInstance } from '@/lib/apis/fetch-config';
-import { Metadata } from 'next';
+import { AppProductSummary } from '@/components/ui';
+import { fetchInstance } from '@/lib/fetchInstance';
 import { cn } from '@/lib/utils/cn/cn';
-import { app_center, app_vertical, link_style } from '@/lib/variables/variables';
+import { app_vertical } from '@/lib/variables/variables';
 import { roboto } from '@/styles/fonts';
 import { IOrder } from '@/types/interfaces/order/order';
-import { AppLinkButton, AppProductSummary, AppTypography } from '@/components/shared';
-import OrderInformationLayout from './parts/layout/order-information-layout';
+import { Metadata } from 'next';
 import deployHashModel from './model';
-import { ORDER_STATUS_ENUM } from '@/types/enums/order/order';
+import OrderInformationLayout from './parts/layout/order-information-layout';
 
 type IProps = { params: { orderID: string } };
 

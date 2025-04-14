@@ -1,6 +1,6 @@
 import AppIcons from '@/assets/AppIcons';
-import { AppButton, AppInput } from '@/components/shared';
-import useAppCart from '@/functions/hooks/cart/useAppCart';
+import { AppButton, AppInput } from '@/components/ui';
+import useAppCart from '@/state/hooks/cart/useAppCart';
 import useAppStore from '@/lib/stores/app/appStore';
 import { useFormik } from 'formik';
 import { toast } from 'sonner';

@@ -1,8 +1,8 @@
 import AppIcons from '@/assets/AppIcons';
 import droplinked from '@/assets/icons/droplinked.png';
 import AppWalletIcons from '@/assets/icons/wallets/AppWalletIcons';
-import { AppSeparator, AppTypography } from '@/components/shared';
-import AppShow from '@/components/shared/show/AppShow';
+import { AppSeparator, AppTypography } from '@/components/ui';
+import AppShow from '@/components/ui/show/AppShow';
 import useAppStore from '@/lib/stores/app/appStore';
 import { cn } from '@/lib/utils/cn/cn';
 import { app_center, APP_DEVELOPMENT, app_vertical, hide } from '@/lib/variables/variables';

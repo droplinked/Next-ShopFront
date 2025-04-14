@@ -1,4 +1,4 @@
-import { AppSeparator, AppTypography } from '@/components/shared';
+import { AppSeparator, AppTypography } from '@/components/ui';
 import { cn } from '@/lib/utils/cn/cn';
 import { app_center, app_vertical } from '@/lib/variables/variables';
 import { ICart } from '@/types/interfaces/cart/cart';

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils/cn/cn";
-import useAppShop from "@/functions/hooks/shop/useAppShop";
+import useAppShop from "@/state/hooks/shop/useAppShop";
 import { app_vertical } from "@/lib/variables/variables";
 import { Banner, Explore, Initial } from "./parts";
 import { useEffect, useState } from "react";

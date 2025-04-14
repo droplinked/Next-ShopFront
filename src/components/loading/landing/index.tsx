@@ -1,4 +1,4 @@
-import { AppSkeleton } from "@/components/shared";
+import { AppSkeleton } from "@/components/ui";
 import { cn } from "@/lib/utils/cn/cn";
 import { app_vertical } from "@/lib/variables/variables";
 

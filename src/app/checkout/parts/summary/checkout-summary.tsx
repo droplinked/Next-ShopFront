@@ -1,15 +1,15 @@
-import { AppButton, AppDialog, AppProductSummary, AppSeparator } from '@/components/shared';
+import { AppButton, AppDialog, AppProductSummary, AppSeparator } from '@/components/ui';
 import useAppStore from '@/lib/stores/app/appStore';
 import { cn } from '@/lib/utils/cn/cn';
 import { app_vertical } from '@/lib/variables/variables';
 import { roboto } from '@/styles/fonts';
 import { SummaryFooter, SummaryGiftCardForm } from './parts';
 import PaymentModal from './parts/modal/payment-modal';
-import AppShow from '@/components/shared/show/AppShow';
+import AppShow from '@/components/ui/show/AppShow';
 import { useContext } from 'react';
 import CheckoutPageContext from '../../context';
 import { usePopupState } from 'material-ui-popup-state/hooks';
-import { usePayment } from '@/functions/hooks/droplinked/payment/usePayment';
+import { usePayment } from '@/state/hooks/droplinked/payment/usePayment';
 
 const CheckoutSummary = () => {
   const {

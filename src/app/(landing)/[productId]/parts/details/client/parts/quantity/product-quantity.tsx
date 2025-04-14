@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import ProductContext from "../../context";
-import { AppQuantity, AppTypography } from "@/components/shared";
+import { AppQuantity, AppTypography } from "@/components/ui";
 
 const ProductQuantity = () => {
     const { states: {option: { quantity }}, methods: { updateOption }} = useContext(ProductContext);

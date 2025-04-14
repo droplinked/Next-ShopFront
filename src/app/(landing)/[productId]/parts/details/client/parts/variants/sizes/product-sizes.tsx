@@ -3,7 +3,7 @@ import ProductContext from "../../../context";
 import productVariantsModel from "../model";
 import { cn } from "@/lib/utils/cn/cn";
 import { variantIDs } from "@/lib/variables/variables";
-import { AppButton, AppDotLabel } from "@/components/shared";
+import { AppButton, AppDotLabel } from "@/components/ui";
 
 function ProductSizes() {
     const { skuIDsMatchColor, getOptions } = productVariantsModel;

@@ -1,5 +1,5 @@
-import { AppTypography } from "@/components/shared";
-import AppShow from "@/components/shared/show/AppShow";
+import { AppTypography } from "@/components/ui";
+import AppShow from "@/components/ui/show/AppShow";
 import { cn } from "@/lib/utils/cn/cn";
 import { app_center, app_vertical } from "@/lib/variables/variables";
 import React from "react";

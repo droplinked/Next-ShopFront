@@ -1,7 +1,7 @@
 import { AppThemeProvider } from "@/components/providers/theme/AppThemeProvider";
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
-import AppLayout from "@/components/layout/AppLayout";
+import AppLayout from "@/components/core/AppLayout";
 import "./globals.css";
 
 export const metadata: Metadata = {
