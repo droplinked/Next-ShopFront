@@ -6,10 +6,11 @@ export async function POST(request: Request, { params }: { params: { cartId: str
     const { cartId } = params;
     const body = await request.json();
     
-    const data = await fetchInstance(`checkout/${cartId}/payment/stripe`, {
+    const data = await fetchInstance(`checkout/stripe/${cartId}`, {
       method: 'POST',
       body: JSON.stringify(body)
     });
+    
     
     return NextResponse.json(data);
   } catch (error: unknown) {

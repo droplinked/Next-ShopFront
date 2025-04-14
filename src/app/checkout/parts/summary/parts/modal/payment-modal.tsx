@@ -3,13 +3,12 @@ import droplinked from '@/assets/icons/droplinked.png';
 import AppWalletIcons from '@/assets/icons/wallets/AppWalletIcons';
 import { AppSeparator, AppTypography } from '@/components/shared';
 import AppShow from '@/components/shared/show/AppShow';
-import AppStripe from '@/components/shared/stripe/AppStripe';
 import useAppStore from '@/lib/stores/app/appStore';
 import { cn } from '@/lib/utils/cn/cn';
-import { app_center, app_vertical, hide } from '@/lib/variables/variables';
+import { app_center, APP_DEVELOPMENT, app_vertical, hide } from '@/lib/variables/variables';
+import { DroplinkedPaymentIntent } from 'droplinked-payment-intent';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import * as UI from '@droplinked-dev/ui';
 
 const PaymentModal = ({ stripe }: { stripe: { client_secret: string; orderID: string } }) => {
   const {
@@ -26,14 +25,41 @@ const PaymentModal = ({ stripe }: { stripe: { client_secret: string; orderID: st
           show={{
             when: stripe?.client_secret && stripe?.orderID && stripe?.client_secret !== '' && stripe?.orderID !== '',
             then: (
-              <UI.DroplinkedStripe
+              <DroplinkedPaymentIntent
                 clientSecret={stripe.client_secret}
-                onError={() => {
-                  console.log('Error');
-                }}
+                type={"stripe"}
+                isTestnet={APP_DEVELOPMENT}
+                return_url={`${window.location.origin}/checkout/${stripe?.orderID}`}
                 onSuccess={() => {
                   router.push(`/checkout/${stripe?.orderID}`);
                   console.log('Success');
+                }}
+                onError={() => {
+                  console.log("something went wrong");
+                }}
+                onCancel={() => {
+                  console.log('Cancelled');
+                }}
+                commonStyle={{
+                  backgroundBody: "#fff",
+                  colorContainer: "#fff",
+                  textColorLabel: "#000",
+                  colorInput:"#fff",
+                  textColorInput: "#000",
+                  colorBorderInput:  "#F2F2F2",
+                  borderRadius: "8px",
+                  cancelButton: {
+                    backgroundColor: "#F2F2F2",
+                    borderRadius: "8px",
+                    textColor: "#000",
+                  },
+                  submitButton: {
+                    backgroundColor:  "#000",
+                    borderRadius: "8px",
+                    textColor:  "#fff"
+                  },
+                  verticalPadding: "1rem",
+                  theme: "light"
                 }}
               />
             )

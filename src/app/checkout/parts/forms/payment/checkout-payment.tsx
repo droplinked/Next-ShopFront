@@ -5,7 +5,6 @@ import { app_center, app_vertical } from "@/lib/variables/variables";
 import { useFormik } from "formik";
 import React from "react";
 import EachPaymentRadio from "./parts/radio/each-payment-radio";
-import useWeb3Hook from "@/functions/hooks/droplinked/web3/useWeb3";
 
 const CheckoutPayment = () => {
     const {

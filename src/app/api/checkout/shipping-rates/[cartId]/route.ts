@@ -6,7 +6,7 @@ export async function POST(request: Request, { params }: { params: { cartId: str
     const { cartId } = params;
     const body = await request.json();
     
-    const data = await fetchInstance(`checkout/${cartId}/shipping/rates`, {
+    const data = await fetchInstance(`checkout/shipping-rates/${cartId}`, {
       method: 'POST',
       body: JSON.stringify(body)
     });
