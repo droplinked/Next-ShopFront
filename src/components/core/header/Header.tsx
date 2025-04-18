@@ -1,7 +1,7 @@
 import AppIcons from "@/assets/AppIcons";
 import droplinked from "@/assets/icons/droplinked.png";
 import Image from "next/image";
-import CartTrigger from "./triggers/cart/cart-trigger";
+import CartTrigger from "./triggers/cart/CartTrigger";
 import Link from "next/link";
 import { AppIconButton } from "@/components/ui";
 

@@ -78,15 +78,15 @@ export interface IGetProductsService{
 
 These functions interact with a backend API to perform CRUD operations on a shopping cart.
 
-- **`create_cart_service()`**: Initializes a new cart session by making a POST request to the /cart endpoint.
+- **`createCartService()`**: Initializes a new cart session by making a POST request to the /cart endpoint.
 ```typescript
-export const create_cart_service = () => fetchInstance(`cart`, { method: "POST" });
+export const createCartService = () => fetchInstance(`cart`, { method: "POST" });
 ```
 
 
-- **`add_to_cart_service`**: Adds an item to a specified cart by sending a POST request to cart/${cartId} with the item details.
+- **`addToCartService`**: Adds an item to a specified cart by sending a POST request to cart/${cartId} with the item details.
 ```typescript
-export const add_to_cart_service = ({ cartId, ...body }: IAddToCartService) => fetchInstance(`cart/${cartId}`, { method: "POST", body: JSON.stringify(body) });
+export const addToCartService = ({ cartId, ...body }: IAddToCartService) => fetchInstance(`cart/${cartId}`, { method: "POST", body: JSON.stringify(body) });
 export interface IAddToCartService {
     cartId: string;
     shopID: string;
@@ -101,20 +101,19 @@ export interface IM2MProps {
 }
 ```
 
-- **`change_quantity_service`**: Updates the quantity of an item in the cart by sending a PATCH request to /cart/${cartId}.
+- **`changeQuantityService`**: Updates the quantity of an item in the cart by sending a PATCH request to /cart/${cartId}.
 
 ```typescript
-export const change_quantity_service = ({ cartId, ...body }: ICahngeQuantityService) => fetchInstance(`cart/${cartId}`, { method: "PATCH", body: JSON.stringify(body) });
+export const changeQuantityService = ({ cartId, ...body }: IChangeQuantityService) => fetchInstance(`cart/${cartId}`, { method: "PATCH", body: JSON.stringify(body) });
 
-export interface ICahngeQuantityService extends Omit<IAddToCartService, "m2m_data"> {
+export interface IChangeQuantityService extends Omit<IAddToCartService, "m2m_data"> {
     itemId: string;
 }
 ```
 
-
-- **`get_cart_service`**: Retrieves the cart's current state by making a GET request to /cart/${cartId}.
+- **`getCartService`**: Retrieves the cart's current state by making a GET request to /cart/${cartId}.
 ```typescript
-export const get_cart_service = ({ cartId }: IGetCartService) => fetchInstance(`cart/${cartId}`);
+export const getCartService = ({ cartId }: IGetCartService) => fetchInstance(`cart/${cartId}`);
 
 export interface IGetCartService {
     cartId: string;
@@ -129,14 +128,13 @@ This custom hook integrates the services, managing the state of the shopping car
 
 - **`_update()`**: A helper function that updates the cart state and returns the updated data.
 - **`_create()`**: Creates a new cart by calling an asynchronous service and updates the global cart state upon successful creation.
-- **`_add_params({ skuID, quantity, m2m_data })`**: Prepares and returns the parameters needed for the **`add_to_cart_service`** function by ensuring a cart ID is available, either from the existing state or by creating a new cart.
-- **`add()`**: Adds an item to the cart using the **`add_to_cart_service`**. It handles both the addition of the item and updating the global cart state.
-- **`change({ cartId, skuID, quantity, itemId })`**: Changes the quantity of an existing item in the cart and updates the state.
-- **`get(_id)`**: Retrieves a cart's details based on cart ID and updates the app state.
-- **`_add_email(params)`**: Adds an email to the cart as part of the checkout process and updates the state.
-- **`add_address(params, email)`**: First adds an email to the cart and then an address, updating the state after each operation.
-- **`add_shipping({ cartId, rates })`**: Adds shipping information to the cart and updates the state.
-- **`add_gift(params)`**: Applies a gift card to the cart and updates the state.
+- **`_addParams({ skuID, quantity, m2m_data })`**: Prepares and returns the parameters needed for the **`addToCartService`** function by ensuring a cart ID is available, either from the existing state or by creating a new cart.
+- **`addItemToCart()`**: Adds an item to the cart using the **`addToCartService`**. It handles both the addition of the item and updating the global cart state.
+- **`updateCartItemQuantity({ cartId, skuID, quantity, itemId })`**: Changes the quantity of an existing item in the cart and updates the state.
+- **`fetchCart(_id)`**: Retrieves a cart's details based on cart ID and updates the app state.
+- **`addCartDetails(cartId, email, addressId, note)`**: Adds email and address to the cart as part of the checkout process and updates the state.
+- **`addShippingToCart({ cartId, rates })`**: Adds shipping information to the cart and updates the state.
+- **`applyGiftCardToCart(params)`**: Applies a gift card to the cart and updates the state.
 
 
 # Managing Crypto Payment
@@ -154,7 +152,7 @@ export type IPaymentDroplinked = {
 
 ## usePayment Hook
 
-- **`crypto_payment`**: A function intended to handle cryptocurrency payments. It uses the **`selected_method`** from the checkout state to determine the payment method and processes the payment accordingly. It includes obtaining wallet addresses, initiating transactions, and managing the checkout and submission of orders.
+- **`processCryptoPayment`**: A function intended to handle cryptocurrency payments. It uses the **`selected_method`** from the checkout state to determine the payment method and processes the payment accordingly. It includes obtaining wallet addresses, initiating transactions, and managing the checkout and submission of orders.
 
 - install the @droplinked/wallet-connection package in your project.
   ```bash
@@ -168,11 +166,11 @@ export type IPaymentDroplinked = {
     const crypto_payment = async ({selected_method: {name: paymentType, enum_number, token}}: Pick<ICheckoutState, "selected_method">) => {
         if(paymentType === "" || paymentType === "STRIPE") return
         const sender: string = await (await getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, "").walletLogin())?.address;
-        let checkout = await (await checkout_crypto_payment_service({ cartId: _id, paymentType, token, email, walletAddress: sender }));
+        let checkout = await (await checkoutCryptoPaymentService({ cartId: _id, paymentType, token, email, walletAddress: sender }));
         if (checkout) {
             const paymentResult = getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, sender);
             const payment = await paymentResult?.payment(checkout?.paymentData);
-            await submit_order_service({
+            await submitOrderService({
                 chain: paymentType?.toLowerCase(),
                 deploy_hash: payment?.deploy_hash,
                 orderID: checkout?.orderID,
@@ -218,10 +216,10 @@ export type IPaymentDroplinked = {
 2. Initiates a payment through a checkout service and then proceeds with blockchain-specific payment processing.
     
     ```typescript
-    export const checkout_crypto_payment_service = ({ cartId, paymentType, token, ...body }: ICheckoutCryptoPaymentService) =>
+    export const checkoutCryptoPaymentService = ({ cartId, paymentType, token, ...body }: ICheckoutCryptoPaymentService) =>
         fetchInstance(`checkout/${cartId}/payment/${paymentType}/${token}`, { method: "POST", body: JSON.stringify(body) });
     
-    let checkout = await (await checkout_crypto_payment_service({ cartId: _id, paymentType, token, email, walletAddress: sender }));
+    let checkout = await (await checkoutCryptoPaymentService({ cartId: _id, paymentType, token, email, walletAddress: sender }));
     ```
     
 3. Submits the completed order to the order service, capturing essential transaction details like the deploy hash and order ID.
@@ -229,7 +227,7 @@ export type IPaymentDroplinked = {
     ```typescript
     const paymentResult = getNetworkProvider(enum_number, APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET, sender);
     const payment = await paymentResult?.payment(checkout?.paymentData);
-    await submit_order_service({ chain: paymentType?.toLowerCase(), deploy_hash: payment?.deploy_hash, orderID: checkout?.orderID, cryptoAmount: parseInt(payment?.cryptoAmount)}
+    await submitOrderService({ chain: paymentType?.toLowerCase(), deploy_hash: payment?.deploy_hash, orderID: checkout?.orderID, cryptoAmount: parseInt(payment?.cryptoAmount)}
     ```
     
 4. Handles the transaction completion or failure, updating the application state and routing the user accordingly.

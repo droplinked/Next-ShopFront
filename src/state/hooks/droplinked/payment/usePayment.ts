@@ -1,4 +1,4 @@
-import CheckoutPageContext, { ICheckoutState } from '@/app/checkout/context';
+import CheckoutPageContext, { ICheckoutState } from "@/app/(routes)/checkout/context/context";
 import { checkoutCryptoPaymentService, fetchStripePaymentDetails, submitOrderService } from '@/services/checkout/service';
 import useAppStore from '@/lib/stores/app/appStore';
 import { APP_DEVELOPMENT } from '@/lib/variables/variables';
@@ -68,6 +68,7 @@ export function usePayment() {
       });
 
       if (checkoutResponse) {
+        const { orderID } = await checkoutResponse.json(); // Parse the response JSON to extract orderID
         const paymentInstance = web3.web3Instance({
           method: Web3Actions.PAYMENT,
           chain: Chain.BINANCE, // TODO: Update chain dynamically
@@ -85,11 +86,11 @@ export function usePayment() {
           await submitOrderService({
             chain: walletType.toLowerCase(),
             deploy_hash: paymentResult?.transactionHash,
-            orderID: checkoutResponse?.orderID,
+            orderID: orderID,
             cryptoAmount: parseInt(paymentResult?.cryptoAmount)
           });
 
-          router.push(`/checkout/${checkoutResponse?.orderID}`);
+          router.push(`/checkout/${orderID}`);
         }
       }
     } catch (error) {

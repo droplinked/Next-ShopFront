@@ -25,7 +25,7 @@ function useAppCart() {
           .catch((err) => reject(err))
     );
 
-  const _add_params = async ({ skuID, quantity, m2m_data }: IAddToCart) => ({
+  const _addParams = async ({ skuID, quantity, m2m_data }: IAddToCart) => ({
     cartId: cart._id ? cart._id : (await _create())?._id,
     shopID: shop?._id,
     skuID,
@@ -57,7 +57,7 @@ function useAppCart() {
   const addItemToCart = async (params: IAddToCart) =>
     new Promise<ICart>(
       async (resolve, reject) =>
-        await addToCartService(await _add_params(params))
+        await addToCartService(await _addParams(params))
           .then((res) => resolve(_update(res)))
           .catch((err) => reject(err))
     );
