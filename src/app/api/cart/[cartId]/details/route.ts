@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { cartId: string } }
+  { params }: { params: Promise<{ cartId: string }>}
 ) {
   try {
-    const cartId = params.cartId;
+
+    const {cartId} = await params;
     const body = await request.json();
     
     // Get the data from the request body

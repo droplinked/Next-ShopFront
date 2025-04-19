@@ -3,9 +3,9 @@ import { fetchInstance } from '@/lib/fetchInstance';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { cartId: string, itemId: string } }
+  { params }: { params: Promise<{cartId: string, itemId: string}>}
 ) {
-  const { cartId, itemId } = params;
+  const { cartId, itemId } = await params;
   
   try {
     const data = await fetchInstance(`cart/${cartId}/items/${itemId}`, { method: 'DELETE' });

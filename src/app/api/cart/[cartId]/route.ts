@@ -3,9 +3,9 @@ import { fetchInstance } from '@/lib/fetchInstance';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { cartId: string } }
+  { params }: { params: Promise<{ cartId: string }> }
 ) {
-  const { cartId } = params;
+  const { cartId } = await params;
   
   try {
     const data = await fetchInstance(`cart/${cartId}`);
@@ -18,9 +18,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { cartId: string } }
+  { params }: { params: Promise<{ cartId: string }> }
 ) {
-  const { cartId } = params;
+  const { cartId } = await params;
   
   try {
     const body = await request.json();
@@ -38,9 +38,9 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { cartId: string } }
+  { params }: { params: Promise<{ cartId: string }>}
 ) {
-  const { cartId } = params;
+  const { cartId } = await params
   
   try {
     const body = await request.json();

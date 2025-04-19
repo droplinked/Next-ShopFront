@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { fetchInstance } from '@/lib/fetchInstance';
 
-export async function POST(request: Request, { params }: { params: { cartId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ cartId: string }> }) {
   try {
-    const { cartId } = params;
+    const { cartId } = await params;
     const body = await request.json();
     
     const data = await fetchInstance(`checkout/stripe/${cartId}`, {

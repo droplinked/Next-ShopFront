@@ -8,15 +8,11 @@ import { AppSeparator } from '@/components/ui';
 import { fetchInstance } from '@/lib/fetchInstance';
 import ProductSlider from './components/ProductSlider';
 
-type IProps = { params: { productId: string } };
+// type IProps = { params: { productId: string } };
 
-export async function generateMetadata({ params }: IProps): Promise<Metadata> {
-  const product = await fetchInstance(`products/${params.productId}`);
-  return { title: `droplinked | ${product?.title}` };
-}
-
-export default async function Page({ params }: IProps) {
-  const data = await fetchInstance(`products/${params.productId}`);
+export default async function Page({ params } : { params: Promise<{ productId: string }>}) {
+  const { productId } = await params
+  const data = await fetchInstance(`products/${productId}`);
   
   return (
     <main className="container px-8 flex items-start md:flex-row flex-col justify-center w-full gap-12 mt-20">

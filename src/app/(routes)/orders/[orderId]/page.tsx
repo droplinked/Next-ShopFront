@@ -10,14 +10,10 @@ import { Metadata } from 'next';
 import deployHashModel from './model';
 import OrderInformationLayout from './OrderInformationLayout';
 
-type IProps = { params: { orderID: string } };
 
-export async function generateMetadata({ params }: IProps): Promise<Metadata> {
-  return { title: `droplinked | success order` };
-}
-
-export default async function Page({ params }: IProps) {
-  const order = await fetchInstance(`order/${params.orderID}`, { cache: 'no-cache' }).then((res: IOrder) => res);
+export default async function Page({ params }: { params: Promise<{ orderId: string }> }) {
+  const { orderId } = await params
+  const order = await fetchInstance(`order/${orderId}`, { cache: 'no-cache' }).then((res: IOrder) => res);
   const address_array = order?.details?.address?.split(', ');
   const { style, title } = deployHashModel.status_design(order?.details?.status);
 

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { fetchInstance } from '@/lib/fetchInstance';
+import { promises } from 'dns';
 
-export async function POST(request: Request, { params }: { params: { chain: string } }) {
+export async function POST(request: Request,{ params } : { params: Promise<{ chain: string }>}) {
   try {
-    const { chain } = params;
+    const { chain } = await params;
     const body = await request.json();
     
     const data = await fetchInstance(`checkout/payment/${chain}`, {
