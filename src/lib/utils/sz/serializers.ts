@@ -1,4 +1,3 @@
-import { IPaymentMethod } from '@/types/interfaces/shop/shop';
 
 export const payment_methods_serializer = (payment_methods: any) => {
   const result = [];
