@@ -1,0 +1,84 @@
+name: Deploy ECS - dev
+
+on:
+  push:
+    branches: [ "dev" ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: shopdev_droplinked_com
+  ECS_CLUSTER: droplinked-cluster
+  ECS_SERVICE: shopdev_droplinked_com_service
+  CONTAINER_NAME: shopdev_droplinked_com
+  TASK_DEFINITION: shopdev_droplinked_com
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::353643723135:role/github-actions-deploy
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Create env file
+      id: create-env
+      run: |
+        echo "${{ secrets.ENV_FILE_dev }}" > .env
+    
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+
+    - name: Retrieve current task definition JSON
+      run: |
+        aws ecs describe-task-definition --task-definition "${{ env.TASK_DEFINITION }}" --output json > task-def.json
+
+    - name: Install jq
+      run: sudo apt-get install jq
+
+    - name: Extract task definition
+      run: |
+        jq '.taskDefinition' task-def.json > temp-task-def.json 
+        jq 'del(.enableFaultInjection)' temp-task-def.json > task-definition-fixed.json
+        mv task-definition-fixed.json task-definition.json
+
+    - name: Display task definition
+      run: cat task-definition.json
+      
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ env.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: false
