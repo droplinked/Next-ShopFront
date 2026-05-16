@@ -81,8 +81,6 @@ export function usePayment() {
               return Chain.BINANCE;
             case 'ETHEREUM':
               return Chain.ETH;
-            case 'SKALE':
-              return Chain.SKALE;
             case 'BITLAYER':
               return Chain.BITLAYER;
             default:
