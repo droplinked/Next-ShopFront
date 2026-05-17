@@ -7,7 +7,15 @@
     "build": "next build",
     "start": "next start",
     "prod": "next start -p 80",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:mobile": "playwright test --config=playwright.config.ts",
+    "test:mobile:smoke": "playwright test --config=playwright.config.ts smoke",
+    "test:mobile:ui": "playwright test --config=playwright.config.ts --ui",
+    "test:mobile:headed": "playwright test --config=playwright.config.ts --headed",
+    "test:mobile:debug": "playwright test --config=playwright.config.ts --debug",
+    "test:mobile:update-snapshots": "playwright test --config=playwright.config.ts --update-snapshots",
+    "test:mobile:report": "playwright show-report",
+    "test:mobile:install": "playwright install --with-deps chromium webkit"
   },
   "dependencies": {
     "@droplinked-dev/ui": "^1.2.11",
@@ -47,6 +55,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
     "@types/react": "^18",

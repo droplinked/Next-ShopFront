@@ -1,0 +1,86 @@
+name: Mobile tests
+
+on:
+  pull_request:
+    paths:
+      # Next-ShopFront layout: App Router lives under src/app/**.
+      - 'src/**'
+      - 'public/**'
+      - 'tests/**'
+      - 'helpers/**'
+      - 'playwright.config.ts'
+      - 'package.json'
+      - '.github/workflows/mobile-test.yml'
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC nightly full run
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Smoke (PR gate)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Wait for Vercel preview URL
+        id: preview
+        # Customize for your deploy target. Two common patterns:
+        #   - Vercel: parse `vercel-deployment-action` output
+        #   - Netlify: wait for `netlify/deploy-preview` status
+        #   - Cloudflare Pages: poll the deployments API
+        # For local-only / no preview deploy, point at PLAYWRIGHT_BASE_URL.
+        run: |
+          # Replace with your project's preview-URL resolution
+          echo "url=${{ secrets.PREVIEW_URL_FALLBACK || 'http://localhost:3000' }}" >> $GITHUB_OUTPUT
+      - name: Run smoke tests
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.preview.outputs.url }}
+        run: npm run test:mobile:smoke
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-smoke
+          path: playwright-report/
+          retention-days: 7
+
+  full:
+    name: Full nightly
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run full suite (sharded)
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PRODUCTION_URL }}
+          # Optional cloud-device run on nightly only
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: npx playwright test --shard=${{ matrix.shard }}
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ strategy.job-index }}
+          path: playwright-report/
+          retention-days: 14
