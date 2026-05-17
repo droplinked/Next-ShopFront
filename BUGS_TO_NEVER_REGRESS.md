@@ -34,3 +34,16 @@ the bug will return.
    strike through the row but keep the history.
 4. **Periodic audit.** Quarterly, scan the log + verify every test still
    runs and still tests its bug.
+
+## Historical seed (mined from git history 2026-05-17)
+
+**History shallow — no qualifying entries seeded.** This repo is a young
+Next.js shopfront fork; the visible `git log` contains only CI / dependency
+/ infra commits (Next.js bump #3, SKALE drop #11, OIDC migration #4, CVE
+overrides #5/#8/#9, auto-changelog #13, CI cost-reduction #14). No
+`fix:`-style commits touching mobile, iOS Safari, Android, viewport,
+safe-area, scroll, modal, drawer, sticky, or responsive surfaces exist
+yet.
+
+The first real mobile bug fix on this repo should be appended here as the
+first row, alongside its regression spec in `tests/`.
