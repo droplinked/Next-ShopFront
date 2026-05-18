@@ -154,14 +154,8 @@ export type IPaymentDroplinked = {
 
 - **`processCryptoPayment`**: A function intended to handle cryptocurrency payments. It uses the **`selected_method`** from the checkout state to determine the payment method and processes the payment accordingly. It includes obtaining wallet addresses, initiating transactions, and managing the checkout and submission of orders.
 
-- install the @droplinked/wallet-connection package in your project.
-  ```bash
-  npm install @droplinked/wallet-connection
-  ```
-  After installing the package, import the necessary utilities into your file where you're defining the crypto_payment function. Import getNetworkProvider and Network from @droplinked/wallet-connection. You can do this as follows:
-  ```typescript
-  import { getNetworkProvider, Network } from "@droplinked/wallet-connection";
-  ```
+- Wallet-connection utilities are provided by the in-repo helpers under `droplinked-web3` / `droplinked-payment-intent`. Import the network provider helpers as needed for your `crypto_payment` function (e.g. `getNetworkProvider`, `Network`).
+  > Note: the legacy `@droplinked/wallet-connection` npm package referenced in earlier revisions of this guide is no longer a dependency of this project. A re-published, organization-owned replacement will be wired in via a follow-up change.
     ```typescript
     const crypto_payment = async ({selected_method: {name: paymentType, enum_number, token}}: Pick<ICheckoutState, "selected_method">) => {
         if(paymentType === "" || paymentType === "STRIPE") return
