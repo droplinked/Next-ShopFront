@@ -2,7 +2,7 @@ import CheckoutPageContext, { ICheckoutState } from "@/app/(routes)/checkout/con
 import { checkoutCryptoPaymentService, fetchStripePaymentDetails, submitOrderService } from '@/services/checkout/service';
 import useAppStore from '@/lib/stores/app/appStore';
 import { APP_DEVELOPMENT } from '@/lib/variables/variables';
-import { Chain, ChainWallet, DropWeb3, Network, Web3Actions, PaymentTokens } from 'droplinked-web3';
+import { Chain, ChainWallet, DropWeb3, Network, Web3Actions, PaymentTokens } from '@droplinked_inc/web3';
 import { useRouter } from 'next/navigation';
 import { useContext, useState, useTransition } from 'react';
 
