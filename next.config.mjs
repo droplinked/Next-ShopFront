@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 // Content-Security-Policy in Report-Only mode. Mirrors the directives
 // shipped on the other three droplinked frontends so violation reports
 // are comparable. NOT enforcing yet — emits violations to the
@@ -52,4 +54,19 @@ const nextConfig = {
     },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+    // Suppress all Sentry CLI logs during build; we are not uploading
+    // source maps in CI yet (no SENTRY_AUTH_TOKEN wired).
+    silent: true,
+    // Org / project are optional at build time when no auth token is set;
+    // the SDK still functions at runtime via the DSN.
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    // Don't upload source maps unless an auth token is explicitly provided.
+    disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+    disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
+    // Tunnel through a Next.js route to bypass ad-blockers (optional, default off).
+    // tunnelRoute: '/monitoring',
+    hideSourceMaps: true,
+    widenClientFileUpload: true,
+});
