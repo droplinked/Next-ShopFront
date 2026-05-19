@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@droplinked_inc/web3": "*",
+    "@droplinked_inc/web3": "^1.0.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.9",
