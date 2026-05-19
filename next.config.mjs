@@ -19,6 +19,10 @@ const cspReportOnly = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Dockerfile (runner stage) copies /app/.next/standalone — require Next.js
+    // to emit that directory at build time. Without this, every LIVE deploy
+    // fails at `COPY --from=builder /app/.next/standalone ./` (issue #38).
+    output: 'standalone',
     images: {
         remotePatterns: [
             {
