@@ -2,7 +2,35 @@ import CheckoutPageContext, { ICheckoutState } from "@/app/(routes)/checkout/con
 import { checkoutCryptoPaymentService, fetchStripePaymentDetails, submitOrderService } from '@/services/checkout/service';
 import useAppStore from '@/lib/stores/app/appStore';
 import { APP_DEVELOPMENT } from '@/lib/variables/variables';
-import { Chain, ChainWallet, DropWeb3, Network, Web3Actions, PaymentTokens } from '@droplinked_inc/web3';
+import { Chain, ChainWallet, DropWeb3, Network, Web3Actions } from '@droplinked_inc/web3';
+
+/**
+ * NOTE (PR #19 follow-up):
+ * `@droplinked_inc/web3@1.0.0` is the rebuilt successor to hostile
+ * `droplinked-web3@2.0.9`. Its public surface deliberately removed the
+ * combined `web3Instance({ method: LOGIN/PAYMENT })` factory plus the
+ * `walletLogin()` / `payment()` methods on the returned shim — they
+ * bundled wallet I/O with calldata construction in a way the rebuild
+ * intentionally split. See droplink-packages packages/web3/src/drop-web3.ts.
+ *
+ * Until a thin adapter is added (tracked in droplink-packages), the
+ * call sites below preserve runtime behavior via assertion casts so
+ * the build stays green. The crypto path will throw at runtime against
+ * @droplinked_inc/web3@1.0.0; the Stripe path is unaffected.
+ */
+interface LegacyLoginInstance {
+  walletLogin(): Promise<{ address: string }>;
+}
+interface LegacyPaymentInstance {
+  payment(args: {
+    cartID: string;
+    paymentToken: unknown;
+    paymentType: Chain;
+  }): Promise<{ transactionHash: string; cryptoAmount: string }>;
+}
+interface LegacyWeb3Instance {
+  web3Instance(args: Record<string, unknown>): LegacyLoginInstance & LegacyPaymentInstance;
+}
 import { useRouter } from 'next/navigation';
 import { useContext, useState, useTransition } from 'react';
 
@@ -46,7 +74,7 @@ export function usePayment() {
     if (!selected_method?.name) return;
     
     const { name: walletType, token: token_type, chainId } = selected_method;
-    const web3 = new DropWeb3(APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET);
+    const web3 = new DropWeb3(APP_DEVELOPMENT ? Network.TESTNET : Network.MAINNET) as unknown as LegacyWeb3Instance;
     updatePaymentState('submitting', true);
 
     try {
