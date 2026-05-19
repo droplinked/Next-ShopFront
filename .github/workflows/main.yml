@@ -50,6 +50,14 @@ jobs:
       id: create-env
       run: |
         echo "${{ secrets.ENV_FILE }}" > .env
+        # --- Sentry release tagging 2026-05-19 ---
+        # Source: sentry.server.config.ts:7 + sentry.edge.config.ts:7 read
+        # process.env.SENTRY_RELEASE; instrumentation-client.ts:6 reads
+        # NEXT_PUBLIC_SENTRY_RELEASE. Without these, all events bucket into
+        # a single fake release in Sentry UI, breaking regression detection
+        # + deploy correlation.
+        echo "SENTRY_RELEASE=${{ github.sha }}" >> .env
+        echo "NEXT_PUBLIC_SENTRY_RELEASE=${{ github.sha }}" >> .env
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
