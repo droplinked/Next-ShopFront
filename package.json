@@ -25,7 +25,6 @@
     "casper-js-sdk": "^2.15.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "droplinked-payment-intent": "1.3.0",
     "@droplinked_inc/web3": "*",
     "ethers": "^5.7.2",
     "formik": "^2.4.5",
