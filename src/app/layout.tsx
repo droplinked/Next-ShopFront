@@ -2,6 +2,7 @@ import { AppThemeProvider } from "@/components/providers/theme/AppThemeProvider"
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import AppLayout from "@/components/core/AppLayout";
+import DevEnvironmentBanner from "@/components/core/DevEnvironmentBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     return (
         <html lang="en" suppressHydrationWarning>
             <body>
+                <DevEnvironmentBanner />
                 <AppLayout>
                     <Toaster position="bottom-center" />
                     <AppThemeProvider>{children}</AppThemeProvider>
