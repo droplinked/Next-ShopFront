@@ -31,6 +31,23 @@ COPY . .
 # Set NEXT_TELEMETRY_DISABLED to 1 to disable telemetry during build.
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# --- Sentry source-map upload build-args 2026-05-19 ---
+# Passed in by .github/workflows/{dev,main}.yml via `docker build
+# --build-arg`. When SENTRY_AUTH_TOKEN is set, next.config.mjs
+# (withSentryConfig) auto-uploads source maps so production stack
+# traces de-minify in Sentry. When unset, build still succeeds —
+# the Sentry CLI warns + skips upload.
+ARG SENTRY_AUTH_TOKEN
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+ARG SENTRY_RELEASE
+ARG NEXT_PUBLIC_SENTRY_RELEASE
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+ENV SENTRY_ORG=$SENTRY_ORG
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
+ENV SENTRY_RELEASE=$SENTRY_RELEASE
+ENV NEXT_PUBLIC_SENTRY_RELEASE=$NEXT_PUBLIC_SENTRY_RELEASE
+
 # Build the Next.js application.
 # This command requires the full dependencies (including devDependencies).
 # Ensure your next.config.js or next.config.mjs includes `output: 'standalone'`

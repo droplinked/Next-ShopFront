@@ -55,13 +55,22 @@ const nextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-    // Suppress all Sentry CLI logs during build; we are not uploading
-    // source maps in CI yet (no SENTRY_AUTH_TOKEN wired).
-    silent: true,
-    // Org / project are optional at build time when no auth token is set;
-    // the SDK still functions at runtime via the DSN.
+    // Suppress all Sentry CLI logs during build unless the auth token
+    // is wired (then we want CI to surface upload failures).
+    silent: !process.env.SENTRY_AUTH_TOKEN,
+    // Org / project / authToken are optional at build time when no auth
+    // token is set; the SDK still functions at runtime via the DSN.
+    // When all three are present (CI), `withSentryConfig` automatically
+    // uploads source maps so production stack traces de-minify.
     org: process.env.SENTRY_ORG,
     project: process.env.SENTRY_PROJECT,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    // Tag uploaded source maps with the same release identifier used by
+    // the SDK at runtime — without this, uploaded maps don't match the
+    // events Sentry receives.
+    release: {
+        name: process.env.SENTRY_RELEASE || process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+    },
     // Don't upload source maps unless an auth token is explicitly provided.
     disableServerWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
     disableClientWebpackPlugin: !process.env.SENTRY_AUTH_TOKEN,
