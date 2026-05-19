@@ -18,6 +18,34 @@ const cspReportOnly = [
 ].join('; ');
 
 /** @type {import('next').NextConfig} */
+
+// CSP Report-Only — week 1 of rollout. See droplink-packages docs PR #36
+// (`docs/csp-audit-2026-05-19.md`). Report-Only collects violations
+// without blocking. Promote to enforcing `Content-Security-Policy` only
+// after 7-day Sentry observation window per the rollout plan.
+//
+// `'unsafe-eval'` is required by ethers@5 BigNumber internals + some
+// Solana RPC adapters. Tracked for removal via ethers@6 / viem upgrade.
+// `'unsafe-inline'` is required for GTM bootstrap + Next.js style-jsx.
+const cspReportOnly = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com",
+    "font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com data:",
+    "img-src 'self' data: blob: https://upload-file-droplinked.s3.amazonaws.com https://upload-file-flatlay.s3.us-west-2.amazonaws.com https://files.cdn.printful.com https://*.cloudfront.net https://www.google-analytics.com",
+    "connect-src 'self' https://apiv3.droplinked.com https://apiv3dev.droplinked.com https://tools.droplinked.com https://ipapi.co https://accept.paymob.com https://*.ingest.sentry.io https://www.google-analytics.com",
+    "frame-src 'self' https://accept.paymob.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self' https://accept.paymob.com",
+    "object-src 'none'",
+    "upgrade-insecure-requests",
+    // TODO(security): wire report-uri to project Sentry CSP endpoint once
+    // operator confirms project DSN. Pattern:
+    //   https://oXXXX.ingest.sentry.io/api/<project_id>/security/?sentry_key=<key>
+    // "report-uri https://<sentry-ingest-host>/api/<project_id>/security/?sentry_key=<key>",
+].join('; ')
+
 const nextConfig = {
     // Dockerfile (runner stage) copies /app/.next/standalone — require Next.js
     // to emit that directory at build time. Without this, every LIVE deploy
