@@ -2,7 +2,8 @@
 
 # ---- Base Stage ----
 # Use a specific Node.js version on Alpine Linux for a small base image.
-FROM node:20-alpine AS base
+# Node 22 required by @droplinked_inc/web3@1.0.0 (engines.node >=22.0.0).
+FROM node:22-alpine AS base
 
 # ---- Dependencies Stage ----
 # Install dependencies first to leverage Docker cache.
