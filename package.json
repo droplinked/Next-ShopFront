@@ -10,11 +10,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@droplinked_inc/web3": "*",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.9",
     "@mui/joy": "^5.0.0-beta.27",
     "@mui/material": "^5.15.9",
+    "@sentry/nextjs": "^10.53.1",
     "@solana/spl-token": "^0.4.6",
     "@stripe/react-stripe-js": "^2.6.2",
     "@stripe/stripe-js": "^3.0.10",
@@ -25,7 +27,6 @@
     "casper-js-sdk": "^2.15.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "@droplinked_inc/web3": "*",
     "ethers": "^5.7.2",
     "formik": "^2.4.5",
     "material-ui-popup-state": "^5.0.10",
