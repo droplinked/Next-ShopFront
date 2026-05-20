@@ -16,11 +16,17 @@ concurrency:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: shopdev_droplinked_com
+  # --- ECS split closes #41 (2026-05-19) ---
+  # Previously deployed to shopdev_droplinked_com_service, which is shared
+  # with droplinked-shop-builder historically. Last-deploy-wins overwrote.
+  # Migrated to a dedicated service/repo/task-def/container so the two
+  # codebases can ship independently. Operator-provisioned via the AWS
+  # CLI block in docs/ECS_SPLIT_MIGRATION.md.
+  ECR_REPOSITORY: nextshopfront_droplinked_com
   ECS_CLUSTER: droplinked-cluster
-  ECS_SERVICE: shopdev_droplinked_com_service
-  CONTAINER_NAME: shopdev_droplinked_com
-  TASK_DEFINITION: shopdev_droplinked_com
+  ECS_SERVICE: nextshopfront_droplinked_com_service
+  CONTAINER_NAME: nextshopfront_droplinked_com
+  TASK_DEFINITION: nextshopfront_droplinked_com
 
 permissions:
   contents: read
