@@ -1,0 +1,50 @@
+# npm provenance signatures verification
+#
+# Verifies that installed packages have valid npm provenance signatures
+# (npm 8.15+, see https://docs.npmjs.com/generating-provenance-statements).
+# Catches packages where the registry-published artifact does not match
+# the source repo — same failure mode behind the lodash@4.18.x incident.
+#
+# Informational for the first 2 weeks (continue-on-error: true).
+# Operator flips continue-on-error to false after the soak window.
+
+name: audit-signatures
+
+on:
+  pull_request:
+    branches: [main, stage, dev]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-signatures-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: install
+        run: npm ci --no-audit --legacy-peer-deps
+
+      - name: Verify npm provenance signatures
+        run: npm audit signatures --omit=dev --no-audit-level || echo "::warning::Some packages lack provenance signatures (informational this rollout)"
+        continue-on-error: true
