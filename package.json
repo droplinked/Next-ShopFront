@@ -9,7 +9,7 @@
     "start": "next start",
     "prod": "next start -p 80",
     "lint": "next lint",
-    "test": "node --test 'src/__smoke__/*.test.mjs'",
+    "test": "node --test 'src/__smoke__/*.test.mjs' 'src/app/api/mcp/tools/__tests__/*.test.mjs'",
     "test:mobile": "playwright test --config=playwright.config.ts",
     "test:mobile:smoke": "playwright test --config=playwright.config.ts smoke",
     "test:mobile:ui": "playwright test --config=playwright.config.ts --ui",
