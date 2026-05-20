@@ -1,0 +1,11 @@
+# CODEOWNERS — solo-founder pattern.
+# Reviews are signaled but not enforced (no branch protection requiring owner review).
+# Per-area entries may be added as the team grows.
+
+*       @asammour
+
+# Sensitive areas (no-op if path absent in this repo)
+/src/modules/auth/      @asammour
+/src/modules/web3/      @asammour
+/src/modules/payment-gateway/  @asammour
+/.github/      @asammour
