@@ -24,6 +24,7 @@ env:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   deploy:
@@ -35,11 +36,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v6
 
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials (OIDC)
       uses: aws-actions/configure-aws-credentials@v6
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::353643723135:role/github-actions-deploy
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
