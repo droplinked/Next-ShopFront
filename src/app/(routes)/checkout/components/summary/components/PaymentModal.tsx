@@ -171,7 +171,12 @@ const PaymentModal = ({ stripe }: { stripe: { client_secret: string; orderID: st
             then: (
               <Elements stripe={stripePromise} options={elementsOptions!}>
                 <StripePaymentForm
-                  return_url={typeof window !== 'undefined' ? `${window.location.origin}/orders/${stripe?.orderID}` : `/orders/${stripe?.orderID}`}
+                  return_url={(() => {
+                    if (typeof window === 'undefined') return `/orders/${stripe?.orderID}`;
+                    // Preserve droplinked.com/s/{shop} prefix so post-payment lands back inside the path-routed shop surface
+                    const prefix = window.location.pathname.startsWith('/s/') ? '/s' : '';
+                    return `${window.location.origin}${prefix}/orders/${stripe?.orderID}`;
+                  })()}
                   onSuccess={() => {
                     toast.success('Payment successful');
                   }}
