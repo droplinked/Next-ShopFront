@@ -81,4 +81,4 @@ ENV PORT 80
 
 # Command to run the application using the Node.js server included in the standalone output.
 # This will run as the root user.
-CMD ["npm", "run", "prod"]
+CMD ["node", "server.js"]
