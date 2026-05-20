@@ -10,6 +10,11 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: "lodash"
+        versions: ["4.18.x"]
+      - dependency-name: "lodash-es"
+        versions: ["4.18.x"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
