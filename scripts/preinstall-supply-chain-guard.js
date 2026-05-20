@@ -11,12 +11,12 @@
  *     scope prefix). Bare `droplinked-*` names on the public registry are
  *     squatters and must never resolve into our dependency graph.
  *
- *   - Any lodash@4.18.x
- *     `lodash` was dormant since 2021. New maintainers were added to the npm
- *     package in March 2026 and pushed 4.18.0 + 4.18.1. Both are on
- *     registry.npmjs.org. The maintainer identity has not been independently
- *     vetted, so we pin to the last known-good 4.17.21 and refuse anything
- *     in the 4.18.x line until the new maintainers are vetted.
+ *   - lodash beyond the OpenJS-reboot-vetted 4.18.1 ceiling
+ *     4.18.0/4.18.1 were vetted via Socket.dev + OpenJS governance
+ *     (Sovereign-Tech-Agency-funded security reboot). 4.18.0 patches
+ *     CVE-2026-4800 (GHSA-r5fr-rjxr-66jc, high-sev `_.template` code
+ *     injection). 4.17.x and 4.18.x (up to 4.18.1) are allowed.
+ *     Anything above 4.18.1 needs re-vetting.
  *
  *   - `fs` at `0.0.1-security`
  *     Typo-squat security-placeholder published by npm to occupy the `fs`
@@ -53,9 +53,17 @@ const POISON_EXACT = [
 const POISON_VERSION_RANGES = [
   {
     name: 'lodash',
-    test: (v) => /^4\.18\./.test(v),
+    test: (v) => {
+      const m = /^(\d+)\.(\d+)\.(\d+)/.exec(v);
+      if (!m) return false;
+      const [, major, minor, patch] = m.map(Number);
+      if (major > 4) return true;
+      if (major === 4 && minor > 18) return true;
+      if (major === 4 && minor === 18 && patch > 1) return true;
+      return false;
+    },
     reason:
-      'lodash@4.18.x was published in March 2026 by a newly-added maintainer after years of dormancy; pinned to 4.17.21 until maintainer identity vetted',
+      'lodash version is beyond the OpenJS-reboot-vetted 4.18.1 ceiling — re-vet maintainership before allowing',
   },
 ];
 

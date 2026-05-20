@@ -44,31 +44,28 @@ describe('preinstall-supply-chain-guard scanLockfile', () => {
     assert.deepEqual(scanLockfile(lock), []);
   });
 
-  test('blocks lodash@4.18.0', () => {
-    const lock = {
+  test('allows lodash 4.17.x and 4.18.x (vetted) but blocks 4.18.2+ / 4.19.x / 5.x', () => {
+    const allowed = {
       packages: {
-        'node_modules/lodash': { name: 'lodash', version: '4.18.0' },
+        'node_modules/lodash-old': { name: 'lodash', version: '4.17.21' },
+        'node_modules/lodash-vetted-min': { name: 'lodash', version: '4.18.0' },
+        'node_modules/lodash-vetted-max': { name: 'lodash', version: '4.18.1' },
       },
     };
-    const blocks = scanLockfile(lock);
-    assert.equal(blocks.length, 1);
-    assert.equal(blocks[0].name, 'lodash');
-    assert.equal(blocks[0].version, '4.18.0');
-    assert.match(blocks[0].reason, /lodash@4\.18/);
-  });
+    assert.deepEqual(scanLockfile(allowed), []);
 
-  test('blocks lodash@4.18.1 nested under another package', () => {
-    const lock = {
+    const blocked = {
       packages: {
-        'node_modules/some-pkg/node_modules/lodash': {
-          name: 'lodash',
-          version: '4.18.1',
-        },
+        'node_modules/lodash-patch-bump': { name: 'lodash', version: '4.18.2' },
+        'node_modules/lodash-minor-bump': { name: 'lodash', version: '4.19.0' },
+        'node_modules/lodash-major-bump': { name: 'lodash', version: '5.0.0' },
       },
     };
-    const blocks = scanLockfile(lock);
-    assert.equal(blocks.length, 1);
-    assert.equal(blocks[0].version, '4.18.1');
+    const blocks = scanLockfile(blocked);
+    assert.equal(blocks.length, 3);
+    for (const b of blocks) {
+      assert.match(b.reason, /OpenJS-reboot-vetted 4\.18\.1 ceiling/);
+    }
   });
 
   test('blocks bare droplinked-* names (squatters)', () => {
@@ -137,7 +134,7 @@ describe('preinstall-supply-chain-guard scanLockfile', () => {
     };
     const blocks = scanLockfile(lock);
     const names = blocks.map((b) => b.name).sort();
-    assert.deepEqual(names, ['droplinked-evil', 'lodash']);
+    assert.deepEqual(names, ['droplinked-evil']);
   });
 
   test('allows other lodash 4.17.x versions', () => {
