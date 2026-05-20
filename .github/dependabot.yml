@@ -10,11 +10,15 @@ updates:
         update-types:
           - minor
           - patch
+    # Lodash post-4.18.1 (vetted via OpenJS reboot + CVE-2026-4800 patch)
+    # — any FURTHER bump requires manual maintainer-vetting. We allow
+    # 4.18.1 (current ceiling) but ignore anything newer so dependabot
+    # cannot silently auto-bump us into an unvetted release.
     ignore:
       - dependency-name: "lodash"
-        versions: ["4.18.x"]
+        versions: [">4.18.1"]
       - dependency-name: "lodash-es"
-        versions: ["4.18.x"]
+        versions: [">4.18.1"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
