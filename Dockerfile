@@ -14,6 +14,13 @@ WORKDIR /app
 # If using npm, copy package.json and package-lock.json
 COPY package.json yarn.lock* ./
 
+# Copy scripts/ BEFORE install so the npm `preinstall` supply-chain
+# guard script is present at install time. Without this, install fails
+# with ENOENT on scripts/preinstall-supply-chain-guard.js because the
+# rest of the source tree is not COPYed until the builder stage.
+# Cousin of droplinked-backend#1300.
+COPY scripts ./scripts
+
 # Install dependencies using yarn
 # Use --frozen-lockfile to ensure reproducible installs based on the lock file.
 RUN yarn install --frozen-lockfile
