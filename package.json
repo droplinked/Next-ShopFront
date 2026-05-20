@@ -17,7 +17,10 @@
     "test:mobile:debug": "playwright test --config=playwright.config.ts --debug",
     "test:mobile:update-snapshots": "playwright test --config=playwright.config.ts --update-snapshots",
     "test:mobile:report": "playwright show-report",
-    "test:mobile:install": "playwright install --with-deps chromium webkit"
+    "test:mobile:install": "playwright install --with-deps chromium webkit",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@droplinked_inc/web3": "^1.0.0",
@@ -65,7 +68,9 @@
     "eslint-config-next": "15.3.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@opennextjs/cloudflare": "^1.0.0",
+    "wrangler": "^3.95.0"
   },
   "overrides": {
     "@babel/plugin-transform-modules-systemjs": "^7.29.4",

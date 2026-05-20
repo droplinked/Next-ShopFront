@@ -1,0 +1,12 @@
+name = "next-shopfront"
+compatibility_date = "2026-05-20"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".open-next/dist"
+
+# Operator: bind production secrets in CF dashboard or `wrangler pages secret put <NAME>`
+# Required at runtime:
+#   NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SENTRY_DSN, SENTRY_AUTH_TOKEN
+#
+# Environments use the same Pages project with branch-based deploys:
+#   main → production (shop.droplinked.com via custom domain)
+#   dev  → preview (auto preview URL)
