@@ -29,12 +29,12 @@ const cspReportOnly = [
 // `'unsafe-inline'` is required for GTM bootstrap + Next.js style-jsx.
 const cspReportOnly = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com",
     "font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com data:",
     "img-src 'self' data: blob: https://upload-file-droplinked.s3.amazonaws.com https://upload-file-flatlay.s3.us-west-2.amazonaws.com https://files.cdn.printful.com https://*.cloudfront.net https://www.google-analytics.com",
-    "connect-src 'self' https://apiv3.droplinked.com https://apiv3dev.droplinked.com https://tools.droplinked.com https://ipapi.co https://accept.paymob.com https://*.ingest.sentry.io https://www.google-analytics.com",
-    "frame-src 'self' https://accept.paymob.com",
+    "connect-src 'self' https://apiv3.droplinked.com https://apiv3dev.droplinked.com https://tools.droplinked.com https://ipapi.co https://accept.paymob.com https://*.ingest.sentry.io https://www.google-analytics.com https://api.stripe.com",
+    "frame-src 'self' https://accept.paymob.com https://js.stripe.com https://hooks.stripe.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self' https://accept.paymob.com",
