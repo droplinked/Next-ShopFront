@@ -10,7 +10,7 @@ jobs:
   sanity:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Guard against out-of-tree paths in package-lock.json
         run: |
           if grep -q '"\.\./' package-lock.json; then
