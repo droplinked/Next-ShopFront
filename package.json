@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test 'src/**/__tests__/*.test.mjs'"
   },
   "dependencies": {
     "@droplinked-dev/ui": "^1.2.11",
