@@ -8,6 +8,7 @@ import {
   formatListingPrice,
 } from '@/lib/marketplace/marketplace';
 import type { IMarketplaceListing } from '@/types/interfaces/marketplace/listing';
+import ListingCardAttestationChip from './ListingCardAttestationChip';
 
 /**
  * Single-listing preview tile rendered inside MarketplaceListingGrid.
@@ -67,6 +68,12 @@ const MarketplaceListingCard = ({
         >
           {commission} commission
         </div>
+        {/* G20 attestation chip — icon-only, top-left. Only renders when
+            the listing has either a product-level UID OR a program id we
+            could verify. Card variant intentionally non-interactive (the
+            whole card is already a link); visitors get the full badge +
+            modal on the detail page. */}
+        <ListingCardAttestationChip listing={listing} />
       </div>
       <div className="flex flex-col gap-2 p-3 pt-1">
         {merchantLabel && (

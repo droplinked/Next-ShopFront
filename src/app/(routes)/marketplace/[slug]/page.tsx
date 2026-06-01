@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils/cn/cn';
 import { app_vertical } from '@/lib/variables/variables';
 import Link from 'next/link';
 import { getMarketplaceListingBySlug } from '@/services/marketplace/service';
+import { getProgramAttestation } from '@/services/attestation/service';
+import AttestationBadge from '../components/AttestationBadge';
 import ListingHero from './components/ListingHero';
 import ListingDetails from './components/ListingDetails';
 import MerchantInfo from './components/MerchantInfo';
@@ -73,6 +75,14 @@ export default async function MarketplaceListingDetailPage({
 }) {
   const { slug } = await params;
   const listing = await getMarketplaceListingBySlug(slug);
+  // Attestation lookup is best-effort + conditional on
+  // `affiliateProgramId` being present on the listing. Resolves to null
+  // for programs not yet attested OR when the public verifier endpoint
+  // is gated (PROGRAM_ATTESTATION_ENABLED=false). Badge renders nothing
+  // in either case — graceful degradation by design.
+  const attestation = listing?.affiliateProgramId
+    ? await getProgramAttestation(listing.affiliateProgramId)
+    : null;
 
   if (!listing) {
     return (
@@ -114,6 +124,15 @@ export default async function MarketplaceListingDetailPage({
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <ListingHero listing={listing} />
+          {/* G20 visual-proof artifact — renders nothing if attestation
+              is null or no chain reached `confirmed`. Sits under the hero
+              so visitors see "Onchain Attested" right next to the product
+              image, where the trust signal does the most work. */}
+          {attestation && (
+            <div data-testid="marketplace-listing-attestation-slot">
+              <AttestationBadge attestation={attestation} variant="default" />
+            </div>
+          )}
           <ListingDetails listing={listing} />
         </div>
         <aside className="flex flex-col gap-4">

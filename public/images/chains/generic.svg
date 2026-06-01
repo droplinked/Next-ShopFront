@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+  <title>Chain</title>
+  <circle cx="32" cy="32" r="32" fill="#6B7280"/>
+  <path d="M22 32a10 10 0 0 1 10-10h4M42 32a10 10 0 0 1-10 10h-4" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>
