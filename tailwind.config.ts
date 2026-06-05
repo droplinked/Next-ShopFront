@@ -84,11 +84,70 @@ const config: Config = {
                 link: {
                     foreground: "hsl(var(--link-foreground))",
                 },
+                // === Mint accent scale — droplinked design-system primary ===
+                // Pulled from Figma Main Pages canvas SOLID fills:
+                // (43,206,161) #2BCEA1 base · (73,207,172) #49CFAC light ·
+                // (38,141,112) #268D70 pressed · (0,255,194) #00FFC2 neon.
+                // Scoped to landing surfaces — additive only, existing pages
+                // continue to use the `hovered/focused/pressed` mint tokens.
+                mint: {
+                    DEFAULT: "#2BCEA1",
+                    50: "#EAFBF5",
+                    100: "#D2F5E9",
+                    200: "#A6ECD3",
+                    300: "#72E0BB",
+                    400: "#49CFAC",
+                    light: "#49CFAC",
+                    500: "#2BCEA1",
+                    600: "#23A985",
+                    700: "#1C8B6E",
+                    800: "#177058",
+                    900: "#0F4D3D",
+                    neon: "#00FFC2",
+                },
+                // === Dark theme surface layers (Figma 1440 landing) ===
+                // Layered card vocabulary: page bg → surface-1 → surface-2 → surface-3.
+                surface: {
+                    DEFAULT: "#0A0A0A",
+                    0: "#0A0A0A",
+                    1: "#141414",
+                    2: "#1C1C1C",
+                    3: "#222222",
+                    4: "#292929",
+                    5: "#3C3C3C",
+                },
+                line: {
+                    DEFAULT: "#262626",
+                    soft: "#1F1F1F",
+                    strong: "#3C3C3C",
+                    stronger: "#4F4F4F",
+                },
+                ink: {
+                    DEFAULT: "#FFFFFF",
+                    muted: "#B1B1B1",
+                    soft: "#DEDEDE",
+                    faint: "#7A7A7A",
+                },
             },
             borderRadius: {
                 lg: "16px",
                 md: "12px",
                 sm: "8px",
+            },
+            fontFamily: {
+                // Inter is the droplinked design-system primary typeface
+                // (Figma 41345:30038). Opt in per section/page via
+                // `font-display`/`font-display-tight` — global default
+                // typography is unchanged so other surfaces don't shift.
+                display: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+            boxShadow: {
+                // Mint glow used by hero CTA + focus rings, per the Figma
+                // landing hero pattern.
+                "mint-glow": "0 8px 32px rgba(43, 206, 161, 0.20)",
+                "mint-glow-lg": "0 12px 48px rgba(43, 206, 161, 0.28)",
+                // Card elevation in the dark layered surface system.
+                "card-dark": "0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.40)",
             },
             keyframes: {
                 "slide-down": {
