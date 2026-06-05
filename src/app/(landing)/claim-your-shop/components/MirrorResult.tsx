@@ -10,7 +10,13 @@ interface MirrorResultProps {
 }
 
 /**
- * Live mirror result panel.
+ * Live mirror result panel — design-system fidelity revision.
+ *
+ * Surface vocabulary mirrors Figma `Aura Card` (43431:342009) + the dark
+ * landing layered card pattern (Main Pages canvas, Frame 1707492505).
+ *
+ * Layered surfaces: page bg `#0A0A0A` → card `#141414` → inner row `#1C1C1C`.
+ * Mint top-bar uses a 12% fill of `#2BCEA1` with a 30% mint border.
  *
  * Animates a "loading → mirrored" transition then renders:
  *   1. Top bar with shop-mirrored confirmation + counts
@@ -61,15 +67,15 @@ function LoadingPanel({ input }: { input: MirrorResultProps["input"] }) {
             : "Loading demo shop…";
 
     return (
-        <div className="border border-foreground/10 rounded-xl p-8 sm:p-12 bg-white shadow-sm">
+        <div className="border border-line-strong rounded-2xl p-8 sm:p-12 bg-surface-1 shadow-card-dark">
             <div className="flex items-center gap-3 mb-6">
-                <div className="w-3 h-3 rounded-full bg-hovered animate-pulse" />
-                <span className="text-sm font-medium text-foreground/80">{label}</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-mint animate-pulse shadow-[0_0_12px_rgba(43,206,161,0.7)]" />
+                <span className="text-sm font-medium text-ink-soft">{label}</span>
             </div>
-            <div className="h-2 bg-foreground/5 rounded-full overflow-hidden">
-                <div className="h-full bg-hovered animate-[shimmer_2s_ease-in-out_infinite] w-1/2" />
+            <div className="h-1.5 bg-surface-3 rounded-full overflow-hidden relative">
+                <div className="ds-shimmer absolute inset-y-0 left-0 w-2/3 rounded-full" />
             </div>
-            <p className="mt-6 text-sm text-foreground/60">
+            <p className="mt-6 text-sm text-ink-muted">
                 Detecting platform · Reading product feed · Generating LLMS.txt per product · Preparing
                 Verified Brand preview
             </p>
@@ -88,46 +94,46 @@ function ReadyPanel({
 }) {
     return (
         <div className="space-y-10">
-            {/* Top bar */}
-            <div className="border border-hovered/30 bg-hovered/5 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Top bar — mint emphasis card */}
+            <div className="border border-mint/40 bg-mint/[0.08] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-mint-glow">
                 <div>
-                    <p className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+                    <p className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
                         <CheckIcon /> Your shop is now mirrored on droplinked
                     </p>
-                    <p className="text-sm text-foreground/70 mt-1">
+                    <p className="text-sm text-ink-soft/80 mt-1">
                         {productCount} products · {collectionCount} collections · ready for distribution
                     </p>
                 </div>
             </div>
 
-            {/* Verified Brand preview card */}
-            <div className="border border-foreground/10 rounded-xl p-6 sm:p-8 bg-white shadow-sm">
+            {/* Verified Brand preview card — dark surface, mint badge */}
+            <div className="border border-line-strong rounded-2xl p-6 sm:p-8 bg-surface-1 shadow-card-dark">
                 <div className="flex items-start gap-4">
                     <div className="shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-hovered/15 flex items-center justify-center animate-pulse">
-                            <CheckIcon className="text-hovered" />
+                        <div className="w-12 h-12 rounded-full bg-mint/15 border border-mint/30 flex items-center justify-center animate-pulse">
+                            <CheckIcon className="text-mint" />
                         </div>
                     </div>
                     <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-lg sm:text-xl font-semibold text-foreground">
+                            <span className="text-lg sm:text-xl font-semibold text-white">
                                 Verified Brand
                             </span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-foreground/5 text-foreground/60 font-medium">
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-surface-3 text-ink-soft font-medium border border-line-strong">
                                 pending KYB review
                             </span>
                         </div>
-                        <p className="mt-2 text-sm sm:text-base text-foreground/70">
+                        <p className="mt-2 text-sm sm:text-base text-ink-muted leading-relaxed">
                             Brands verified on droplinked get prioritized in AI shopping results and earn
                             higher conversion across ChatGPT, Claude, and Perplexity.
                         </p>
                         <button
                             type="button"
                             onClick={() => onCtaClick("listing")}
-                            className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-hovered hover:text-pressed transition-colors"
+                            className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-mint hover:text-mint-light transition-colors"
                         >
                             Complete verification →{" "}
-                            <span className="text-foreground/50 font-normal">(takes 5 minutes)</span>
+                            <span className="text-ink-faint font-normal">(takes 5 minutes)</span>
                         </button>
                     </div>
                 </div>
@@ -135,7 +141,7 @@ function ReadyPanel({
 
             {/* Product grid preview */}
             <div>
-                <p className="text-xs uppercase tracking-wide text-foreground/50 mb-3">
+                <p className="text-xs uppercase tracking-[0.15em] text-mint font-semibold mb-3">
                     Preview · first 8 products mirrored
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
@@ -190,22 +196,22 @@ function CtaCard({
     return (
         <div
             className={cn(
-                "rounded-xl p-6 border flex flex-col h-full",
+                "rounded-2xl p-6 border flex flex-col h-full transition-colors duration-200",
                 accent
-                    ? "border-hovered/40 bg-hovered/5"
-                    : "border-foreground/10 bg-white"
+                    ? "border-mint/40 bg-mint/[0.06] hover:border-mint/60"
+                    : "border-line-strong bg-surface-1 hover:border-line-stronger"
             )}
         >
-            <h3 className="text-base sm:text-lg font-semibold text-foreground">{label}</h3>
-            <p className="mt-2 text-sm text-foreground/70 flex-1">{body}</p>
+            <h3 className="text-base sm:text-lg font-semibold text-white">{label}</h3>
+            <p className="mt-2 text-sm text-ink-muted flex-1 leading-relaxed">{body}</p>
             <button
                 type="button"
                 onClick={onClick}
                 className={cn(
-                    "mt-5 px-5 py-3 rounded-md font-medium text-sm transition-colors",
+                    "mt-5 px-5 py-3 rounded-xl font-semibold text-sm transition-colors duration-150",
                     accent
-                        ? "bg-hovered text-white hover:bg-pressed"
-                        : "border border-foreground text-foreground hover:bg-foreground hover:text-white"
+                        ? "bg-mint text-surface hover:bg-mint-light shadow-mint-glow"
+                        : "border border-line-stronger text-white hover:bg-surface-3 hover:border-mint/50"
                 )}
             >
                 {cta} →
@@ -226,13 +232,13 @@ function SaveForLaterCapture() {
     };
 
     return (
-        <div className="border-t border-foreground/10 pt-8">
-            <p className="text-sm text-foreground/70 mb-3">
+        <div className="border-t border-line-strong pt-8">
+            <p className="text-sm text-ink-muted mb-3">
                 Want to come back to this later? Drop your email — we&apos;ll send you a private link to
                 your mirrored shop.
             </p>
             {saved ? (
-                <p className="text-sm text-hovered font-medium">
+                <p className="text-sm text-mint font-medium">
                     Saved. Check your inbox for your private mirror link.
                 </p>
             ) : (
@@ -242,12 +248,12 @@ function SaveForLaterCapture() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@yourbrand.com"
-                        className="flex-1 px-4 py-3 rounded-md border border-foreground/15 bg-white outline-none focus:border-hovered text-sm"
+                        className="flex-1 px-4 py-3 rounded-xl border border-line-strong bg-surface-1 text-white outline-none focus:border-mint placeholder:text-ink-faint text-sm"
                         aria-label="Email address"
                     />
                     <button
                         type="submit"
-                        className="px-5 py-3 rounded-md border border-foreground text-foreground font-medium text-sm hover:bg-foreground hover:text-white transition-colors"
+                        className="px-5 py-3 rounded-xl border border-line-stronger text-white font-semibold text-sm hover:bg-surface-3 hover:border-mint/50 transition-colors"
                     >
                         Save my shop
                     </button>
@@ -277,17 +283,17 @@ const STUB_PRODUCTS: StubProduct[] = [
 
 function ProductCard({ product }: { product: StubProduct }) {
     return (
-        <div className="rounded-lg overflow-hidden border border-foreground/10 bg-white">
+        <div className="rounded-xl overflow-hidden border border-line-strong bg-surface-1 hover:border-mint/40 transition-colors duration-150">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src={product.image}
                 alt={product.title}
-                className="w-full aspect-square object-cover bg-foreground/5"
+                className="w-full aspect-square object-cover bg-surface-3"
                 loading="lazy"
             />
             <div className="p-3">
-                <p className="text-sm font-medium text-foreground truncate">{product.title}</p>
-                <p className="text-xs text-foreground/60 mt-1">{product.price}</p>
+                <p className="text-sm font-medium text-white truncate">{product.title}</p>
+                <p className="text-xs text-ink-muted mt-1">{product.price}</p>
             </div>
         </div>
     );
@@ -298,7 +304,7 @@ function CheckIcon({ className }: { className?: string }) {
         <svg
             viewBox="0 0 20 20"
             fill="currentColor"
-            className={cn("w-5 h-5 text-hovered", className)}
+            className={cn("w-5 h-5 text-mint", className)}
             aria-hidden="true"
         >
             <path

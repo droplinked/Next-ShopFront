@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { inter } from "@/styles/fonts";
+import { cn } from "@/lib/utils/cn/cn";
 import Hero from "./components/Hero";
 import MirrorResult from "./components/MirrorResult";
 import WhyDroplinked from "./components/WhyDroplinked";
@@ -63,7 +65,12 @@ export default function ClaimYourShopPage() {
     };
 
     return (
-        <main className="bg-background text-foreground min-h-screen overflow-x-hidden">
+        <main
+            className={cn(
+                "ds-landing min-h-screen overflow-x-hidden antialiased",
+                inter.variable
+            )}
+        >
             <JsonLd />
 
             {/* Hero collapses once a mirror flow has started */}
