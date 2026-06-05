@@ -1,24 +1,56 @@
 name: Mobile tests
 
+# ─── Scaffolding state ──────────────────────────────────────────────────
+# The Playwright scaffold landed in PR #16 but is NOT yet wired to a live
+# deploy target. Both jobs need a real PLAYWRIGHT_BASE_URL to be useful:
+#   - smoke: needs a Vercel/Netlify/Cloudflare PR preview URL, OR a local
+#     Next dev server started in-job. Neither is set up yet.
+#   - full:  needs `PRODUCTION_URL` repo secret pointing at the live shop.
+#
+# Until those are wired, this workflow runs ONLY on manual dispatch so it
+# does not red-mark every PR with a meaningless "Connection refused" on
+# http://localhost:3000.
+#
+# Follow-up: see the issue linked in the PR that introduced this guard.
+# ────────────────────────────────────────────────────────────────────────
+
 on:
-  pull_request:
-    paths:
-      # Next-ShopFront layout: App Router lives under src/app/**.
-      - 'src/**'
-      - 'public/**'
-      - 'tests/**'
-      - 'helpers/**'
-      - 'playwright.config.ts'
-      - 'package.json'
-      - '.github/workflows/mobile-test.yml'
-  schedule:
-    - cron: '0 6 * * *'   # 06:00 UTC nightly full run
+  # PR + scheduled triggers are intentionally disabled until preview-URL
+  # / production-URL plumbing is in place. Re-enable by uncommenting the
+  # `pull_request:` + `schedule:` blocks below once the follow-up issue
+  # is resolved.
+  #
+  # pull_request:
+  #   paths:
+  #     # Next-ShopFront layout: App Router lives under src/app/**.
+  #     - 'src/**'
+  #     - 'public/**'
+  #     - 'tests/**'
+  #     - 'helpers/**'
+  #     - 'playwright.config.ts'
+  #     - 'package.json'
+  #     - '.github/workflows/mobile-test.yml'
+  # schedule:
+  #   - cron: '0 6 * * *'   # 06:00 UTC nightly full run
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'PLAYWRIGHT_BASE_URL to test against (overrides PREVIEW_URL_FALLBACK / PRODUCTION_URL secrets)'
+        required: false
+        type: string
+      mode:
+        description: 'smoke (single device, fast) or full (sharded matrix, slow)'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - full
 
 jobs:
   smoke:
-    name: Smoke (PR gate)
-    if: github.event_name == 'pull_request'
+    name: Smoke (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'smoke'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -30,16 +62,21 @@ jobs:
       - run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium webkit
-      - name: Wait for Vercel preview URL
+      - name: Resolve base URL
         id: preview
-        # Customize for your deploy target. Two common patterns:
-        #   - Vercel: parse `vercel-deployment-action` output
-        #   - Netlify: wait for `netlify/deploy-preview` status
-        #   - Cloudflare Pages: poll the deployments API
-        # For local-only / no preview deploy, point at PLAYWRIGHT_BASE_URL.
+        # Priority: workflow_dispatch input > PREVIEW_URL_FALLBACK secret.
+        # Fails fast if neither is set — we no longer silently fall back to
+        # http://localhost:3000 because nothing in this job starts a server.
         run: |
-          # Replace with your project's preview-URL resolution
-          echo "url=${{ secrets.PREVIEW_URL_FALLBACK || 'http://localhost:3000' }}" >> $GITHUB_OUTPUT
+          URL="${{ inputs.base_url }}"
+          if [ -z "$URL" ]; then
+            URL="${{ secrets.PREVIEW_URL_FALLBACK }}"
+          fi
+          if [ -z "$URL" ]; then
+            echo "::error::No base URL: pass workflow_dispatch input 'base_url' or set repo secret PREVIEW_URL_FALLBACK."
+            exit 1
+          fi
+          echo "url=$URL" >> $GITHUB_OUTPUT
       - name: Run smoke tests
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.preview.outputs.url }}
@@ -53,8 +90,8 @@ jobs:
           retention-days: 7
 
   full:
-    name: Full nightly
-    if: github.event_name != 'pull_request'
+    name: Full (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -70,9 +107,21 @@ jobs:
       - run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
+      - name: Resolve base URL
+        id: preview
+        run: |
+          URL="${{ inputs.base_url }}"
+          if [ -z "$URL" ]; then
+            URL="${{ secrets.PRODUCTION_URL }}"
+          fi
+          if [ -z "$URL" ]; then
+            echo "::error::No base URL: pass workflow_dispatch input 'base_url' or set repo secret PRODUCTION_URL."
+            exit 1
+          fi
+          echo "url=$URL" >> $GITHUB_OUTPUT
       - name: Run full suite (sharded)
         env:
-          PLAYWRIGHT_BASE_URL: ${{ secrets.PRODUCTION_URL }}
+          PLAYWRIGHT_BASE_URL: ${{ steps.preview.outputs.url }}
           # Optional cloud-device run on nightly only
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
