@@ -47,7 +47,7 @@
     "react-infinite-scroll-component": "^6.1.0",
     "react-select": "^5.8.0",
     "sharp": "^0.34.5",
-    "sonner": "^1.4.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "yet-another-react-lightbox": "^3.17.0",
