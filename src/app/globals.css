@@ -99,3 +99,66 @@ body,
         @apply bg-background text-foreground;
     }
 }
+
+/*
+ * === droplinked design-system landing surface ===
+ * Scoped to `.ds-landing` only — other Next-ShopFront pages keep their
+ * current tokens untouched. Sources: Figma Main Pages canvas 43599:488279
+ * (dark bg + section layout) and Components canvas 41345:30038 (mint scale).
+ */
+.ds-landing {
+    --ds-bg: #0a0a0a;
+    --ds-surface-1: #141414;
+    --ds-surface-2: #1c1c1c;
+    --ds-surface-3: #222222;
+    --ds-surface-4: #292929;
+    --ds-line: #262626;
+    --ds-line-strong: #3c3c3c;
+    --ds-ink: #ffffff;
+    --ds-ink-muted: #b1b1b1;
+    --ds-ink-soft: #dedede;
+    --ds-ink-faint: #7a7a7a;
+    --ds-mint: #2bcea1;
+    --ds-mint-light: #49cfac;
+    --ds-mint-dark: #1c8b6e;
+    --ds-mint-pressed: #177058;
+    --ds-mint-neon: #00ffc2;
+    background-color: var(--ds-bg);
+    color: var(--ds-ink);
+}
+
+/*
+ * Inter is the design-system display face. Opt in per section via
+ * `.font-display` / `font-display`. The body default stays Avenir/Roboto.
+ */
+.ds-landing,
+.ds-landing :where(h1, h2, h3, h4, h5, h6, p, span, button, a, input, label) {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Hero CTA shimmer halo, per Figma hero CTA + focus state. */
+.ds-landing .ds-cta-glow {
+    box-shadow: 0 12px 48px rgba(43, 206, 161, 0.28);
+}
+
+/* Subtle radial mint glow behind the hero, matches Figma 1440 hero pattern. */
+.ds-landing .ds-hero-glow {
+    background:
+        radial-gradient(60% 70% at 50% 35%, rgba(43, 206, 161, 0.12) 0%, rgba(43, 206, 161, 0) 60%),
+        radial-gradient(80% 80% at 50% 0%, rgba(0, 255, 194, 0.06) 0%, rgba(0, 255, 194, 0) 70%);
+}
+
+@keyframes ds-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.ds-landing .ds-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(43, 206, 161, 0) 0%,
+        rgba(43, 206, 161, 0.6) 50%,
+        rgba(43, 206, 161, 0) 100%
+    );
+    animation: ds-shimmer 1.8s ease-in-out infinite;
+}
