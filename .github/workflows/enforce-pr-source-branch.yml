@@ -1,0 +1,23 @@
+name: PR Source Branch Policy
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main]
+jobs:
+  enforce-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR head branch
+        run: |
+          HEAD="${{ github.head_ref }}"
+          if [[ "$HEAD" == "dev" || "$HEAD" == hotfix/* ]]; then
+            echo "PR source '$HEAD' satisfies the dev-first policy"
+            exit 0
+          fi
+          echo "::error::PR head '$HEAD' violates the dev-first policy."
+          echo "Required head branch for PRs targeting main: 'dev' OR 'hotfix/*'"
+          echo "Exception path 'hotfix/*' is for active integration debugging with external partners"
+          echo "where dev parity does not exist (e.g. Telr E0x partner bisect). Operator merges still required."
+          echo "Reference: workspace playbook droplinked-repo-sync-equilibrium-playbook-2026-06-05.md"
+          echo "          memory feedback-dev-first-no-direct-to-main"
+          exit 1
