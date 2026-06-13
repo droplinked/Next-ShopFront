@@ -128,6 +128,16 @@ const config: Config = {
                     soft: "#DEDEDE",
                     faint: "#7A7A7A",
                 },
+                // === Semantic error token — canonical source-of-truth ===
+                // Figma `error.500` = #FF2244 (slightly cooler + more saturated
+                // than Tailwind default `red-500` #EF4444). Migrate error-state
+                // consumers off `text-red-500`/`bg-red-500`/`border-red-500`
+                // onto `text-error-500` etc. so the surface picks up the token
+                // instead of the Tailwind default red scale.
+                error: {
+                    500: "#FF2244",
+                    bgsoft: "rgba(255, 34, 68, 0.15)",
+                },
             },
             borderRadius: {
                 lg: "16px",
