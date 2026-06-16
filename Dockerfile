@@ -10,9 +10,12 @@ FROM node:22-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-# Copy package.json and lock file
-# If using npm, copy package.json and package-lock.json
-COPY package.json yarn.lock* ./
+# Copy package.json and package-lock.json so npm ci has a deterministic
+# lockfile to install from. The repo is npm-managed (no yarn.lock) — using
+# `yarn install` previously caused libvips/sharp native-binary mismatches
+# because yarn classic does not honor npm's platform-aware
+# optionalDependencies resolution (issue #115).
+COPY package.json package-lock.json ./
 
 # Copy scripts/ BEFORE install so the npm `preinstall` supply-chain
 # guard script is present at install time. Without this, install fails
@@ -21,9 +24,11 @@ COPY package.json yarn.lock* ./
 # Cousin of droplinked-backend#1300.
 COPY scripts ./scripts
 
-# Install dependencies using yarn
-# Use --frozen-lockfile to ensure reproducible installs based on the lock file.
-RUN yarn install --frozen-lockfile
+# Install dependencies using npm ci for reproducible, lockfile-driven
+# installs that correctly resolve sharp + @img/sharp-libvips-* native
+# binaries for the linuxmusl-x64 runtime. --legacy-peer-deps matches the
+# repo's existing peer-resolution posture (see #115 + #106 follow-up).
+RUN npm ci --legacy-peer-deps
 
 # ---- Builder Stage ----
 # Build the Next.js application.
@@ -58,7 +63,7 @@ ENV NEXT_PUBLIC_SENTRY_RELEASE=$NEXT_PUBLIC_SENTRY_RELEASE
 # Build the Next.js application.
 # This command requires the full dependencies (including devDependencies).
 # Ensure your next.config.js or next.config.mjs includes `output: 'standalone'`
-RUN yarn build
+RUN npm run build
 
 # ---- Runner Stage ----
 # Create the final production image (simplified, runs as root).
