@@ -37,7 +37,7 @@ jobs:
 
       - name: Checkout community repo
         if: steps.classify.outputs.skip == 'false'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: droplinked/droplinked-community
           token: ${{ secrets.COMMUNITY_REPO_TOKEN }}
