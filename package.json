@@ -23,7 +23,7 @@
     "@droplinked_inc/web3": "^1.0.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.9",
+    "@mui/icons-material": "^9.1.1",
     "@mui/joy": "^5.0.0-beta.27",
     "@mui/material": "^5.15.9",
     "@sentry/nextjs": "^10.56.0",
