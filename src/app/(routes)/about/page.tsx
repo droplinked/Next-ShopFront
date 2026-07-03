@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import LegalPage, { LegalSection } from "@/components/core/legal/LegalPage";
 import { SITE } from "@/lib/site";
 
@@ -33,12 +34,12 @@ export default function AboutPage() {
         <p>
           We stand behind transparent pricing, accurate product information, a
           clear{" "}
-          <a
+          <Link
             href="/returns-policy"
             className="text-mint-500 transition-colors hover:text-mint-400"
           >
             returns &amp; refunds policy
-          </a>
+          </Link>
           , and responsive support. If anything about your order isn&apos;t
           right, our team will make it right.
         </p>
