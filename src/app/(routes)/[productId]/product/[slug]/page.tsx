@@ -32,11 +32,13 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   fetchStructuredData,
   toProductView,
   buildServedUrl,
 } from "./lib/structured-data";
+import { POLICY } from "@/lib/site";
 
 // ISR — revalidate every 5 minutes.
 export const revalidate = 300;
@@ -107,6 +109,13 @@ export default async function ProductPage({ params }: PageProps) {
   const priceLabel = view.price
     ? `${view.price} ${view.priceCurrency}`
     : "Price unavailable";
+
+  // The interactive product page (mounts cart actions → guest checkout) is
+  // keyed by the product ObjectId at `/<productId>`. The Buy CTA must lead
+  // there — NOT back to this same canonical URL, which would be a dead-end a
+  // reviewer cannot get past. Fall back to the canonical URL only when the
+  // structured-data payload carried no product id.
+  const purchaseUrl = data.productId ? `/${data.productId}` : view.canonicalUrl;
 
   return (
     <>
@@ -192,14 +201,39 @@ export default async function ProductPage({ params }: PageProps) {
             </p>
           )}
 
-          {/* Buy / view CTA → the canonical served product URL. */}
-          <a
-            href={view.canonicalUrl}
+          {/* Buy / view CTA → the interactive product page (cart + checkout).
+              Never links back to this same canonical URL (a review dead-end). */}
+          <Link
+            href={purchaseUrl}
             className="inline-flex items-center justify-center rounded-lg bg-mint-500 hover:bg-mint-400 transition-colors px-6 py-3 text-base font-semibold text-black w-full md:w-auto"
-            aria-disabled={!view.inStock}
           >
             {view.inStock ? "Buy now" : "View product"}
-          </a>
+          </Link>
+
+          {/* Trust affordances a reviewer sees on the feed landing page. */}
+          <p className="text-xs text-ink-faint">
+            Secure checkout · {POLICY.returnWindowDays}-day{" "}
+            <Link
+              href="/returns-policy"
+              className="text-mint-500 hover:text-mint-400 transition-colors"
+            >
+              returns
+            </Link>{" "}
+            ·{" "}
+            <Link
+              href="/shipping-policy"
+              className="text-mint-500 hover:text-mint-400 transition-colors"
+            >
+              shipping info
+            </Link>{" "}
+            ·{" "}
+            <Link
+              href="/contact"
+              className="text-mint-500 hover:text-mint-400 transition-colors"
+            >
+              contact
+            </Link>
+          </p>
 
           {view.sku && (
             <p className="text-xs text-ink-faint">SKU: {view.sku}</p>
