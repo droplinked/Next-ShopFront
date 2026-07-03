@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import LegalPage, { LegalSection } from "@/components/core/legal/LegalPage";
 import { SITE } from "@/lib/site";
 
@@ -46,12 +47,12 @@ export default function TermsPage() {
       <LegalSection heading="Returns & Refunds">
         <p>
           Returns and refunds are governed by our{" "}
-          <a
+          <Link
             href="/returns-policy"
             className="text-mint-500 transition-colors hover:text-mint-400"
           >
             Returns &amp; Refunds policy
-          </a>
+          </Link>
           , which forms part of these terms.
         </p>
       </LegalSection>

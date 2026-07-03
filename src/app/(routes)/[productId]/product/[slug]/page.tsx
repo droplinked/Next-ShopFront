@@ -32,6 +32,7 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   fetchStructuredData,
   toProductView,
@@ -202,36 +203,36 @@ export default async function ProductPage({ params }: PageProps) {
 
           {/* Buy / view CTA → the interactive product page (cart + checkout).
               Never links back to this same canonical URL (a review dead-end). */}
-          <a
+          <Link
             href={purchaseUrl}
             className="inline-flex items-center justify-center rounded-lg bg-mint-500 hover:bg-mint-400 transition-colors px-6 py-3 text-base font-semibold text-black w-full md:w-auto"
           >
             {view.inStock ? "Buy now" : "View product"}
-          </a>
+          </Link>
 
           {/* Trust affordances a reviewer sees on the feed landing page. */}
           <p className="text-xs text-ink-faint">
             Secure checkout · {POLICY.returnWindowDays}-day{" "}
-            <a
+            <Link
               href="/returns-policy"
               className="text-mint-500 hover:text-mint-400 transition-colors"
             >
               returns
-            </a>{" "}
+            </Link>{" "}
             ·{" "}
-            <a
+            <Link
               href="/shipping-policy"
               className="text-mint-500 hover:text-mint-400 transition-colors"
             >
               shipping info
-            </a>{" "}
+            </Link>{" "}
             ·{" "}
-            <a
+            <Link
               href="/contact"
               className="text-mint-500 hover:text-mint-400 transition-colors"
             >
               contact
-            </a>
+            </Link>
           </p>
 
           {view.sku && (
