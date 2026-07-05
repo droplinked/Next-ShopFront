@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import LegalPage, { LegalSection } from "@/components/core/legal/LegalPage";
-import { SITE, SITE_ADDRESS_LINE, SOCIAL_LINKS } from "@/lib/site";
+import { SITE, SITE_ADDRESS_LINE, SITE_PHONE_TEL, SOCIAL_LINKS } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact Us | droplinked",
@@ -25,6 +25,13 @@ export default function ContactPage() {
             className="text-mint-500 transition-colors hover:text-mint-400"
           >
             {SITE.supportEmail}
+          </a>{" "}
+          or call{" "}
+          <a
+            href={SITE_PHONE_TEL}
+            className="text-mint-500 transition-colors hover:text-mint-400"
+          >
+            {SITE.supportPhone}
           </a>
           . We aim to respond within 1–2 business days. Please include your
           order number so we can help you faster.

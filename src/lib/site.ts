@@ -31,6 +31,8 @@ export const SITE = {
     "checkout and payment providers you already trust.",
   /** Primary customer support channel. */
   supportEmail: "support@droplinked.com",
+  /** Customer-service phone (matches Merchant Center → Business info contact). */
+  supportPhone: "+1 (929) 266-7624",
   /**
    * Registered business address of the platform (business of record).
    * MUST match the address configured in Merchant Center → Business info so
@@ -49,6 +51,9 @@ export const SITE = {
 
 /** One-line, human-readable rendering of {@link SITE.address}. */
 export const SITE_ADDRESS_LINE = `${SITE.address.line1}, ${SITE.address.city}, ${SITE.address.region} ${SITE.address.postalCode}, ${SITE.address.country}`;
+
+/** `tel:` href derived from {@link SITE.supportPhone} (digits + leading +). */
+export const SITE_PHONE_TEL = `tel:${SITE.supportPhone.replace(/[^+\d]/g, "")}`;
 
 /** Verified, absolute social profile URLs (no protocol-less / dead hrefs). */
 export const SOCIAL_LINKS = {
