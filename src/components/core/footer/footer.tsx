@@ -1,7 +1,7 @@
 import AppIcons from "@/assets/AppIcons";
 import droplinked from "@/assets/icons/droplinked.png";
 import { AppSeparator, AppTypography } from "@/components/ui";
-import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SOCIAL_LINKS } from "@/lib/site";
+import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SOCIAL_LINKS } from "@/lib/site";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -44,6 +44,9 @@ const Footer = () => {
             >
               {SITE.supportEmail}
             </a>
+            <address className="text-sm not-italic text-foreground/70">
+              {SITE_ADDRESS_LINE}
+            </address>
           </div>
           <ul className="flex list-none items-center gap-6">
             <li>
