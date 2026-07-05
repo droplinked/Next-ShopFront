@@ -25,14 +25,30 @@ export const SITE = {
   /** One-line description of what the platform is (no placeholder copy). */
   tagline: "Powering the next generation of commerce.",
   description:
-    "droplinked is a commerce platform that lets creators and brands sell " +
-    "physical and digital products with secure checkout, transparent " +
-    "pricing, and verifiable product data.",
+    "droplinked is the commerce platform for modern brands and retailers — " +
+    "sell physical and digital products, reach new customers across AI " +
+    "shopping agents and affiliate networks, and get paid through the " +
+    "checkout and payment providers you already trust.",
   /** Primary customer support channel. */
   supportEmail: "support@droplinked.com",
+  /**
+   * Registered business address of the platform (business of record).
+   * MUST match the address configured in Merchant Center → Business info so
+   * the storefront the reviewer visits shows the same identity Google holds.
+   */
+  address: {
+    line1: "555 West 5th St",
+    city: "Los Angeles",
+    region: "California",
+    postalCode: "90013",
+    country: "United States",
+  },
   /** Corporate marketing site. */
   homepage: "https://droplinked.com",
 } as const;
+
+/** One-line, human-readable rendering of {@link SITE.address}. */
+export const SITE_ADDRESS_LINE = `${SITE.address.line1}, ${SITE.address.city}, ${SITE.address.region} ${SITE.address.postalCode}, ${SITE.address.country}`;
 
 /** Verified, absolute social profile URLs (no protocol-less / dead hrefs). */
 export const SOCIAL_LINKS = {
