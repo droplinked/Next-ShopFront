@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import LegalPage, { LegalSection } from "@/components/core/legal/LegalPage";
-import { SITE, SOCIAL_LINKS } from "@/lib/site";
+import { SITE, SITE_ADDRESS_LINE, SOCIAL_LINKS } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact Us | droplinked",
@@ -35,6 +35,7 @@ export default function ContactPage() {
         <p>
           <strong>{SITE.legalName}</strong>
           <br />
+          <span className="block">{SITE_ADDRESS_LINE}</span>
           {SITE.tagline}
           <br />
           Website:{" "}
