@@ -1,8 +1,7 @@
 import AppIcons from "@/assets/AppIcons";
-import droplinked from "@/assets/icons/droplinked.png";
+import DroplinkedLogo from "@/assets/icons/droplinked-logo.svg";
 import { AppSeparator, AppTypography } from "@/components/ui";
 import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SITE_PHONE_TEL, SOCIAL_LINKS } from "@/lib/site";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -23,12 +22,9 @@ const Footer = () => {
         {/* Identity + description + socials */}
         <article className="flex w-full max-w-md flex-col gap-6">
           <Link href={SITE.homepage} aria-label={`${SITE.name} home`}>
-            <Image
-              src={droplinked}
-              alt={`${SITE.name} logo`}
-              className="h-10 w-auto object-contain"
-              width={120}
-              height={32}
+            <DroplinkedLogo
+              aria-label={`${SITE.name} logo`}
+              className="h-7 w-auto text-foreground"
             />
           </Link>
           <AppTypography appClassName="text-foreground/50 font-normal text-sm">
@@ -131,12 +127,9 @@ const Footer = () => {
             Powered by
           </AppTypography>
           <Link href={SITE.homepage} aria-label={`${SITE.name} home`}>
-            <Image
-              src={droplinked}
-              alt={`${SITE.name} logo`}
-              className="h-8 w-auto object-contain"
-              width={100}
-              height={28}
+            <DroplinkedLogo
+              aria-label={`${SITE.name} logo`}
+              className="h-5 w-auto text-foreground"
             />
           </Link>
         </div>
