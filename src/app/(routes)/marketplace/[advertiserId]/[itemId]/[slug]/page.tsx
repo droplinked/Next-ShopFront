@@ -121,21 +121,21 @@ export default async function MarketplaceProductPage({ params }: PageProps) {
         {/* ── breadcrumb (internal — not an orphan doorway) ── */}
         <nav
           aria-label="Breadcrumb"
-          className="mb-8 text-sm text-ink-faint flex flex-wrap items-center gap-2"
+          className="mb-8 text-sm text-foreground/50 flex flex-wrap items-center gap-2"
         >
           <Link href="/" className="hover:text-mint-500 transition-colors">
             droplinked
           </Link>
           <span aria-hidden>/</span>
-          <span className="text-ink-faint">Marketplace</span>
+          <span className="text-foreground/50">Marketplace</span>
           {view.category && (
             <>
               <span aria-hidden>/</span>
-              <span className="capitalize text-ink-faint">{view.category}</span>
+              <span className="capitalize text-foreground/50">{view.category}</span>
             </>
           )}
           <span aria-hidden>/</span>
-          <span className="text-ink-muted line-clamp-1">{view.title}</span>
+          <span className="text-foreground/70 line-clamp-1">{view.title}</span>
         </nav>
 
         <div className="flex flex-col md:flex-row items-start gap-10">
@@ -178,17 +178,17 @@ export default async function MarketplaceProductPage({ params }: PageProps) {
 
           {/* ── details column ── */}
           <div className="w-full md:w-1/2 flex flex-col gap-5">
-            <p className="text-sm uppercase tracking-wide text-ink-faint">
+            <p className="text-sm uppercase tracking-wide text-foreground/50">
               Sold by {view.retailerName}
             </p>
 
-            <h1 className="text-3xl md:text-4xl font-semibold text-ink leading-tight">
+            <h1 className="text-3xl md:text-4xl font-semibold text-foreground leading-tight">
               {view.title}
             </h1>
 
             <div className="flex items-center gap-4">
               <span
-                className="text-2xl font-bold text-ink"
+                className="text-2xl font-bold text-foreground"
                 data-testid="marketplace-price"
               >
                 {priceLabel}
@@ -206,7 +206,7 @@ export default async function MarketplaceProductPage({ params }: PageProps) {
             </div>
 
             {view.description && (
-              <p className="text-base leading-relaxed text-ink-muted whitespace-pre-line">
+              <p className="text-base leading-relaxed text-foreground/70 whitespace-pre-line">
                 {view.description}
               </p>
             )}
@@ -225,39 +225,39 @@ export default async function MarketplaceProductPage({ params }: PageProps) {
             )}
 
             {/* Honest disclosure — curated here, purchased at the retailer. */}
-            <p className="text-sm text-ink-faint leading-relaxed">
+            <p className="text-sm text-foreground/50 leading-relaxed">
               droplinked curates this product from{" "}
-              <span className="text-ink-muted">{view.retailerName}</span>. You&apos;ll
+              <span className="text-foreground/70">{view.retailerName}</span>. You&apos;ll
               complete your purchase securely on {view.retailerName}&apos;s site, and
               it is fulfilled and shipped by {view.retailerName} under their own
               shipping &amp; returns policies. droplinked may earn a commission.
             </p>
 
             {(view.sku || view.gtin || view.category) && (
-              <dl className="text-xs text-ink-faint flex flex-col gap-1 border-t border-line pt-4">
+              <dl className="text-xs text-foreground/50 flex flex-col gap-1 border-t border-line pt-4">
                 {view.category && (
                   <div className="flex gap-2">
-                    <dt className="text-ink-faint">Category</dt>
-                    <dd className="capitalize text-ink-muted">{view.category}</dd>
+                    <dt className="text-foreground/50">Category</dt>
+                    <dd className="capitalize text-foreground/70">{view.category}</dd>
                   </div>
                 )}
                 {view.sku && (
                   <div className="flex gap-2">
-                    <dt className="text-ink-faint">SKU</dt>
-                    <dd className="text-ink-muted">{view.sku}</dd>
+                    <dt className="text-foreground/50">SKU</dt>
+                    <dd className="text-foreground/70">{view.sku}</dd>
                   </div>
                 )}
                 {view.gtin && (
                   <div className="flex gap-2">
-                    <dt className="text-ink-faint">GTIN</dt>
-                    <dd className="text-ink-muted">{view.gtin}</dd>
+                    <dt className="text-foreground/50">GTIN</dt>
+                    <dd className="text-foreground/70">{view.gtin}</dd>
                   </div>
                 )}
               </dl>
             )}
 
             {/* Trust row + internal links back into the storefront. */}
-            <p className="text-xs text-ink-faint mt-1">
+            <p className="text-xs text-foreground/50 mt-1">
               Curated on{" "}
               <Link href="/" className="text-mint-500 hover:text-mint-400 transition-colors">
                 droplinked
