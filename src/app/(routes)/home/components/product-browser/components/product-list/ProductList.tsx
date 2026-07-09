@@ -81,7 +81,7 @@ const ProductList = () => {
       </InfiniteScroll>
     ) : (
       <AppTypography>
-        Oops, looks like the product doesn&apos;t exist.
+        No products found.
       </AppTypography>
     )
   ) : (
