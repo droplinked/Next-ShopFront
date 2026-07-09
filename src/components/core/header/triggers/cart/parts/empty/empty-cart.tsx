@@ -9,9 +9,9 @@ const EmptyCart = () => {
     return (
         <article className={cn(app_vertical, "w-full gap-10 py-6")}>
             <Image src={emptycart} width={144} height={166} alt="Your cart is empty" />
-            <AppTypography appClassName="text-center font-normal">Your cart is emptier than our Monday morning meetings...</AppTypography>
+            <AppTypography appClassName="text-center font-normal">Your cart is empty</AppTypography>
             <Link href={"/"} className={cn(app_link, "text-center text-base font-thin")}>
-                Go back to shopping
+                Continue shopping
             </Link>
         </article>
     );
