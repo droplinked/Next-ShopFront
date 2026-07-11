@@ -42,12 +42,17 @@ const nextConfig = {
     images: {
         // Aggregate storefront serves product images from ARBITRARY merchant
         // CDNs (Shopify custom domains like theshoecircle.com, cdn.shopify.com,
-        // retailer CDNs). next/image REJECTS any host not listed here, which
-        // rendered every imported product image as a broken placeholder. Allow
-        // any https host so merchant images resolve; the droplinked S3 hosts are
-        // implicitly covered but kept explicit for intent.
+        // retailer CDNs). The Next image OPTIMIZER rejects any host not in
+        // `remotePatterns` with HTTP 400 — and a bare `hostname: '**'` does NOT
+        // match apex merchant domains in Next 15, so every imported product image
+        // (main via AppMagnifier + thumbnails, both `next/image`) rendered as a
+        // broken placeholder. Disable the optimizer so `next/image` emits the raw
+        // <img> with the original merchant URL — the source CDNs (Shopify etc.)
+        // already serve optimized images, so we lose little and unblock all hosts.
+        // (Follow-up option: a custom loader / SSRF-guarded /img proxy to
+        // re-enable optimization for third-party hosts.)
+        unoptimized: true,
         remotePatterns: [
-            { protocol: 'https', hostname: '**' },
             {
                 protocol: 'https',
                 hostname: 'upload-file-flatlay.s3.us-west-2.amazonaws.com',
