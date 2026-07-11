@@ -38,7 +38,7 @@ import {
   toProductView,
   buildServedUrl,
 } from "./lib/structured-data";
-import { sanitizeHtml } from "./lib/sanitize-html";
+import { sanitizeHtml, htmlToText } from "./lib/sanitize-html";
 import { POLICY } from "@/lib/site";
 import styles from "./description.module.css";
 
@@ -68,8 +68,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalUrl = buildServedUrl(merchant, slug);
 
   const title = view.name ? `${view.name} | droplinked` : "Product | droplinked";
+  // Meta / og / twitter / JSON-LD descriptions are TEXT fields — the imported
+  // description is HTML, so flatten it to plain text (capped) or the raw markup
+  // leaks into search/social/GMC previews as literal tags.
   const description =
-    view.description ||
+    htmlToText(view.description, 300) ||
     `${view.name}${view.brandName ? ` by ${view.brandName}` : ""} — available on droplinked.`;
   const ogImage = view.images[0];
 
@@ -81,14 +84,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "website",
       url: canonicalUrl,
       title: data.openGraph["og:title"] || title,
-      description: data.openGraph["og:description"] || description,
+      description: htmlToText(data.openGraph["og:description"], 300) || description,
       siteName: data.openGraph["og:site_name"] || "droplinked",
       images: ogImage ? [{ url: ogImage, alt: view.name }] : [],
     },
     twitter: {
       card: "summary_large_image",
       title: data.openGraph["twitter:title"] || title,
-      description: data.openGraph["twitter:description"] || description,
+      description: htmlToText(data.openGraph["twitter:description"], 300) || description,
       images: ogImage ? [ogImage] : [],
     },
     robots: { index: true, follow: true },
@@ -127,7 +130,14 @@ export default async function ProductPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(data.jsonLd) }}
+        dangerouslySetInnerHTML={{
+          // JSON-LD description is a TEXT field — flatten the imported HTML so
+          // GMC/Googlebot reads a clean product description, not raw markup.
+          __html: JSON.stringify({
+            ...data.jsonLd,
+            description: htmlToText(data.jsonLd.description, 5000),
+          }),
+        }}
       />
 
       <main className="container mx-auto px-6 md:px-8 py-12 flex flex-col md:flex-row items-start gap-10 max-w-6xl">
