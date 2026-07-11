@@ -38,7 +38,9 @@ import {
   toProductView,
   buildServedUrl,
 } from "./lib/structured-data";
+import { sanitizeHtml } from "./lib/sanitize-html";
 import { POLICY } from "@/lib/site";
+import styles from "./description.module.css";
 
 // ISR — revalidate every 5 minutes.
 export const revalidate = 300;
@@ -195,11 +197,20 @@ export default async function ProductPage({ params }: PageProps) {
             </span>
           </div>
 
-          {view.description && (
-            <p className="text-base leading-relaxed text-ink-muted whitespace-pre-line">
-              {view.description}
-            </p>
-          )}
+          {(() => {
+            // Imported descriptions (e.g. Shopify `body_html`) are real HTML.
+            // Rendering the string as a JSX text node escaped it, so the raw
+            // tags showed as literal text. Render it as sanitized HTML instead,
+            // scoped-styled via the CSS module so headings/lists/images format.
+            const html = sanitizeHtml(view.description);
+            return html ? (
+              <div
+                className={`${styles.rich} text-ink-muted`}
+                data-testid="product-description"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            ) : null;
+          })()}
 
           {/* Buy / view CTA → the interactive product page (cart + checkout).
               Never links back to this same canonical URL (a review dead-end). */}
