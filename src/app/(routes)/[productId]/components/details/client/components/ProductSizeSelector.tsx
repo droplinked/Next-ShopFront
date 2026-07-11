@@ -21,8 +21,8 @@ function ProductSizeSelector() {
 
   const active = useCallback(
     (caption: string) =>
-      product?.skuIDs.find((el: any) =>
-        el.options.find((item: any) => item.variantID === variantIDs.color._id)
+      product?.skuIDs?.find((el: any) =>
+        el?.options?.find((item: any) => item.variantID === variantIDs.color._id)
       )
         ? match.includes(caption)
         : true,
