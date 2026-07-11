@@ -3,6 +3,14 @@ import { roboto } from "@/styles/fonts";
 export const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
 export const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 export const APP_DEVELOPMENT = process.env.NEXT_PUBLIC_APP_DEVELOPMENT === "true";
+/**
+ * Aggregate product catalog at the platform root (shop.droplinked.com/).
+ * Server-only flag (NOT NEXT_PUBLIC_) so it defaults OFF simply by being absent
+ * from an environment's ENV_FILE. Set ROOT_CATALOG_ENABLED=true in the dev
+ * ENV_FILE (shopdev) for preview; leave it unset on prod until sign-off, then
+ * flip it on via a one-line env change (reversible, no code revert).
+ */
+export const ROOT_CATALOG_ENABLED = process.env.ROOT_CATALOG_ENABLED === "true";
 export const variantIDs = { color: { _id: "62a989ab1f2c2bbc5b1e7153" }, size: { _id: "62a989e21f2c2bbc5b1e7154" } };
 export const app_vertical = "flex flex-col items-center justify-center";
 export const app_center = "flex items-center justify-center";

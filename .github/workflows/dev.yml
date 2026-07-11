@@ -58,6 +58,14 @@ jobs:
         # + deploy correlation.
         echo "SENTRY_RELEASE=${{ github.sha }}" >> .env
         echo "NEXT_PUBLIC_SENTRY_RELEASE=${{ github.sha }}" >> .env
+        # --- Aggregate root catalog: dev/shopdev preview 2026-07-11 ---
+        # Enable the SSR aggregate product catalog at the platform root on the
+        # dev environment only, pointed at the dev API host where the public
+        # marketplace endpoint is deployed. Prod (main.yml) leaves both unset →
+        # ROOT_CATALOG_ENABLED absent = OFF, so the prod root keeps redirecting
+        # to /home until an explicit prod enablement.
+        echo "ROOT_CATALOG_ENABLED=true" >> .env
+        echo "APIV3_BASE_URL=https://apiv3dev.droplinked.com" >> .env
     
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
