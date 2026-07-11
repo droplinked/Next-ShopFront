@@ -15,7 +15,12 @@ const cspReportOnly = [
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com",
     "font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com data:",
-    "img-src 'self' data: blob: https://upload-file-droplinked.s3.amazonaws.com https://upload-file-flatlay.s3.us-west-2.amazonaws.com https://files.cdn.printful.com https://*.cloudfront.net https://www.google-analytics.com",
+    // Aggregate storefront: product images come from ARBITRARY merchant CDNs
+    // (Shopify custom domains, retailer CDNs, etc.), so `img-src` must allow any
+    // https image host or imported products render as broken placeholders. Kept
+    // scheme-restricted to https (+ data:/blob: for inline). Non-image directives
+    // stay tight.
+    "img-src 'self' data: blob: https:",
     "connect-src 'self' https://apiv3.droplinked.com https://apiv3dev.droplinked.com https://tools.droplinked.com https://ipapi.co https://accept.paymob.com https://*.ingest.sentry.io https://www.google-analytics.com https://api.stripe.com",
     "frame-src 'self' https://accept.paymob.com https://js.stripe.com https://hooks.stripe.com",
     "frame-ancestors 'none'",
@@ -35,7 +40,14 @@ const nextConfig = {
     // fails at `COPY --from=builder /app/.next/standalone ./` (issue #38).
     output: 'standalone',
     images: {
+        // Aggregate storefront serves product images from ARBITRARY merchant
+        // CDNs (Shopify custom domains like theshoecircle.com, cdn.shopify.com,
+        // retailer CDNs). next/image REJECTS any host not listed here, which
+        // rendered every imported product image as a broken placeholder. Allow
+        // any https host so merchant images resolve; the droplinked S3 hosts are
+        // implicitly covered but kept explicit for intent.
         remotePatterns: [
+            { protocol: 'https', hostname: '**' },
             {
                 protocol: 'https',
                 hostname: 'upload-file-flatlay.s3.us-west-2.amazonaws.com',
