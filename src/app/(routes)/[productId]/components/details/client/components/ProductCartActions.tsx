@@ -5,7 +5,7 @@ import { useContext } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ProductContext } from '../context';
-import { BASE_API_URL, MOR_CHECKOUT_ENABLED } from '@/lib/variables/variables';
+import { MOR_CHECKOUT_ENABLED } from '@/lib/variables/variables';
 
 const ProductCartActions = () => {
   const {
@@ -45,8 +45,10 @@ const ProductCartActions = () => {
         const cartToken =
           globalThis.crypto?.randomUUID?.() ??
           `mor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const base = (BASE_API_URL || '').replace(/\/$/, '');
-        const res = await fetch(`${base}/mor-checkout/session`, {
+        // Same-origin proxy (BASE_API_URL is not inlined in the client bundle;
+        // the aggregate root has no x-shop-id). The /api route forwards to
+        // apiv3's public /mor-checkout/session server-side.
+        const res = await fetch(`/api/mor-checkout/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId, skuId: sku._id, quantity, cartToken }),
