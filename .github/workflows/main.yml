@@ -68,6 +68,7 @@ jobs:
         # prod API host. Revert this single line to fall back to the previous
         # behaviour (root redirects to /home).
         echo "NEXT_PUBLIC_ROOT_CATALOG_ENABLED=true" >> .env
+        echo "NEXT_PUBLIC_MOR_CHECKOUT_ENABLED=true" >> .env
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
