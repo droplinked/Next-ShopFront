@@ -13,6 +13,17 @@ export const APP_DEVELOPMENT = process.env.NEXT_PUBLIC_APP_DEVELOPMENT === "true
  */
 export const ROOT_CATALOG_ENABLED =
   process.env.NEXT_PUBLIC_ROOT_CATALOG_ENABLED === "true";
+
+/**
+ * Merchant-of-Record checkout for the aggregate storefront. When ON, the Buy
+ * button on an aggregate PDP routes through the backend `POST /mor-checkout/
+ * session` (droplinked's platform Stripe as MoR) → Stripe Checkout, instead of
+ * the shop-scoped cart (which the aggregate root has no shop context for).
+ * NEXT_PUBLIC_ so Next inlines it at build time. Default OFF — set
+ * NEXT_PUBLIC_MOR_CHECKOUT_ENABLED=true to enable (reversible, no code revert).
+ */
+export const MOR_CHECKOUT_ENABLED =
+  process.env.NEXT_PUBLIC_MOR_CHECKOUT_ENABLED === "true";
 export const variantIDs = { color: { _id: "62a989ab1f2c2bbc5b1e7153" }, size: { _id: "62a989e21f2c2bbc5b1e7154" } };
 export const app_vertical = "flex flex-col items-center justify-center";
 export const app_center = "flex items-center justify-center";
