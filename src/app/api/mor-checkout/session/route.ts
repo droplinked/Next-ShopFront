@@ -1,20 +1,23 @@
-import { BASE_API_URL } from '@/lib/variables/variables';
 import { NextResponse } from 'next/server';
 
 /**
  * Same-origin proxy for the public Merchant-of-Record checkout endpoint.
  *
  * The aggregate storefront root has no shop identity, so the client cannot call
- * apiv3 directly (`fetchInstance` throws without an x-shop-id, and
- * NEXT_PUBLIC_BASE_API_URL is not inlined in the client bundle). This route runs
- * SERVER-SIDE, where BASE_API_URL is set, and forwards to apiv3's PUBLIC
- * `/mor-checkout/session` (no x-shop-id). Mirrors `src/app/api/products/route.ts`.
+ * apiv3 directly (`fetchInstance` throws without an x-shop-id). This route runs
+ * SERVER-SIDE and forwards to apiv3's PUBLIC `/mor-checkout/session` (no
+ * x-shop-id). Uses the SAME apiv3 base as the working SSR product loader
+ * (`[productId]/lib/product-data.ts`): `APIV3_BASE_URL` env, defaulting to the
+ * prod host. (`NEXT_PUBLIC_BASE_API_URL` is intentionally unset here.)
  */
+const APIV3_BASE = (
+  process.env.APIV3_BASE_URL || 'https://apiv3.droplinked.com'
+).replace(/\/$/, '');
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const base = (BASE_API_URL || '').replace(/\/$/, '');
-    const res = await fetch(`${base}/mor-checkout/session`, {
+    const res = await fetch(`${APIV3_BASE}/mor-checkout/session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(body),
