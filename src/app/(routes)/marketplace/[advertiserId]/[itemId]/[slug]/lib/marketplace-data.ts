@@ -248,7 +248,10 @@ export async function fetchMarketplaceItem(
   let response: Response;
   try {
     response = await fetch(url, {
-      next: { revalidate: 300 },
+      // 1h cache — matches the page ISR window + the apiv3 endpoint's
+      // Cache-Control: max-age=3600. Cost guardrail: minimizes origin fetches
+      // as the marketplace corpus scales.
+      next: { revalidate: 3600 },
       headers: {
         Accept: "application/json",
         "User-Agent": `${SITE.name}-shopfront/1.0 (marketplace-pdp)`,
