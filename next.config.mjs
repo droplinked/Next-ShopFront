@@ -74,6 +74,25 @@ const nextConfig = {
                     },
                 ],
             },
+            {
+                // Affiliate marketplace PDPs are ISR (revalidate 1h) + change
+                // rarely (retailer feed refreshes nightly). Emit a PUBLIC,
+                // shared-cacheable header so a CDN / crawler cache can absorb
+                // repeat crawls instead of hitting origin every time — the cost
+                // guardrail as the corpus scales, and the prerequisite for
+                // fronting /marketplace/* with CloudFront (which honours
+                // s-maxage). stale-while-revalidate keeps it snappy across the
+                // revalidate boundary. Scoped to /marketplace/* ONLY — the rest
+                // of the storefront (cart/checkout/account) keeps its default
+                // no-cache behaviour.
+                source: '/marketplace/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+                    },
+                ],
+            },
         ];
     },
     webpack(config, options) {
