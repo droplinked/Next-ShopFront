@@ -109,10 +109,13 @@ export async function fetchMarketplaceCatalog(params?: {
 }): Promise<MarketplaceCatalog> {
   const page = params?.page ?? 1;
   const limit = params?.limit ?? 48;
-  const type = params?.type ?? "physical";
-  const url = `${APIV3_BASE}/product-v2/public/marketplace?page=${page}&limit=${limit}&type=${encodeURIComponent(
-    type,
-  )}`;
+  // No `type` → show ALL shoppable product types (physical + pod + digital).
+  // The MoR / GMC feed catalog is mostly `pod` (print-on-demand), so defaulting
+  // to `physical` hid it — the root grid must mirror the full approved catalog,
+  // not just physical goods. Callers can still pass an explicit type to narrow.
+  const type = params?.type;
+  const typeParam = type ? `&type=${encodeURIComponent(type)}` : "";
+  const url = `${APIV3_BASE}/product-v2/public/marketplace?page=${page}&limit=${limit}${typeParam}`;
 
   let response: Response;
   try {
