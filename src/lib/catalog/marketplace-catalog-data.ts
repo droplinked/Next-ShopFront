@@ -108,7 +108,9 @@ export async function fetchMarketplaceCatalog(params?: {
   type?: "physical" | "digital" | "pod";
 }): Promise<MarketplaceCatalog> {
   const page = params?.page ?? 1;
-  const limit = params?.limit ?? 48;
+  // Clamp to the apiv3 max (DTO @Max(100)): a limit >100 fails validation and
+  // the endpoint returns an empty grid, so never let a caller exceed it.
+  const limit = Math.min(params?.limit ?? 48, 100);
   // No `type` → show ALL shoppable product types (physical + pod + digital).
   // The MoR / GMC feed catalog is mostly `pod` (print-on-demand), so defaulting
   // to `physical` hid it — the root grid must mirror the full approved catalog,
