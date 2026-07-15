@@ -43,6 +43,10 @@ export default async function RootPage() {
     redirect("/home");
   }
 
-  const catalog = await fetchMarketplaceCatalog({ page: 1, limit: 48, type: "physical" });
+  // No `type` filter — show the full approved MoR/GMC catalog (physical + pod +
+  // digital). The feed is mostly `pod`, so filtering to physical showed almost
+  // nothing on the root grid. Limit high enough to surface the whole approved
+  // catalog on the single-page grid (no client pagination here).
+  const catalog = await fetchMarketplaceCatalog({ page: 1, limit: 200 });
   return <MarketplaceCatalog products={catalog.products} total={catalog.total} />;
 }
