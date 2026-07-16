@@ -23,10 +23,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { IProduct, ISku } from '@/types/interfaces/product/product';
 import { MOR_CHECKOUT_ENABLED, variantIDs } from '@/lib/variables/variables';
-import { POLICY } from '@/lib/site';
+import { POD_POLICY, POLICY } from '@/lib/site';
+import { isPodProduct } from '@/lib/pod';
 import useAppCart from '@/state/hooks/cart/useAppCart';
 import productClientModel from '../details/client/context/ProductOptionsModel';
 import productVariantsModel from '../details/client/components/model';
@@ -88,6 +90,12 @@ export default function PremiumDetails({
   }, [sku]);
 
   const price = sku?.price ?? product?.skuIDs?.[0]?.price ?? 0;
+
+  // POD (made to order via Printful): the trust surface must show Printful's
+  // made-to-order terms — no buyer's-remorse/size returns; damaged/misprinted/
+  // defective replaced when reported within POD_POLICY.claimWindowDays of
+  // delivery. Non-POD copy stays byte-identical.
+  const pod = isPodProduct(product);
 
   const buy = async () => {
     if (busy) return;
@@ -159,7 +167,7 @@ export default function PremiumDetails({
           ${Number(price).toFixed(2)}
         </span>
         <span className="text-xs text-neutral-500">
-          Free {POLICY.returnWindowDays}-day returns
+          {pod ? 'Made to order' : <>Free {POLICY.returnWindowDays}-day returns</>}
         </span>
       </div>
 
@@ -282,11 +290,26 @@ export default function PremiumDetails({
           and self-fail-open. */}
       <ProductPassport product={product} />
 
-      {/* Trust row — same POLICY source as the sitewide footer */}
-      <p className="mt-6 text-[12px] leading-5 text-neutral-500">
-        Secure checkout · {POLICY.returnWindowDays}-day returns · Made to order —
-        ships in {POLICY.handlingTimeDays}
-      </p>
+      {/* Trust row — same POLICY source as the sitewide footer. POD items
+          carry Printful's made-to-order terms instead of the return window. */}
+      {pod ? (
+        <p className="mt-6 text-[12px] leading-5 text-neutral-500">
+          Secure checkout · Made to order — ships in {POLICY.handlingTimeDays} ·
+          Damaged or misprinted? We&apos;ll replace it — report within{' '}
+          {POD_POLICY.claimWindowDays} days of delivery.{' '}
+          <Link
+            href="/returns-policy"
+            className="underline underline-offset-2 hover:text-neutral-900"
+          >
+            Return policy
+          </Link>
+        </p>
+      ) : (
+        <p className="mt-6 text-[12px] leading-5 text-neutral-500">
+          Secure checkout · {POLICY.returnWindowDays}-day returns · Made to order —
+          ships in {POLICY.handlingTimeDays}
+        </p>
+      )}
     </div>
   );
 }

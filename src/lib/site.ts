@@ -78,6 +78,24 @@ export const POLICY = {
   handlingTimeDays: "1–3 business days",
 } as const;
 
+/**
+ * Made-to-order (print-on-demand) terms. POD items are produced per order by
+ * the print partner (Printful), so they piggyback Printful's return terms
+ * instead of the standard {@link POLICY} return window: no returns for size
+ * changes or change of mind; damaged, misprinted, or defective items are
+ * replaced or refunded when reported within {@link POD_POLICY.claimWindowDays}
+ * days of delivery. Source: Printful Return Policy
+ * (https://www.printful.com/policies/returns, last updated 2022-06-03) —
+ * "Any claims for misprinted/damaged/defective items must be submitted within
+ * 30 days after the product has been received." EU nuance: per Article 16(c)
+ * of Directive 2011/83/EU the 14-day right of withdrawal may not be provided
+ * for goods made to the consumer's specifications or clearly personalized.
+ */
+export const POD_POLICY = {
+  /** Damaged / misprinted / defective claim window, in days from delivery. */
+  claimWindowDays: 30,
+} as const;
+
 /** Footer / policy navigation targets. Every href resolves to a real route. */
 export const POLICY_LINKS = [
   { label: "Shipping Policy", href: "/shipping-policy" },
