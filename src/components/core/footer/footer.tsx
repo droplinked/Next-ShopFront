@@ -109,10 +109,19 @@ const Footer = () => {
 
       <AppSeparator />
 
-      {/* Policy summary line — concrete, machine-readable trust terms */}
+      {/* Policy summary line — policy-NEUTRAL on returns. The catalog mixes
+          made-to-order (POD, Printful terms: defect claims within 30 days, no
+          remorse returns) with standard items ({POLICY.returnWindowDays}-day
+          window), so a sitewide "N-day returns" claim over-promises on POD
+          pages — the exact visible-copy inconsistency class flagged in the
+          GMC misrepresentation remediation. Per-item terms live on the PDP;
+          the footer links the policy instead of asserting a number. */}
       <AppTypography appClassName="text-foreground/40 font-normal text-xs">
-        Secure checkout · {POLICY.returnWindowDays}-day returns · Refunds to your{" "}
-        {POLICY.refundMethod} · Ships in {POLICY.handlingTimeDays}.
+        Secure checkout · Refunds to your {POLICY.refundMethod} · Ships in{" "}
+        {POLICY.handlingTimeDays} ·{" "}
+        <Link href="/returns-policy" className="underline underline-offset-2">
+          Return policy
+        </Link>
       </AppTypography>
 
       <section className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
