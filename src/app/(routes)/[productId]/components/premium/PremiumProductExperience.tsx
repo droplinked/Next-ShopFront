@@ -13,7 +13,8 @@
 
 import Link from 'next/link';
 import { inter } from '@/styles/fonts';
-import { POLICY } from '@/lib/site';
+import { POD_POLICY, POLICY } from '@/lib/site';
+import { isPodProduct } from '@/lib/pod';
 import type { IProduct } from '@/types/interfaces/product/product';
 import { sanitizeHtml } from '../../product/[slug]/lib/sanitize-html';
 import styles from '../../product/[slug]/description.module.css';
@@ -108,11 +109,24 @@ export default function PremiumProductExperience({
                     Every piece is made to order and ships in {POLICY.handlingTimeDays}{' '}
                     with tracking.
                   </p>
-                  <p>
-                    Returns are free within {POLICY.returnWindowDays} days of delivery —
-                    refunds go back to your {POLICY.refundMethod} within{' '}
-                    {POLICY.refundProcessingDays}.
-                  </p>
+                  {isPodProduct(product) ? (
+                    // POD (Printful) terms: made to order, so no size-change /
+                    // change-of-mind returns; damaged/misprinted/defective is
+                    // covered when reported within the claim window.
+                    <p>
+                      Each piece is printed just for you, so returns for size or
+                      change of mind aren&apos;t available. If your order arrives
+                      damaged, misprinted, or defective, contact us within{' '}
+                      {POD_POLICY.claimWindowDays} days of delivery — we&apos;ll
+                      replace it or refund you in full.
+                    </p>
+                  ) : (
+                    <p>
+                      Returns are free within {POLICY.returnWindowDays} days of delivery —
+                      refunds go back to your {POLICY.refundMethod} within{' '}
+                      {POLICY.refundProcessingDays}.
+                    </p>
+                  )}
                   <p className="text-[13px]">
                     <Link
                       href="/shipping-policy"
