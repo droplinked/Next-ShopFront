@@ -65,6 +65,17 @@ jobs:
         # ROOT_CATALOG_ENABLED absent = OFF, so the prod root keeps redirecting
         # to /home until an explicit prod enablement.
         echo "NEXT_PUBLIC_ROOT_CATALOG_ENABLED=true" >> .env
+        # --- Unified PDP + MoR checkout: dev preview 2026-07-15 ---
+        # UNIFIED_PDP: render the interactive product body (slider + Buy-now +
+        # description) on the SEO landing page /<merchant>/product/<slug> instead
+        # of the static teaser that bounced to /<productId>. MOR_CHECKOUT: route
+        # the aggregate-root Buy-now through the platform MoR Stripe session
+        # (POST /mor-checkout/session) — the aggregate root has no shop-scoped
+        # cart context, so the unified PDP's Buy only completes with this ON.
+        # Prod (main.yml) already has MOR_CHECKOUT on; UNIFIED_PDP stays OFF on
+        # prod until sign-off (this is the GMC-reinstatement landing page).
+        echo "NEXT_PUBLIC_UNIFIED_PDP_ENABLED=true" >> .env
+        echo "NEXT_PUBLIC_MOR_CHECKOUT_ENABLED=true" >> .env
         echo "APIV3_BASE_URL=https://apiv3dev.droplinked.com" >> .env
     
     - name: Build, tag, and push image to Amazon ECR
