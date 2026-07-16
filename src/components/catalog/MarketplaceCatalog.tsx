@@ -29,7 +29,7 @@ export default function MarketplaceCatalog({ products }: MarketplaceCatalogProps
         <header className="mb-8">
           <h1 className="text-2xl font-semibold md:text-3xl">Shop all products</h1>
           <p className="mt-2 max-w-2xl text-sm text-gray-600 md:text-base">
-            Discover physical products from brands and retailers across {SITE.name}.
+            Discover products from brands and retailers on {SITE.name}.
           </p>
         </header>
 

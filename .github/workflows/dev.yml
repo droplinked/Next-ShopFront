@@ -64,7 +64,7 @@ jobs:
         # marketplace endpoint is deployed. Prod (main.yml) leaves both unset →
         # ROOT_CATALOG_ENABLED absent = OFF, so the prod root keeps redirecting
         # to /home until an explicit prod enablement.
-        echo "ROOT_CATALOG_ENABLED=true" >> .env
+        echo "NEXT_PUBLIC_ROOT_CATALOG_ENABLED=true" >> .env
         echo "APIV3_BASE_URL=https://apiv3dev.droplinked.com" >> .env
     
     - name: Build, tag, and push image to Amazon ECR

@@ -62,6 +62,13 @@ jobs:
         # + deploy correlation.
         echo "SENTRY_RELEASE=${{ github.sha }}" >> .env
         echo "NEXT_PUBLIC_SENTRY_RELEASE=${{ github.sha }}" >> .env
+        # --- Aggregate root catalog: PROD enablement 2026-07-11 ---
+        # Serve the SSR aggregate product catalog at the platform root (/) on
+        # prod. APIV3_BASE_URL is intentionally left unset so it defaults to the
+        # prod API host. Revert this single line to fall back to the previous
+        # behaviour (root redirects to /home).
+        echo "NEXT_PUBLIC_ROOT_CATALOG_ENABLED=true" >> .env
+        echo "NEXT_PUBLIC_MOR_CHECKOUT_ENABLED=true" >> .env
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
