@@ -1,7 +1,7 @@
 import AppIcons from "@/assets/AppIcons";
 import DroplinkedLogo from "@/assets/icons/droplinked-logo.svg";
 import { AppSeparator, AppTypography } from "@/components/ui";
-import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SITE_PHONE_TEL, SOCIAL_LINKS } from "@/lib/site";
+import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SOCIAL_LINKS } from "@/lib/site";
 import Link from "next/link";
 import React from "react";
 
@@ -39,12 +39,6 @@ const Footer = () => {
               className="text-sm text-foreground/70 hover:text-foreground transition-colors"
             >
               {SITE.supportEmail}
-            </a>
-            <a
-              href={SITE_PHONE_TEL}
-              className="text-sm text-foreground/70 hover:text-foreground transition-colors"
-            >
-              {SITE.supportPhone}
             </a>
             <address className="text-sm not-italic text-foreground/70">
               {SITE_ADDRESS_LINE}

@@ -25,10 +25,9 @@ export const SITE = {
   /** One-line description of what the platform is (no placeholder copy). */
   tagline: "Powering the next generation of commerce.",
   description:
-    "droplinked is the commerce platform for modern brands and retailers — " +
-    "sell physical and digital products, reach new customers across AI " +
-    "shopping agents and affiliate networks, and get paid through the " +
-    "checkout and payment providers you already trust.",
+    "droplinked is the commerce platform for modern brands — sell physical " +
+    "and digital products, get found by AI shopping agents and affiliates, " +
+    "and get paid through providers you already trust.",
   /** Primary customer support channel. */
   supportEmail: "support@droplinked.com",
   /** Customer-service phone (matches Merchant Center → Business info contact). */
