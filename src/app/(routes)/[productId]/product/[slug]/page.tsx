@@ -40,6 +40,7 @@ import {
 } from "./lib/structured-data";
 import { sanitizeHtml, htmlToText } from "./lib/sanitize-html";
 import { POLICY } from "@/lib/site";
+import { titleCaseHandle } from "@/lib/utils/handle/handle";
 import { UNIFIED_PDP_ENABLED } from "@/lib/variables/variables";
 import { getInteractiveProduct } from "../../lib/product-data";
 import ProductExperience from "../../components/ProductExperience";
@@ -163,8 +164,10 @@ export default async function ProductPage({ params }: PageProps) {
         <ProductExperience
           product={interactiveProduct}
           // Brand context for the premium body's brand line + breadcrumb: the
-          // structured-data brand name, falling back to the merchant handle.
-          brand={{ name: view.brandName || merchant }}
+          // structured-data brand name, falling back to a display-cased merchant
+          // handle (raw slug `unstoppable` → `Unstoppable`). A real brandName is
+          // already display copy and is passed through untouched.
+          brand={{ name: view.brandName || titleCaseHandle(merchant) }}
         />
       </>
     );
