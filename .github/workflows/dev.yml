@@ -76,6 +76,11 @@ jobs:
         # prod until sign-off (this is the GMC-reinstatement landing page).
         echo "NEXT_PUBLIC_UNIFIED_PDP_ENABLED=true" >> .env
         echo "NEXT_PUBLIC_MOR_CHECKOUT_ENABLED=true" >> .env
+        # --- Premium PDP: dev preview 2026-07-16 ---
+        # Bloomingdale's-grade product body (breadcrumb, rail gallery, size
+        # pills, accordions, POD boilerplate stripped). Prod (main.yml) leaves
+        # it unset -> OFF until design sign-off on the dev preview.
+        echo "NEXT_PUBLIC_PREMIUM_PDP_ENABLED=true" >> .env
         echo "APIV3_BASE_URL=https://apiv3dev.droplinked.com" >> .env
     
     - name: Build, tag, and push image to Amazon ECR

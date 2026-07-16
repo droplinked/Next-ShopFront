@@ -39,6 +39,18 @@ export const MOR_CHECKOUT_ENABLED =
  */
 export const UNIFIED_PDP_ENABLED =
   process.env.NEXT_PUBLIC_UNIFIED_PDP_ENABLED === "true";
+
+/**
+ * Premium PDP: render the Bloomingdale's-grade product body (breadcrumb,
+ * thumbnail-rail gallery, size pill grid, detail accordions, POD boilerplate
+ * stripped, size charts relocated behind "Size guide") instead of the legacy
+ * interactive body. Applies wherever ProductExperience renders (id route +
+ * unified slug route). NEXT_PUBLIC_ so Next inlines it at build time. Default
+ * OFF — set NEXT_PUBLIC_PREMIUM_PDP_ENABLED=true to enable (reversible, no
+ * code revert).
+ */
+export const PREMIUM_PDP_ENABLED =
+  process.env.NEXT_PUBLIC_PREMIUM_PDP_ENABLED === "true";
 export const variantIDs = { color: { _id: "62a989ab1f2c2bbc5b1e7153" }, size: { _id: "62a989e21f2c2bbc5b1e7154" } };
 export const app_vertical = "flex flex-col items-center justify-center";
 export const app_center = "flex items-center justify-center";

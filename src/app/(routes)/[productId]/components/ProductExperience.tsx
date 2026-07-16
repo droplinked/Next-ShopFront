@@ -25,11 +25,29 @@
 
 import { AppSeparator } from '@/components/ui';
 import type { IProduct } from '@/types/interfaces/product/product';
+import { PREMIUM_PDP_ENABLED } from '@/lib/variables/variables';
 import ProductSlider from './ProductSlider';
 import ProductDetails from './details/ProductDetails';
 import ProductDescription from './ProductDescription';
+import PremiumProductExperience, {
+  type PremiumBrand,
+} from './premium/PremiumProductExperience';
 
-export default function ProductExperience({ product }: { product: IProduct }) {
+export default function ProductExperience({
+  product,
+  brand,
+}: {
+  product: IProduct;
+  /** Optional brand context (slug route knows the merchant; id route may not). */
+  brand?: PremiumBrand;
+}) {
+  // Premium body (flag-gated): Bloomingdale's-grade composition — breadcrumb,
+  // thumbnail-rail gallery, pill sizes, accordions, POD boilerplate stripped.
+  // OFF → the legacy body below stays byte-identical.
+  if (PREMIUM_PDP_ENABLED) {
+    return <PremiumProductExperience product={product} brand={brand} />;
+  }
+
   return (
     <main className="container px-8 flex items-start md:flex-row flex-col justify-center w-full gap-12 mt-20">
       <div className="min-w-full md:min-w-[40%] md:sticky left-0 top-24">
