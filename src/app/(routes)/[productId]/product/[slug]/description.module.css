@@ -1,0 +1,91 @@
+/**
+ * Scoped formatting for imported product descriptions rendered as HTML.
+ *
+ * The repo has no Tailwind typography (`prose`) plugin, and Tailwind's base
+ * reset strips margins/weights/list markers from raw tags — so the imported
+ * `<h2>/<p>/<ul>/<img>` HTML would render flat. These descendant rules restyle
+ * the rendered markup. CSS-module hashing applies to `.rich` only; the tag
+ * selectors below scope to that wrapper, so nothing else on the page shifts.
+ */
+
+.rich {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.rich h1,
+.rich h2,
+.rich h3,
+.rich h4 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.25em 0 0.5em;
+}
+.rich h1 { font-size: 1.5rem; }
+.rich h2 { font-size: 1.25rem; }
+.rich h3 { font-size: 1.1rem; }
+.rich h4 { font-size: 1rem; }
+
+/* First heading shouldn't push a big gap at the top of the block. */
+.rich > :first-child {
+  margin-top: 0;
+}
+
+.rich p {
+  margin: 0 0 1em;
+}
+
+.rich strong,
+.rich b {
+  font-weight: 600;
+}
+
+.rich em,
+.rich i {
+  font-style: italic;
+}
+
+.rich a {
+  color: rgb(16 185 129); /* mint-500, matches the CTA */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich ul,
+.rich ol {
+  margin: 0 0 1em;
+  padding-left: 1.5rem;
+}
+.rich ul { list-style: disc; }
+.rich ol { list-style: decimal; }
+.rich li { margin: 0.25em 0; }
+
+.rich img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.75em 0;
+  border-radius: 6px;
+}
+
+.rich table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1em;
+  display: block;
+  overflow-x: auto;
+}
+.rich th,
+.rich td {
+  border: 1px solid rgb(0 0 0 / 0.1);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.rich hr {
+  border: 0;
+  border-top: 1px solid rgb(0 0 0 / 0.1);
+  margin: 1.25em 0;
+}

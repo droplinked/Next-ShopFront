@@ -15,7 +15,12 @@ const cspReportOnly = [
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com",
     "font-src 'self' https://fonts.gstatic.com https://fonts.cdnfonts.com data:",
-    "img-src 'self' data: blob: https://upload-file-droplinked.s3.amazonaws.com https://upload-file-flatlay.s3.us-west-2.amazonaws.com https://files.cdn.printful.com https://*.cloudfront.net https://www.google-analytics.com",
+    // Aggregate storefront: product images come from ARBITRARY merchant CDNs
+    // (Shopify custom domains, retailer CDNs, etc.), so `img-src` must allow any
+    // https image host or imported products render as broken placeholders. Kept
+    // scheme-restricted to https (+ data:/blob: for inline). Non-image directives
+    // stay tight.
+    "img-src 'self' data: blob: https:",
     "connect-src 'self' https://apiv3.droplinked.com https://apiv3dev.droplinked.com https://tools.droplinked.com https://ipapi.co https://accept.paymob.com https://*.ingest.sentry.io https://www.google-analytics.com https://api.stripe.com",
     "frame-src 'self' https://accept.paymob.com https://js.stripe.com https://hooks.stripe.com",
     "frame-ancestors 'none'",
@@ -35,6 +40,18 @@ const nextConfig = {
     // fails at `COPY --from=builder /app/.next/standalone ./` (issue #38).
     output: 'standalone',
     images: {
+        // Aggregate storefront serves product images from ARBITRARY merchant
+        // CDNs (Shopify custom domains like theshoecircle.com, cdn.shopify.com,
+        // retailer CDNs). The Next image OPTIMIZER rejects any host not in
+        // `remotePatterns` with HTTP 400 — and a bare `hostname: '**'` does NOT
+        // match apex merchant domains in Next 15, so every imported product image
+        // (main via AppMagnifier + thumbnails, both `next/image`) rendered as a
+        // broken placeholder. Disable the optimizer so `next/image` emits the raw
+        // <img> with the original merchant URL — the source CDNs (Shopify etc.)
+        // already serve optimized images, so we lose little and unblock all hosts.
+        // (Follow-up option: a custom loader / SSRF-guarded /img proxy to
+        // re-enable optimization for third-party hosts.)
+        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',
@@ -54,6 +71,25 @@ const nextConfig = {
                     {
                         key: 'Content-Security-Policy-Report-Only',
                         value: cspReportOnly,
+                    },
+                ],
+            },
+            {
+                // Affiliate marketplace PDPs are ISR (revalidate 1h) + change
+                // rarely (retailer feed refreshes nightly). Emit a PUBLIC,
+                // shared-cacheable header so a CDN / crawler cache can absorb
+                // repeat crawls instead of hitting origin every time — the cost
+                // guardrail as the corpus scales, and the prerequisite for
+                // fronting /marketplace/* with CloudFront (which honours
+                // s-maxage). stale-while-revalidate keeps it snappy across the
+                // revalidate boundary. Scoped to /marketplace/* ONLY — the rest
+                // of the storefront (cart/checkout/account) keeps its default
+                // no-cache behaviour.
+                source: '/marketplace/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, s-maxage=3600, stale-while-revalidate=86400',
                     },
                 ],
             },
