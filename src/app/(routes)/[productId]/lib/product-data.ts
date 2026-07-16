@@ -47,8 +47,9 @@ import {
 } from '@/types/interfaces/product/product';
 
 /** apiv3 base — overridable for dev/preview; defaults to the prod API host. */
+const APIV3_PROD = 'https://apiv3.droplinked.com';
 const APIV3_BASE = (
-  process.env.APIV3_BASE_URL || 'https://apiv3.droplinked.com'
+  process.env.APIV3_BASE_URL || APIV3_PROD
 ).replace(/\/+$/, '');
 
 // ---- subset of the apiv3 product-v2 payload we consume -------------------
@@ -173,8 +174,11 @@ export function adaptProductV2ToLegacy(v2: V2Product): IProduct {
 
 // ---- fetch (never throws) ------------------------------------------------
 
-async function fetchPublicProductV2(productId: string): Promise<V2Product | null> {
-  const url = `${APIV3_BASE}/product-v2/public/${encodeURIComponent(productId)}`;
+async function fetchPublicProductV2(
+  productId: string,
+  base: string = APIV3_BASE,
+): Promise<V2Product | null> {
+  const url = `${base}/product-v2/public/${encodeURIComponent(productId)}`;
   let response: Response;
   try {
     response = await fetch(url, {
@@ -207,19 +211,41 @@ async function fetchPublicProductV2(productId: string): Promise<V2Product | null
 }
 
 /**
+ * A product is SELLABLE when it carries at least one SKU — that's what the
+ * interactive body needs to render price / variants / Buy. A source can
+ * legitimately return a product-shaped object with ZERO skus (observed on the
+ * dev env: the shop-scoped legacy endpoint holds a partial copy of a prod
+ * product — title only, no skus/media). Accepting such a payload renders an
+ * empty buy page (no price, no size, no images) and poisons the ISR cache for
+ * 5 minutes, so sources that answer but aren't sellable only WIN if nothing
+ * better exists.
+ */
+function isSellable(p: IProduct | null | undefined): boolean {
+  return !!p && Array.isArray(p.skuIDs) && p.skuIDs.length > 0;
+}
+
+/**
  * Resolve the interactive PDP product, fail-open. Tries the legacy shop-scoped
  * endpoint first (single-shop deployments), then the public cross-shop
- * product-v2 endpoint (aggregate root). Returns a legacy-shaped IProduct, or
- * null when the product cannot be resolved anywhere → page calls notFound().
- * NEVER throws.
+ * product-v2 endpoint (aggregate root). The FIRST SELLABLE result wins;
+ * sku-less partials are kept only as a last resort so the page still renders
+ * something identifiable. Returns null when no source knows the product →
+ * page calls notFound(). NEVER throws.
  */
 export async function getInteractiveProduct(productId: string): Promise<IProduct | null> {
+  // Best non-sellable answer seen so far (title-only partials etc.).
+  let partial: IProduct | null = null;
+
   // 1. Legacy shop-scoped endpoint. On the aggregate root this throws
-  //    "Unauthorized!" (no x-shop-id) — swallow and fall through.
+  //    "Unauthorized!" (no x-shop-id) — swallow and fall through. On dev this
+  //    endpoint can answer with a PARTIAL product (no skus) — do not let it
+  //    shadow the full payload from the sources below.
   try {
     const legacy = await fetchInstance(`products/${productId}`);
     if (legacy && typeof legacy === 'object' && Array.isArray((legacy as IProduct).skuIDs)) {
-      return legacy as IProduct;
+      const p = legacy as IProduct;
+      if (isSellable(p)) return p;
+      partial = partial ?? p;
     }
   } catch {
     /* no shop identity on the aggregate root, or route/product missing */
@@ -227,7 +253,29 @@ export async function getInteractiveProduct(productId: string): Promise<IProduct
 
   // 2. Public cross-shop product-v2 endpoint (no auth), adapted to legacy shape.
   const v2 = await fetchPublicProductV2(productId);
-  if (v2) return adaptProductV2ToLegacy(v2);
+  if (v2) {
+    const p = adaptProductV2ToLegacy(v2);
+    if (isSellable(p)) return p;
+    partial = partial ?? p;
+  }
 
-  return null;
+  // 3. Dev-preview cross-host fallback. The per-product SEO landing page sources
+  //    its structured-data from PROD apiv3 (hardcoded in structured-data.ts), so
+  //    on a dev deploy (APIV3_BASE_URL=apiv3dev) a PROD-only product 404s on the
+  //    dev host above and the unified PDP would fail open to the static teaser —
+  //    making the feature un-previewable on dev. Retry against PROD so the dev
+  //    preview can render prod products' interactive body. No-op on prod, where
+  //    APIV3_BASE already IS prod (the two are equal → skipped). Still fail-open.
+  if (APIV3_BASE !== APIV3_PROD) {
+    const prodV2 = await fetchPublicProductV2(productId, APIV3_PROD);
+    if (prodV2) {
+      const p = adaptProductV2ToLegacy(prodV2);
+      if (isSellable(p)) return p;
+      partial = partial ?? p;
+    }
+  }
+
+  // Nothing sellable anywhere — render the best partial rather than a 404
+  // (the product exists; it just has no purchasable variants right now).
+  return partial;
 }
