@@ -78,6 +78,13 @@ jobs:
         # GMC landing-page check. Revert this single line to fall back to the
         # static teaser (reversible, no code revert).
         echo "NEXT_PUBLIC_UNIFIED_PDP_ENABLED=true" >> .env
+        # --- Premium PDP: PROD enablement 2026-07-16 ---
+        # Render the Bloomingdale's-grade product body (breadcrumb, rail
+        # gallery, size pills, accordions, POD boilerplate stripped) on both
+        # the id route and the unified slug route. Verified on the dev preview
+        # first. Flag OFF -> the legacy interactive body is byte-identical, so
+        # this is fully reversible by removing this single line.
+        echo "NEXT_PUBLIC_PREMIUM_PDP_ENABLED=true" >> .env
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
