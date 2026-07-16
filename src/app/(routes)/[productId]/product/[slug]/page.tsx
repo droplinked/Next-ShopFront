@@ -160,7 +160,12 @@ export default async function ProductPage({ params }: PageProps) {
     return (
       <>
         {jsonLdScript}
-        <ProductExperience product={interactiveProduct} />
+        <ProductExperience
+          product={interactiveProduct}
+          // Brand context for the premium body's brand line + breadcrumb: the
+          // structured-data brand name, falling back to the merchant handle.
+          brand={{ name: view.brandName || merchant }}
+        />
       </>
     );
   }
