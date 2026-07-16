@@ -271,13 +271,14 @@ export default function PremiumDetails({
         {MOR_CHECKOUT_ENABLED ? 'Buy now' : 'Add to bag'}
       </button>
 
-      {/* Differentiator, demoted from a co-equal button to an affordance */}
-      <p className="mt-3 text-center text-[12px] text-neutral-500">
-        Own the design?{' '}
-        <span className="cursor-pointer underline underline-offset-2 hover:text-neutral-900">
-          Mint it to merch
-        </span>
-      </p>
+      {/* Phase 0 (product-passport strategy 2026-07-16): the authenticity slot
+          under the CTA is intentionally EMPTY, not a "Mint it to merch" link.
+          "Mint to Merch" is a CREATOR mechanism (upload artwork → mint a POD
+          design) and belongs on a creator surface, not dressed up as an
+          ownership/provenance affordance on a buy page. This slot is reserved
+          for the conditional onchain product-passport / authenticity module
+          (VerifiedOnchainBadge + dpp/proof:gtin) — rendered only when a
+          confirmed onchain record exists for the item. */}
 
       {/* Trust row — same POLICY source as the sitewide footer */}
       <p className="mt-6 text-[12px] leading-5 text-neutral-500">
