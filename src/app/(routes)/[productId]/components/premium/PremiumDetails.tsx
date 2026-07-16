@@ -30,6 +30,7 @@ import { POLICY } from '@/lib/site';
 import useAppCart from '@/state/hooks/cart/useAppCart';
 import productClientModel from '../details/client/context/ProductOptionsModel';
 import productVariantsModel from '../details/client/components/model';
+import ProductPassport from './ProductPassport';
 
 const numericSize = (caption: string) => {
   const m = String(caption ?? '').match(/[\d.]+/);
@@ -271,14 +272,15 @@ export default function PremiumDetails({
         {MOR_CHECKOUT_ENABLED ? 'Buy now' : 'Add to bag'}
       </button>
 
-      {/* Phase 0 (product-passport strategy 2026-07-16): the authenticity slot
-          under the CTA is intentionally EMPTY, not a "Mint it to merch" link.
-          "Mint to Merch" is a CREATOR mechanism (upload artwork → mint a POD
-          design) and belongs on a creator surface, not dressed up as an
-          ownership/provenance affordance on a buy page. This slot is reserved
-          for the conditional onchain product-passport / authenticity module
-          (VerifiedOnchainBadge + dpp/proof:gtin) — rendered only when a
-          confirmed onchain record exists for the item. */}
+      {/* Authenticity slot (product-passport strategy 2026-07-16). NOT a
+          "Mint it to merch" link — "Mint to Merch" is a CREATOR mechanism and
+          belongs on a creator surface, not dressed up as a provenance affordance
+          on a buy page. This is the conditional onchain product-passport module
+          (Phase 1): flag-gated (NEXT_PUBLIC_PDP_PASSPORT_ENABLED), read-only,
+          and it renders NOTHING unless a CONFIRMED onchain DPP proof exists for
+          the item (never on pending/simulated) — so it is invisible by default
+          and self-fail-open. */}
+      <ProductPassport product={product} />
 
       {/* Trust row — same POLICY source as the sitewide footer */}
       <p className="mt-6 text-[12px] leading-5 text-neutral-500">

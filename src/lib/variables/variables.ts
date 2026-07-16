@@ -51,6 +51,20 @@ export const UNIFIED_PDP_ENABLED =
  */
 export const PREMIUM_PDP_ENABLED =
   process.env.NEXT_PUBLIC_PREMIUM_PDP_ENABLED === "true";
+
+/**
+ * PDP product passport (Phase 1): render the conditional onchain-authenticity
+ * module in the premium PDP's reserved authenticity slot (below the CTA). When
+ * ON, the module reads the public DPP proof (`GET apiv3/dpp/proof/:gtin`) for
+ * the item and renders a quiet badge + passport panel ONLY when a CONFIRMED
+ * onchain proof exists (never on pending/simulated); no proof → renders
+ * nothing. Read-only, no wallet gate; fail-open (any fetch error → nothing).
+ * NEXT_PUBLIC_ so Next inlines it at build time (standalone runner carries no
+ * .env). Default OFF — set NEXT_PUBLIC_PDP_PASSPORT_ENABLED=true to enable
+ * (reversible, no code revert). See product-passport-platform-strategy-2026-07-16.
+ */
+export const PDP_PASSPORT_ENABLED =
+  process.env.NEXT_PUBLIC_PDP_PASSPORT_ENABLED === "true";
 export const variantIDs = { color: { _id: "62a989ab1f2c2bbc5b1e7153" }, size: { _id: "62a989e21f2c2bbc5b1e7154" } };
 export const app_vertical = "flex flex-col items-center justify-center";
 export const app_center = "flex items-center justify-center";
