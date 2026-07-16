@@ -47,8 +47,9 @@ import {
 } from '@/types/interfaces/product/product';
 
 /** apiv3 base — overridable for dev/preview; defaults to the prod API host. */
+const APIV3_PROD = 'https://apiv3.droplinked.com';
 const APIV3_BASE = (
-  process.env.APIV3_BASE_URL || 'https://apiv3.droplinked.com'
+  process.env.APIV3_BASE_URL || APIV3_PROD
 ).replace(/\/+$/, '');
 
 // ---- subset of the apiv3 product-v2 payload we consume -------------------
@@ -173,8 +174,11 @@ export function adaptProductV2ToLegacy(v2: V2Product): IProduct {
 
 // ---- fetch (never throws) ------------------------------------------------
 
-async function fetchPublicProductV2(productId: string): Promise<V2Product | null> {
-  const url = `${APIV3_BASE}/product-v2/public/${encodeURIComponent(productId)}`;
+async function fetchPublicProductV2(
+  productId: string,
+  base: string = APIV3_BASE,
+): Promise<V2Product | null> {
+  const url = `${base}/product-v2/public/${encodeURIComponent(productId)}`;
   let response: Response;
   try {
     response = await fetch(url, {
@@ -228,6 +232,18 @@ export async function getInteractiveProduct(productId: string): Promise<IProduct
   // 2. Public cross-shop product-v2 endpoint (no auth), adapted to legacy shape.
   const v2 = await fetchPublicProductV2(productId);
   if (v2) return adaptProductV2ToLegacy(v2);
+
+  // 3. Dev-preview cross-host fallback. The per-product SEO landing page sources
+  //    its structured-data from PROD apiv3 (hardcoded in structured-data.ts), so
+  //    on a dev deploy (APIV3_BASE_URL=apiv3dev) a PROD-only product 404s on the
+  //    dev host above and the unified PDP would fail open to the static teaser —
+  //    making the feature un-previewable on dev. Retry against PROD so the dev
+  //    preview can render prod products' interactive body. No-op on prod, where
+  //    APIV3_BASE already IS prod (the two are equal → skipped). Still fail-open.
+  if (APIV3_BASE !== APIV3_PROD) {
+    const prodV2 = await fetchPublicProductV2(productId, APIV3_PROD);
+    if (prodV2) return adaptProductV2ToLegacy(prodV2);
+  }
 
   return null;
 }
