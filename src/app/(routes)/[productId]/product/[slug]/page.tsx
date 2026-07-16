@@ -40,6 +40,9 @@ import {
 } from "./lib/structured-data";
 import { sanitizeHtml, htmlToText } from "./lib/sanitize-html";
 import { POLICY } from "@/lib/site";
+import { UNIFIED_PDP_ENABLED } from "@/lib/variables/variables";
+import { getInteractiveProduct } from "../../lib/product-data";
+import ProductExperience from "../../components/ProductExperience";
 import styles from "./description.module.css";
 
 // ISR — revalidate every 5 minutes.
@@ -122,23 +125,49 @@ export default async function ProductPage({ params }: PageProps) {
   // structured-data payload carried no product id.
   const purchaseUrl = data.productId ? `/${data.productId}` : view.canonicalUrl;
 
+  // ── Unified PDP ────────────────────────────────────────────────────────
+  // When enabled, resolve the SAME rich interactive product the /<productId>
+  // route uses and render the shared transactional body IN PLACE — so this
+  // GMC-registered landing URL becomes buy-in-place (no bounce) and shares the
+  // rich media (fixes the sparse structured-data thumbnails). Fail-open: any
+  // miss (flag off, no productId, loader null) falls back to the static teaser
+  // below, so the landing page never regresses to content-less for GMC.
+  const interactiveProduct =
+    UNIFIED_PDP_ENABLED && data.productId
+      ? await getInteractiveProduct(data.productId)
+      : null;
+
+  // Schema.org Product JSON-LD — host-normalised to shop.droplinked.com. This
+  // is what Googlebot / GMC's landing-page check reads to match the feed item.
+  // Emitted in BOTH branches (interactive + teaser) so crawlability is
+  // identical regardless of the rendered body. Inline per App Router convention.
+  const jsonLdScript = (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{
+        // JSON-LD description is a TEXT field — flatten the imported HTML so
+        // GMC/Googlebot reads a clean product description, not raw markup.
+        __html: JSON.stringify({
+          ...data.jsonLd,
+          description: htmlToText(data.jsonLd.description, 5000),
+        }),
+      }}
+    />
+  );
+
+  if (interactiveProduct) {
+    return (
+      <>
+        {jsonLdScript}
+        <ProductExperience product={interactiveProduct} />
+      </>
+    );
+  }
+
   return (
     <>
-      {/* Schema.org Product JSON-LD — host-normalised to shop.droplinked.com.
-          This is what Googlebot / GMC's landing-page check reads to match
-          the feed item. Inline per Next.js App Router convention. */}
-      <script
-        type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{
-          // JSON-LD description is a TEXT field — flatten the imported HTML so
-          // GMC/Googlebot reads a clean product description, not raw markup.
-          __html: JSON.stringify({
-            ...data.jsonLd,
-            description: htmlToText(data.jsonLd.description, 5000),
-          }),
-        }}
-      />
+      {jsonLdScript}
 
       <main className="container mx-auto px-6 md:px-8 py-12 flex flex-col md:flex-row items-start gap-10 max-w-6xl">
         {/* ── media column ── */}
