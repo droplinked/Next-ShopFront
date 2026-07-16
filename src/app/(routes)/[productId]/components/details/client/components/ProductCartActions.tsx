@@ -10,6 +10,7 @@ import { MOR_CHECKOUT_ENABLED } from '@/lib/variables/variables';
 const ProductCartActions = () => {
   const {
     states: {
+      product,
       sku,
       option: { quantity },
     },
@@ -39,8 +40,16 @@ const ProductCartActions = () => {
     e.preventDefault();
     return toast.promise(
       async () => {
+        // The product ObjectId must come from the product CONTEXT, not the URL:
+        // on the unified SEO landing route /<merchant>/product/<slug> the first
+        // URL segment (folder-named [productId]) carries the MERCHANT handle,
+        // so params.productId would send e.g. "unstoppable" and the backend DTO
+        // rejects it ("productId must be a mongodb id"). The context product is
+        // authoritative on both routes; keep the URL param only as a fallback
+        // for the id-route while context hydrates.
         const raw = params?.productId;
-        const productId = Array.isArray(raw) ? raw[0] : raw;
+        const fromUrl = Array.isArray(raw) ? raw[0] : raw;
+        const productId = product?._id || fromUrl;
         if (!productId || !sku?._id) throw new Error('Missing product or variant');
         const cartToken =
           globalThis.crypto?.randomUUID?.() ??
