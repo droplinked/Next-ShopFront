@@ -106,8 +106,8 @@ export default function PremiumProductExperience({
               <AccordionItem title="Shipping & returns">
                 <div className="flex flex-col gap-2 text-[14px] leading-6 text-neutral-600">
                   <p>
-                    Every piece is made to order and ships in {POLICY.handlingTimeDays}{' '}
-                    with tracking.
+                    {isPodProduct(product) ? 'Made to order and ships' : 'Ships'} in{' '}
+                    {POLICY.handlingTimeDays} with tracking.
                   </p>
                   {isPodProduct(product) ? (
                     // POD (Printful) terms: made to order, so no size-change /
