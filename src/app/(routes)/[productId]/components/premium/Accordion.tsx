@@ -10,7 +10,7 @@
  * HTML; only the open/close toggle is client behavior).
  */
 
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 
 export function AccordionItem({
   title,
@@ -22,13 +22,15 @@ export function AccordionItem({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const panelId = useId();
   return (
     <div className="border-b border-neutral-200">
       <button
         type="button"
         aria-expanded={open}
+        aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between py-4 text-left"
+        className="flex w-full items-center justify-between py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
       >
         <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-neutral-900">
           {title}
@@ -51,7 +53,9 @@ export function AccordionItem({
         </svg>
       </button>
       {/* Keep content mounted (SEO/agents read it; toggle is display-only). */}
-      <div className={open ? 'pb-5' : 'hidden'}>{children}</div>
+      <div id={panelId} role="region" aria-label={title} className={open ? 'pb-5' : 'hidden'}>
+        {children}
+      </div>
     </div>
   );
 }

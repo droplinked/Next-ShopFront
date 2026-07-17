@@ -178,15 +178,16 @@ export default function PremiumDetails({
             <span className="font-semibold">Color</span>
             {option.color && <span className="text-neutral-500"> — {option.color}</span>}
           </p>
-          <div className="mt-2.5 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-2" role="group" aria-label="Color">
             {colors.map((c) => (
               <button
                 key={c.caption}
                 type="button"
+                title={c.caption}
                 aria-label={`Color ${c.caption}`}
                 aria-pressed={option.color === c.caption}
                 onClick={() => setOption((prev) => ({ ...prev, color: c.caption }))}
-                className={`h-9 w-9 rounded-full border border-neutral-300 transition-shadow ${
+                className={`h-9 w-9 rounded-full border border-neutral-300 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 ${
                   option.color === c.caption
                     ? 'ring-1 ring-neutral-900 ring-offset-2'
                     : 'hover:ring-1 hover:ring-neutral-400 hover:ring-offset-2'
@@ -219,7 +220,7 @@ export default function PremiumDetails({
               Size guide
             </a>
           </div>
-          <div className="mt-2.5 grid grid-cols-5 gap-2 sm:grid-cols-6">
+          <div className="mt-2.5 grid grid-cols-5 gap-2 sm:grid-cols-6" role="group" aria-label="Size">
             {sizes.map((s) => {
               const selected = option.size === s.caption;
               const available = sizeAvailable(s.caption);
@@ -230,7 +231,7 @@ export default function PremiumDetails({
                   disabled={!available}
                   aria-pressed={selected}
                   onClick={() => setOption((prev) => ({ ...prev, size: s.caption }))}
-                  className={`h-10 rounded-sm border text-[13px] transition-colors ${
+                  className={`h-10 rounded-sm border text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 ${
                     selected
                       ? 'border-neutral-900 bg-neutral-900 text-white'
                       : available
@@ -248,22 +249,34 @@ export default function PremiumDetails({
 
       {/* Quantity — deliberately quiet */}
       <div className="mt-7 flex items-center gap-4">
-        <p className="text-[13px] font-semibold text-neutral-900">Quantity</p>
-        <div className="flex h-9 items-center rounded-sm border border-neutral-300">
+        <p className="text-[13px] font-semibold text-neutral-900" id="premium-qty-label">
+          Quantity
+        </p>
+        <div
+          className="flex h-9 items-center rounded-sm border border-neutral-300"
+          role="group"
+          aria-labelledby="premium-qty-label"
+        >
           <button
             type="button"
             aria-label="Decrease quantity"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="w-9 text-neutral-500 hover:text-neutral-900"
+            className="w-9 text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900"
           >
             −
           </button>
-          <span className="w-8 text-center text-[13px] tabular-nums">{quantity}</span>
+          <span
+            className="w-8 text-center text-[13px] tabular-nums"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {quantity}
+          </span>
           <button
             type="button"
             aria-label="Increase quantity"
             onClick={() => setQuantity((q) => Math.min(99, q + 1))}
-            className="w-9 text-neutral-500 hover:text-neutral-900"
+            className="w-9 text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900"
           >
             +
           </button>
@@ -275,9 +288,16 @@ export default function PremiumDetails({
         type="button"
         onClick={buy}
         disabled={busy}
-        className="mt-8 h-12 w-full rounded-sm bg-neutral-900 text-[13px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-neutral-700 disabled:opacity-60"
+        aria-busy={busy}
+        className="mt-8 h-12 w-full rounded-sm bg-neutral-900 text-[13px] font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 disabled:opacity-60"
       >
-        {MOR_CHECKOUT_ENABLED ? 'Buy now' : 'Add to bag'}
+        {busy
+          ? MOR_CHECKOUT_ENABLED
+            ? 'Starting checkout…'
+            : 'Adding…'
+          : MOR_CHECKOUT_ENABLED
+            ? 'Buy now'
+            : 'Add to bag'}
       </button>
 
       {/* Authenticity slot (product-passport strategy 2026-07-16). NOT a
@@ -306,8 +326,8 @@ export default function PremiumDetails({
         </p>
       ) : (
         <p className="mt-6 text-[12px] leading-5 text-neutral-500">
-          Secure checkout · {POLICY.returnWindowDays}-day returns · Made to order —
-          ships in {POLICY.handlingTimeDays}
+          Secure checkout · {POLICY.returnWindowDays}-day returns · Ships in{' '}
+          {POLICY.handlingTimeDays}
         </p>
       )}
     </div>

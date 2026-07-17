@@ -51,7 +51,7 @@ export default function MediaGallery({
               type="button"
               aria-label={`View image ${i + 1}`}
               onClick={() => setCurrent(m.url)}
-              className={`relative h-16 w-16 overflow-hidden rounded-sm bg-neutral-50 transition-shadow ${
+              className={`relative h-16 w-16 overflow-hidden rounded-sm bg-neutral-50 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 ${
                 current === m.url
                   ? 'ring-1 ring-neutral-900'
                   : 'ring-1 ring-transparent hover:ring-neutral-300'
@@ -74,7 +74,7 @@ export default function MediaGallery({
         type="button"
         aria-label="Open image gallery"
         onClick={() => setLightboxOpen(true)}
-        className="relative aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-sm bg-neutral-50"
+        className="relative aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-sm bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
       >
         {current && (
           <Image
