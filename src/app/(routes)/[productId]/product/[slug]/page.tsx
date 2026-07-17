@@ -39,7 +39,8 @@ import {
   buildServedUrl,
 } from "./lib/structured-data";
 import { sanitizeHtml, htmlToText } from "./lib/sanitize-html";
-import { POLICY } from "@/lib/site";
+import { POD_POLICY, POLICY } from "@/lib/site";
+import { isPodProduct } from "@/lib/pod";
 import { titleCaseHandle } from "@/lib/utils/handle/handle";
 import { UNIFIED_PDP_ENABLED } from "@/lib/variables/variables";
 import { getInteractiveProduct } from "../../lib/product-data";
@@ -125,6 +126,14 @@ export default async function ProductPage({ params }: PageProps) {
   // reviewer cannot get past. Fall back to the canonical URL only when the
   // structured-data payload carried no product id.
   const purchaseUrl = data.productId ? `/${data.productId}` : view.canonicalUrl;
+
+  // POD (made to order via Printful): the static-teaser trust row must show
+  // the SAME made-to-order terms as the live PDP (PremiumDetails, PR #193),
+  // never the standard return window. Branches on the structured-data
+  // envelope's `productType` sibling field; routed through the ONE detector
+  // in @/lib/pod so the spelling logic never forks. Missing field (older BE,
+  // unknown type) → false → existing copy, byte-identical (fail-open).
+  const pod = isPodProduct({ type: data.productType ?? "", product_type: "" });
 
   // ── Unified PDP ────────────────────────────────────────────────────────
   // When enabled, resolve the SAME rich interactive product the /<productId>
@@ -268,30 +277,61 @@ export default async function ProductPage({ params }: PageProps) {
             {view.inStock ? "Buy now" : "View product"}
           </Link>
 
-          {/* Trust affordances a reviewer sees on the feed landing page. */}
-          <p className="text-xs text-ink-faint">
-            Secure checkout · {POLICY.returnWindowDays}-day{" "}
-            <Link
-              href="/returns-policy"
-              className="text-mint-500 hover:text-mint-400 transition-colors"
-            >
-              returns
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href="/shipping-policy"
-              className="text-mint-500 hover:text-mint-400 transition-colors"
-            >
-              shipping info
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href="/contact"
-              className="text-mint-500 hover:text-mint-400 transition-colors"
-            >
-              contact
-            </Link>
-          </p>
+          {/* Trust affordances a reviewer sees on the feed landing page.
+              POD items carry Printful's made-to-order terms (the exact #193
+              line) instead of the return window; non-POD stays byte-identical. */}
+          {pod ? (
+            <p className="text-xs text-ink-faint">
+              Secure checkout · Made to order — ships in{" "}
+              {POLICY.handlingTimeDays} · Damaged or misprinted? We&apos;ll
+              replace it — report within {POD_POLICY.claimWindowDays} days of
+              delivery.{" "}
+              <Link
+                href="/returns-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                Return policy
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/shipping-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                shipping info
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/contact"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                contact
+              </Link>
+            </p>
+          ) : (
+            <p className="text-xs text-ink-faint">
+              Secure checkout · {POLICY.returnWindowDays}-day{" "}
+              <Link
+                href="/returns-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                returns
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/shipping-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                shipping info
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/contact"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                contact
+              </Link>
+            </p>
+          )}
 
           {view.sku && (
             <p className="text-xs text-ink-faint">SKU: {view.sku}</p>

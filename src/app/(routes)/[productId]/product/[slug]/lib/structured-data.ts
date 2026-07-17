@@ -76,10 +76,29 @@ export interface OpenGraphBlock {
   [key: string]: string | undefined;
 }
 
+/**
+ * Normalised product type exposed by the BE as a top-level SIBLING of
+ * `jsonLd` (droplinked-backend `feat/seo-structured-data-expose-type`).
+ * `pod` = print-on-demand (made to order) — the teaser trust row must
+ * render Printful's made-to-order terms (see POD_POLICY in site.ts),
+ * never the standard return window. The BE OMITS the field when the
+ * stored type is absent/unknown; older BE builds don't send it at all —
+ * consumers must fail-open to the existing non-POD copy either way.
+ */
+export type StructuredDataProductType = "pod" | "physical" | "digital";
+
+const KNOWN_PRODUCT_TYPES = new Set<StructuredDataProductType>([
+  "pod",
+  "physical",
+  "digital",
+]);
+
 export interface StructuredData {
   productId: string;
   /** Canonical URL — normalised to the served shop.droplinked.com host. */
   canonicalUrl: string;
+  /** Absent on older BE builds / unknown types — treat as non-POD. */
+  productType?: StructuredDataProductType;
   jsonLd: ProductJsonLd;
   openGraph: OpenGraphBlock;
 }
@@ -160,9 +179,18 @@ function parseStructuredData(
       ? { ...(r.openGraph as OpenGraphBlock), "og:url": servedUrl }
       : { "og:url": servedUrl };
 
+  // Fail-open type parse: only the known vocabulary passes through; any
+  // other/missing value leaves the field absent (→ existing non-POD copy).
+  const productType =
+    typeof r.productType === "string" &&
+    KNOWN_PRODUCT_TYPES.has(r.productType as StructuredDataProductType)
+      ? (r.productType as StructuredDataProductType)
+      : undefined;
+
   return {
     productId: typeof r.productId === "string" ? r.productId : "",
     canonicalUrl: servedUrl,
+    ...(productType ? { productType } : {}),
     jsonLd,
     openGraph,
   };
