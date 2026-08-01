@@ -59,9 +59,13 @@ jobs:
           '
 
       - name: Re-resolve within existing ranges
-        # --package-lock-only: touches ONLY the lockfile. package.json is not
-        # written, so declared ranges cannot widen and a major cannot sneak in.
-        run: npm install --package-lock-only --legacy-peer-deps
+        # `npm update`, NOT `npm install`. `npm install --package-lock-only`
+        # SATISFIES the lockfile it already has and does not move a
+        # valid-but-stale entry — measured: semver 7.5.0 under a declared
+        # ^7.0.0 stayed at 7.5.0, making this job a permanent no-op.
+        # `npm update --package-lock-only` re-resolves within the declared
+        # range (7.5.0 -> 7.8.5) and still does NOT write package.json.
+        run: npm update --package-lock-only --legacy-peer-deps
 
       - name: Diff the resolution set
         id: diff
