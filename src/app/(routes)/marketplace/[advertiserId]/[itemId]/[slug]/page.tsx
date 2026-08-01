@@ -31,11 +31,13 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE } from "@/lib/site";
+import { MARKETPLACE_PDP_CTA_ENABLED } from "@/lib/variables/variables";
 import {
   buildMarketplaceJsonLd,
   fetchMarketplaceItem,
   type MarketplaceView,
 } from "./lib/marketplace-data";
+import MarketplaceRegistrationCta from "./components/MarketplaceRegistrationCta";
 
 // ISR — revalidate hourly. Affiliate items change rarely (price/availability
 // come from the retailer feed, refreshed nightly), so a 1h window slashes
@@ -277,6 +279,13 @@ export default async function MarketplaceProductPage({ params }: PageProps) {
             </p>
           </div>
         </div>
+
+        {/* Additive merchant-acquisition CTA — flag-gated (OFF in prod until
+            reviewed on the dev preview), rendered BELOW the product and its
+            retailer click-out so it never competes with the shopper's buy path
+            or reads as if droplinked sells this item. Mirrors the
+            PREMIUM_PDP_ENABLED call-site gate. */}
+        {MARKETPLACE_PDP_CTA_ENABLED && <MarketplaceRegistrationCta />}
       </main>
     </>
   );
