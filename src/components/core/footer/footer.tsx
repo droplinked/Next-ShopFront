@@ -1,7 +1,7 @@
 import AppIcons from "@/assets/AppIcons";
 import DroplinkedLogo from "@/assets/icons/droplinked-logo.svg";
 import { AppSeparator, AppTypography } from "@/components/ui";
-import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SITE_PHONE_TEL, SOCIAL_LINKS } from "@/lib/site";
+import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SOCIAL_LINKS } from "@/lib/site";
 import Link from "next/link";
 import React from "react";
 
@@ -39,12 +39,6 @@ const Footer = () => {
               className="text-sm text-foreground/70 hover:text-foreground transition-colors"
             >
               {SITE.supportEmail}
-            </a>
-            <a
-              href={SITE_PHONE_TEL}
-              className="text-sm text-foreground/70 hover:text-foreground transition-colors"
-            >
-              {SITE.supportPhone}
             </a>
             <address className="text-sm not-italic text-foreground/70">
               {SITE_ADDRESS_LINE}
@@ -115,10 +109,19 @@ const Footer = () => {
 
       <AppSeparator />
 
-      {/* Policy summary line — concrete, machine-readable trust terms */}
+      {/* Policy summary line — policy-NEUTRAL on returns. The catalog mixes
+          made-to-order (POD, Printful terms: defect claims within 30 days, no
+          remorse returns) with standard items ({POLICY.returnWindowDays}-day
+          window), so a sitewide "N-day returns" claim over-promises on POD
+          pages — the exact visible-copy inconsistency class flagged in the
+          GMC misrepresentation remediation. Per-item terms live on the PDP;
+          the footer links the policy instead of asserting a number. */}
       <AppTypography appClassName="text-foreground/40 font-normal text-xs">
-        Secure checkout · {POLICY.returnWindowDays}-day returns · Refunds to your{" "}
-        {POLICY.refundMethod} · Ships in {POLICY.handlingTimeDays}.
+        Secure checkout · Refunds to your {POLICY.refundMethod} · Ships in{" "}
+        {POLICY.handlingTimeDays} ·{" "}
+        <Link href="/returns-policy" className="underline underline-offset-2">
+          Return policy
+        </Link>
       </AppTypography>
 
       <section className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">

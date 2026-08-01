@@ -24,7 +24,7 @@
  *
  * Data source (apiv3, @Public, no auth):
  *   GET /v2/marketplace/:advertiserId/:itemId
- * ISR: revalidate every 5 minutes. Fully 5xx-safe (notFound() on null).
+ * ISR: revalidate hourly. Fully 5xx-safe (notFound() on null).
  */
 
 import { notFound } from "next/navigation";
@@ -37,8 +37,12 @@ import {
   type MarketplaceView,
 } from "./lib/marketplace-data";
 
-// ISR — revalidate every 5 minutes (matches the sibling product page).
-export const revalidate = 300;
+// ISR — revalidate hourly. Affiliate items change rarely (price/availability
+// come from the retailer feed, refreshed nightly), so a 1h window slashes
+// re-render/origin-fetch volume ~12x vs 5min as the marketplace corpus scales
+// to tens of thousands of PDPs — the cost guardrail for catalogue expansion.
+// Aligns with the apiv3 endpoint's own Cache-Control: max-age=3600.
+export const revalidate = 3600;
 
 interface PageProps {
   params: Promise<{ advertiserId: string; itemId: string; slug: string }>;

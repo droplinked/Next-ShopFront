@@ -28,7 +28,7 @@ const ProductClient = ({ product }: { product: IProduct }) => {
         product: product,
         option: {
           quantity: prev.option.quantity,
-          ...getFirstOption(data?.skuIDs[0]),
+          ...getFirstOption(data?.skuIDs?.[0]),
         },
       })),
     [product]
@@ -38,7 +38,7 @@ const ProductClient = ({ product }: { product: IProduct }) => {
       updateState(
         'sku',
         States?.product?.product_type === 'DIGITAL'
-          ? States?.product?.skuIDs[0]
+          ? States?.product?.skuIDs?.[0]
           : findSkuAsOption({
               color: States.option.color,
               size: States.option.size,

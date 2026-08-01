@@ -38,7 +38,14 @@ import {
   toProductView,
   buildServedUrl,
 } from "./lib/structured-data";
-import { POLICY } from "@/lib/site";
+import { sanitizeHtml, htmlToText } from "./lib/sanitize-html";
+import { POD_POLICY, POLICY } from "@/lib/site";
+import { isPodProduct } from "@/lib/pod";
+import { titleCaseHandle } from "@/lib/utils/handle/handle";
+import { UNIFIED_PDP_ENABLED } from "@/lib/variables/variables";
+import { getInteractiveProduct } from "../../lib/product-data";
+import ProductExperience from "../../components/ProductExperience";
+import styles from "./description.module.css";
 
 // ISR — revalidate every 5 minutes.
 export const revalidate = 300;
@@ -66,8 +73,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalUrl = buildServedUrl(merchant, slug);
 
   const title = view.name ? `${view.name} | droplinked` : "Product | droplinked";
+  // Meta / og / twitter / JSON-LD descriptions are TEXT fields — the imported
+  // description is HTML, so flatten it to plain text (capped) or the raw markup
+  // leaks into search/social/GMC previews as literal tags.
   const description =
-    view.description ||
+    htmlToText(view.description, 300) ||
     `${view.name}${view.brandName ? ` by ${view.brandName}` : ""} — available on droplinked.`;
   const ogImage = view.images[0];
 
@@ -79,14 +89,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "website",
       url: canonicalUrl,
       title: data.openGraph["og:title"] || title,
-      description: data.openGraph["og:description"] || description,
+      description: htmlToText(data.openGraph["og:description"], 300) || description,
       siteName: data.openGraph["og:site_name"] || "droplinked",
       images: ogImage ? [{ url: ogImage, alt: view.name }] : [],
     },
     twitter: {
       card: "summary_large_image",
       title: data.openGraph["twitter:title"] || title,
-      description: data.openGraph["twitter:description"] || description,
+      description: htmlToText(data.openGraph["twitter:description"], 300) || description,
       images: ogImage ? [ogImage] : [],
     },
     robots: { index: true, follow: true },
@@ -117,16 +127,64 @@ export default async function ProductPage({ params }: PageProps) {
   // structured-data payload carried no product id.
   const purchaseUrl = data.productId ? `/${data.productId}` : view.canonicalUrl;
 
+  // POD (made to order via Printful): the static-teaser trust row must show
+  // the SAME made-to-order terms as the live PDP (PremiumDetails, PR #193),
+  // never the standard return window. Branches on the structured-data
+  // envelope's `productType` sibling field; routed through the ONE detector
+  // in @/lib/pod so the spelling logic never forks. Missing field (older BE,
+  // unknown type) → false → existing copy, byte-identical (fail-open).
+  const pod = isPodProduct({ type: data.productType ?? "", product_type: "" });
+
+  // ── Unified PDP ────────────────────────────────────────────────────────
+  // When enabled, resolve the SAME rich interactive product the /<productId>
+  // route uses and render the shared transactional body IN PLACE — so this
+  // GMC-registered landing URL becomes buy-in-place (no bounce) and shares the
+  // rich media (fixes the sparse structured-data thumbnails). Fail-open: any
+  // miss (flag off, no productId, loader null) falls back to the static teaser
+  // below, so the landing page never regresses to content-less for GMC.
+  const interactiveProduct =
+    UNIFIED_PDP_ENABLED && data.productId
+      ? await getInteractiveProduct(data.productId)
+      : null;
+
+  // Schema.org Product JSON-LD — host-normalised to shop.droplinked.com. This
+  // is what Googlebot / GMC's landing-page check reads to match the feed item.
+  // Emitted in BOTH branches (interactive + teaser) so crawlability is
+  // identical regardless of the rendered body. Inline per App Router convention.
+  const jsonLdScript = (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{
+        // JSON-LD description is a TEXT field — flatten the imported HTML so
+        // GMC/Googlebot reads a clean product description, not raw markup.
+        __html: JSON.stringify({
+          ...data.jsonLd,
+          description: htmlToText(data.jsonLd.description, 5000),
+        }),
+      }}
+    />
+  );
+
+  if (interactiveProduct) {
+    return (
+      <>
+        {jsonLdScript}
+        <ProductExperience
+          product={interactiveProduct}
+          // Brand context for the premium body's brand line + breadcrumb: the
+          // structured-data brand name, falling back to a display-cased merchant
+          // handle (raw slug `unstoppable` → `Unstoppable`). A real brandName is
+          // already display copy and is passed through untouched.
+          brand={{ name: view.brandName || titleCaseHandle(merchant) }}
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      {/* Schema.org Product JSON-LD — host-normalised to shop.droplinked.com.
-          This is what Googlebot / GMC's landing-page check reads to match
-          the feed item. Inline per Next.js App Router convention. */}
-      <script
-        type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(data.jsonLd) }}
-      />
+      {jsonLdScript}
 
       <main className="container mx-auto px-6 md:px-8 py-12 flex flex-col md:flex-row items-start gap-10 max-w-6xl">
         {/* ── media column ── */}
@@ -195,11 +253,20 @@ export default async function ProductPage({ params }: PageProps) {
             </span>
           </div>
 
-          {view.description && (
-            <p className="text-base leading-relaxed text-ink-muted whitespace-pre-line">
-              {view.description}
-            </p>
-          )}
+          {(() => {
+            // Imported descriptions (e.g. Shopify `body_html`) are real HTML.
+            // Rendering the string as a JSX text node escaped it, so the raw
+            // tags showed as literal text. Render it as sanitized HTML instead,
+            // scoped-styled via the CSS module so headings/lists/images format.
+            const html = sanitizeHtml(view.description);
+            return html ? (
+              <div
+                className={`${styles.rich} text-ink-muted`}
+                data-testid="product-description"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            ) : null;
+          })()}
 
           {/* Buy / view CTA → the interactive product page (cart + checkout).
               Never links back to this same canonical URL (a review dead-end). */}
@@ -210,30 +277,61 @@ export default async function ProductPage({ params }: PageProps) {
             {view.inStock ? "Buy now" : "View product"}
           </Link>
 
-          {/* Trust affordances a reviewer sees on the feed landing page. */}
-          <p className="text-xs text-ink-faint">
-            Secure checkout · {POLICY.returnWindowDays}-day{" "}
-            <Link
-              href="/returns-policy"
-              className="text-mint-500 hover:text-mint-400 transition-colors"
-            >
-              returns
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href="/shipping-policy"
-              className="text-mint-500 hover:text-mint-400 transition-colors"
-            >
-              shipping info
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href="/contact"
-              className="text-mint-500 hover:text-mint-400 transition-colors"
-            >
-              contact
-            </Link>
-          </p>
+          {/* Trust affordances a reviewer sees on the feed landing page.
+              POD items carry Printful's made-to-order terms (the exact #193
+              line) instead of the return window; non-POD stays byte-identical. */}
+          {pod ? (
+            <p className="text-xs text-ink-faint">
+              Secure checkout · Made to order — ships in{" "}
+              {POLICY.handlingTimeDays} · Damaged or misprinted? We&apos;ll
+              replace it — report within {POD_POLICY.claimWindowDays} days of
+              delivery.{" "}
+              <Link
+                href="/returns-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                Return policy
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/shipping-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                shipping info
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/contact"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                contact
+              </Link>
+            </p>
+          ) : (
+            <p className="text-xs text-ink-faint">
+              Secure checkout · {POLICY.returnWindowDays}-day{" "}
+              <Link
+                href="/returns-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                returns
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/shipping-policy"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                shipping info
+              </Link>{" "}
+              ·{" "}
+              <Link
+                href="/contact"
+                className="text-mint-500 hover:text-mint-400 transition-colors"
+              >
+                contact
+              </Link>
+            </p>
+          )}
 
           {view.sku && (
             <p className="text-xs text-ink-faint">SKU: {view.sku}</p>

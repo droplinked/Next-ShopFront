@@ -1,29 +1,21 @@
 'use server';
 
-import { Metadata } from 'next';
-import ProductDescription from './components/ProductDescription';
-import ProductDetails from './components/details/ProductDetails';
-
-import { AppSeparator } from '@/components/ui';
-import { fetchInstance } from '@/lib/fetchInstance';
-import ProductSlider from './components/ProductSlider';
+import { notFound } from 'next/navigation';
+import ProductExperience from './components/ProductExperience';
+import { getInteractiveProduct } from './lib/product-data';
 
 // type IProps = { params: { productId: string } };
 
 export default async function Page({ params } : { params: Promise<{ productId: string }>}) {
   const { productId } = await params
-  const data = await fetchInstance(`products/${productId}`);
-  
-  return (
-    <main className="container px-8 flex items-start md:flex-row flex-col justify-center w-full gap-12 mt-20">
-      <div className="min-w-full md:min-w-[40%] md:sticky left-0 top-24">
-        <ProductSlider media={data?.media} />
-      </div>
-      <div className="flex flex-col gap-9 min-w-full md:min-w-[60%]">
-        <ProductDetails product={data} />
-        <AppSeparator />
-        <ProductDescription description={data?.description || ''} />
-      </div>
-    </main>
-  );
+  // Fail-open loader: resolves the product across single-shop + aggregate
+  // storefronts and never throws. `null` = genuinely unresolvable → a real 404
+  // page, never the "Application error" black screen (see lib/product-data.ts).
+  const data = await getInteractiveProduct(productId);
+  if (!data) notFound();
+
+  // ProductExperience is the ONE shared body — the same interactive slider +
+  // Buy-now + description now also rendered by the /<merchant>/product/<slug>
+  // SEO landing page, so there is a single product experience across both URLs.
+  return <ProductExperience product={data} />;
 }
