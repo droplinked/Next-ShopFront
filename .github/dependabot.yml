@@ -1,13 +1,46 @@
 version: 2
 updates:
+  # ONE npm entry — Dependabot requires a unique
+  # (package-ecosystem, directory, target-branch) triple, so the runtime /
+  # development split CANNOT be expressed as two npm update configs. It is
+  # done with GROUPS keyed on dependency-type instead, which produces the
+  # thing that actually matters: separate PR streams.
   - package-ecosystem: npm
     directory: /
     target-branch: "dev"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # Raised from 5. Several repos sat AT the old cap while carrying 3-5x
+    # that many open alerts, so most advisories never got a PR at all — and
+    # the throttle was completely invisible.
+    open-pull-requests-limit: 15
     groups:
-      minor-and-patch:
+      # WHY SPLIT RUNTIME FROM DEVELOPMENT. The 2026-08-01 sweep found 26
+      # runtime-high vs 14 development-high across the org. Dev-scope build
+      # tooling (svgo, glob, minimatch, picomatch, rollup, webpack-dev-server)
+      # never reaches the runtime artifact; queueing it alongside runtime
+      # advisories is most of what made the backlog feel relentless, for no
+      # security gain.
+      #
+      # These two groups REPLACE the former catch-all `minor-and-patch` group.
+      # Coverage is identical — every minor/patch that used to land in the
+      # catch-all now lands in exactly one of these, by scope. Keeping the
+      # catch-all as well would defeat the split entirely: whichever was
+      # declared first would swallow everything.
+      #
+      # Declared runtime-first: dependabot assigns a dependency to the first
+      # matching group in definition order. Runtime is what ships, so it gets
+      # its own stream and is never auto-merged.
+      runtime-minor-and-patch:
+        dependency-type: "production"
+        update-types:
+          - minor
+          - patch
+      # Build tooling. Eligible for auto-merge (see
+      # .github/workflows/dependabot-auto-merge.yml) because it cannot reach
+      # a customer.
+      dev-minor-and-patch:
+        dependency-type: "development"
         update-types:
           - minor
           - patch

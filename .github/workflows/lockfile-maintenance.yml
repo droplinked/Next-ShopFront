@@ -1,0 +1,145 @@
+name: Lockfile maintenance
+
+# WHY THIS EXISTS — a failure mode no CVE bot catches
+#
+# On 2026-08-01 a CRITICAL advisory (tar, GHSA #244, runtime scope) was live
+# on prod while package.json ALREADY carried a correct override floor of
+# `^7.5.15`. The floor was never wrong. The LOCKFILE was stale: it pinned
+# 7.5.16 while 7.5.22 had shipped. Nobody had regenerated it.
+#
+# The same run found `axios@1.16.0` nested under @coinbase/cdp-sdk — the
+# x402 settlement rail — while the top-level axios was a healthy 1.18.1.
+#
+# Dependabot cannot fix either case. It proposes RANGE bumps in package.json;
+# it does not refresh a lockfile whose ranges are already satisfiable. So a
+# repo can sit indefinitely on vulnerable resolutions while every declared
+# range looks correct and every alert bot looks quiet.
+#
+# This job closes that gap: it re-resolves the lockfile within the EXISTING
+# declared ranges and opens a PR only when something actually moved. No
+# package.json edits, so no range widening and no major bumps — by
+# construction it can only pick versions the manifest already permits.
+
+on:
+  schedule:
+    # 06:00 UTC on the 1st and 15th. Twice monthly rather than weekly: stale
+    # resolutions drift slowly, and a noisy cadence is how these PRs start
+    # getting rubber-stamped.
+    - cron: '0 6 1,15 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Record the current resolution set
+        run: |
+          node -e '
+            const l = require("./package-lock.json");
+            const out = Object.entries(l.packages || {})
+              .filter(([p]) => p.includes("node_modules/"))
+              .map(([p, m]) => p + "@" + (m.version || "?"))
+              .sort();
+            require("fs").writeFileSync("/tmp/before.txt", out.join("\n"));
+            console.log("resolutions before:", out.length);
+          '
+
+      - name: Re-resolve within existing ranges
+        # --package-lock-only: touches ONLY the lockfile. package.json is not
+        # written, so declared ranges cannot widen and a major cannot sneak in.
+        run: npm install --package-lock-only --legacy-peer-deps
+
+      - name: Diff the resolution set
+        id: diff
+        run: |
+          node -e '
+            const l = require("./package-lock.json");
+            const out = Object.entries(l.packages || {})
+              .filter(([p]) => p.includes("node_modules/"))
+              .map(([p, m]) => p + "@" + (m.version || "?"))
+              .sort();
+            require("fs").writeFileSync("/tmp/after.txt", out.join("\n"));
+          '
+          if diff -q /tmp/before.txt /tmp/after.txt > /dev/null; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Lockfile already fresh — no resolutions moved."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'summary<<EOF'
+              diff /tmp/before.txt /tmp/after.txt | grep -E '^[<>]' | head -60
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open PR when resolutions moved
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MOVED: ${{ steps.diff.outputs.summary }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/lockfile-refresh-$(date -u +%Y%m%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add package-lock.json
+          git commit -F - <<'MSG'
+          chore(deps): refresh lockfile within existing ranges
+
+          Automated re-resolution. package.json is untouched, so every version
+          moved here was already permitted by the declared ranges — they were
+          simply not being resolved to.
+
+          This is the drift class CVE bots do not report: on 2026-08-01 a
+          CRITICAL tar advisory was live on prod while the override floor
+          (^7.5.15) was already correct and only the lockfile was stale.
+          MSG
+          git push -u origin "$BRANCH"
+
+          # Body assembled in a file rather than inline — nesting a heredoc and
+          # a command substitution inside `--body "..."` is exactly the kind of
+          # quoting that silently produces a mangled PR body.
+          {
+            echo "Automated lockfile re-resolution. **\`package.json\` is not modified** —"
+            echo "every change here was already permitted by the declared ranges and simply"
+            echo "was not being resolved to."
+            echo
+            echo "### Why this job exists"
+            echo "Dependabot proposes *range* bumps; it does not refresh a lockfile whose"
+            echo "ranges are already satisfiable. A repo can therefore sit on vulnerable"
+            echo "resolutions while every declared range looks correct and every alert bot"
+            echo "looks quiet."
+            echo
+            echo "Not hypothetical: on 2026-08-01 a **CRITICAL** \`tar\` advisory was live on"
+            echo "production while the override floor \`^7.5.15\` was already correct — the"
+            echo "lockfile was just stale at 7.5.16."
+            echo
+            echo "### Review guidance"
+            echo "Ranges cannot widen here, so this is normally safe to merge on green CI."
+            echo "Look for anything crossing a MAJOR boundary — that would mean a declared"
+            echo "range is wider than intended, which is worth fixing at the manifest."
+            echo
+            echo "### Resolutions moved"
+            echo '```'
+            printf '%s\n' "$MOVED"
+            echo '```'
+          } > /tmp/pr-body.md
+
+          gh pr create --base dev --head "$BRANCH" \
+            --title "chore(deps): lockfile refresh ($(date -u +%Y-%m-%d))" \
+            --body-file /tmp/pr-body.md

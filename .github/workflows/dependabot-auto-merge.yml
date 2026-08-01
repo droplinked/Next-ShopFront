@@ -1,0 +1,132 @@
+name: Dependabot auto-merge
+
+# WHY — remove the weekly click, without removing the review that matters.
+#
+# The dependency work is bimodal. Everything mechanical is same-major: on
+# 2026-08-01, tar / axios / brace-expansion / immutable / fast-uri / js-yaml
+# were all patch-or-minor and needed no judgement whatsoever. Everything that
+# genuinely needed a human was cross-major: react-router 7->8, sigstore 1->4,
+# adm-zip 0.4->0.6. Forcing those through would have turned an advisory into
+# an outage.
+#
+# So the automation boundary is the major boundary, and it is a clean one.
+#
+# SCOPE: development-scope patch/minor only, at first.
+#   - Dev-scope is the majority of the noise (build tooling: svgo, glob,
+#     minimatch, picomatch, rollup, webpack-dev-server) and none of it ships
+#     in the runtime artifact, so a bad one cannot reach a customer.
+#   - RUNTIME updates stay human-reviewed. That is deliberate while merchant
+#     PSPs are being onboarded — the settlement path is not somewhere to
+#     discover that an automated bump was wrong. The point is not that a human
+#     reviews less; it is that the runtime queue is no longer buried under
+#     build-tool noise.
+#
+# Widen to runtime patch once the PSP rollout has settled, by adding
+# 'direct:production' to the scope check below. Do not widen to major.
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Fetch dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # PRECONDITIONS. This workflow is only as safe as two repo settings, and
+      # if either is missing it must say so LOUDLY rather than sit there being
+      # a no-op — a dependency-automation job that silently does nothing is
+      # worse than no job, because it looks like coverage.
+      #
+      #   1. allow_auto_merge must be TRUE, or `gh pr merge --auto` errors.
+      #   2. Branch protection with REQUIRED CHECKS must exist on the target
+      #      branch. `--auto` merges as soon as required checks pass — with no
+      #      required checks, "as soon as" means IMMEDIATELY, on a red PR.
+      #      Branch protection is the actual safety mechanism here; this
+      #      workflow only decides WHICH PRs are eligible.
+      - name: Verify preconditions
+        id: pre
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          AM=$(gh api "repos/${{ github.repository }}" --jq '.allow_auto_merge')
+          BASE="${{ github.event.pull_request.base.ref }}"
+          CHECKS=$(gh api "repos/${{ github.repository }}/branches/$BASE/protection" \
+                     --jq '.required_status_checks.contexts | length' 2>/dev/null || echo 0)
+          echo "allow_auto_merge=$AM  required_checks_on_$BASE=$CHECKS"
+          if [ "$AM" != "true" ] || [ "${CHECKS:-0}" -eq 0 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Auto-merge is INERT. allow_auto_merge=$AM, required checks on '$BASE'=$CHECKS. Both are prerequisites; see the comment on this PR."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Say so when inert
+        if: steps.pre.outputs.ready != 'true'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment "$PR_URL" --body "**Dependabot auto-merge is installed but INERT** — merge this by hand.
+
+          Two repo settings are prerequisites and at least one is missing:
+
+          1. \`allow_auto_merge\` must be enabled on the repository.
+          2. Branch protection with **required status checks** must exist on the target branch.
+
+          The second matters more than it looks: \`gh pr merge --auto\` merges as soon as
+          required checks pass, so with **no** required checks configured, \`--auto\` merges
+          **immediately** — including on a red PR. Branch protection is the real safety
+          mechanism; this workflow only decides which PRs are *eligible*.
+
+          Flagging rather than failing silently. A dependency-automation job that quietly
+          does nothing is worse than none, because it reads as coverage."
+
+      - name: Explain the decision
+        run: |
+          echo "update-type : ${{ steps.meta.outputs.update-type }}"
+          echo "scope       : ${{ steps.meta.outputs.dependency-type }}"
+          echo "packages    : ${{ steps.meta.outputs.dependency-names }}"
+
+      # Auto-merge is QUEUED, not immediate: `--auto` waits for every required
+      # check. It cannot merge a red PR. If branch protection is ever relaxed
+      # this stops being true, which is worth remembering — the safety here is
+      # branch protection, not this workflow.
+      - name: Queue auto-merge (dev-scope patch/minor only)
+        if: |
+          steps.pre.outputs.ready == 'true' &&
+          steps.meta.outputs.dependency-type == 'direct:development' &&
+          (steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+           steps.meta.outputs.update-type == 'version-update:semver-minor')
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Leave a note on everything else
+        if: |
+          !(steps.meta.outputs.dependency-type == 'direct:development' &&
+            (steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+             steps.meta.outputs.update-type == 'version-update:semver-minor'))
+        run: |
+          gh pr comment "$PR_URL" --body "Not auto-merged — held for human review.
+
+          - update type: \`${{ steps.meta.outputs.update-type }}\`
+          - scope: \`${{ steps.meta.outputs.dependency-type }}\`
+
+          Auto-merge covers **development-scope patch/minor** only. Runtime
+          updates and any major bump are reviewed by a person: majors are where
+          the real risk lives (react-router 7→8, sigstore 1→4 and adm-zip
+          0.4→0.6 all needed judgement), and runtime is deliberately held while
+          merchant PSPs are being onboarded."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
