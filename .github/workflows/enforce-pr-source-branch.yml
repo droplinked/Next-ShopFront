@@ -2,7 +2,6 @@ name: PR Source Branch Policy
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
-    branches: [main]
 jobs:
   enforce-source-branch:
     runs-on: ubuntu-latest
@@ -10,6 +9,14 @@ jobs:
       - name: Check PR head branch
         run: |
           HEAD="${{ github.head_ref }}"
+          BASE="${{ github.base_ref }}"
+          # Policy applies ONLY to PRs into main. Without this the job never
+          # re-runs after a PR is retargeted away from main, freezing a red
+          # check that can never clear.
+          if [[ "$BASE" != "main" ]]; then
+            echo "PR targets \'$BASE\', not main - dev-first policy does not apply."
+            exit 0
+          fi
           if [[ "$HEAD" == "dev" || "$HEAD" == hotfix/* || "$HEAD" == dependabot/* ]]; then
             echo "PR source '$HEAD' satisfies the dev-first policy"
             exit 0
