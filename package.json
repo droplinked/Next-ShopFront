@@ -34,7 +34,7 @@
     "@uauth/js": "^2.8.0",
     "axios": "^1.16.0",
     "buffer": "^6.0.3",
-    "casper-js-sdk": "^2.15.4",
+    "casper-js-sdk": "^5.0.12",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "ethers": "^5.7.2",
