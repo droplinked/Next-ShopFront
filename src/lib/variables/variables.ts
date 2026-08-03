@@ -65,6 +65,23 @@ export const PREMIUM_PDP_ENABLED =
  */
 export const PDP_PASSPORT_ENABLED =
   process.env.NEXT_PUBLIC_PDP_PASSPORT_ENABLED === "true";
+
+/**
+ * Marketplace-PDP registration CTA: render an additive "Powered by droplinked"
+ * merchant-acquisition section on the curated affiliate PDP
+ * (`/marketplace/<adv>/<item>/<slug>`), below the product and clearly separated
+ * from the disclosed "Buy at {retailer}" click-out. It turns the catalogue
+ * traffic these pages already earn into droplinked merchant signups (CTA →
+ * `droplinked.com/onboarding?entry=signup` with marketplace_pdp attribution).
+ * Purely additive: the existing retailer buy-out, JSON-LD, canonical, and
+ * affiliate disclosure are untouched, and the CTA never implies droplinked
+ * sells the item. NEXT_PUBLIC_ so Next inlines it at build time (standalone
+ * runner carries no .env). Default OFF — set
+ * NEXT_PUBLIC_MARKETPLACE_PDP_CTA_ENABLED=true to enable (reversible, no code
+ * revert).
+ */
+export const MARKETPLACE_PDP_CTA_ENABLED =
+  process.env.NEXT_PUBLIC_MARKETPLACE_PDP_CTA_ENABLED === "true";
 export const variantIDs = { color: { _id: "62a989ab1f2c2bbc5b1e7153" }, size: { _id: "62a989e21f2c2bbc5b1e7154" } };
 export const app_vertical = "flex flex-col items-center justify-center";
 export const app_center = "flex items-center justify-center";

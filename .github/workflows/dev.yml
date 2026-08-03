@@ -81,6 +81,15 @@ jobs:
         # pills, accordions, POD boilerplate stripped). Prod (main.yml) leaves
         # it unset -> OFF until design sign-off on the dev preview.
         echo "NEXT_PUBLIC_PREMIUM_PDP_ENABLED=true" >> .env
+        # --- Marketplace-PDP registration CTA: dev preview 2026-07-18 ---
+        # Additive "Powered by droplinked" merchant-acquisition band on the
+        # curated affiliate PDP (/marketplace/<adv>/<item>/<slug>), below the
+        # product and separate from the retailer click-out. Converts catalogue
+        # traffic into merchant signups (CTA -> droplinked.com/onboarding with
+        # marketplace_pdp attribution). Prod (main.yml) leaves it unset -> OFF
+        # until the dev preview is reviewed; fully reversible by removing this
+        # single line (no code revert).
+        echo "NEXT_PUBLIC_MARKETPLACE_PDP_CTA_ENABLED=true" >> .env
         echo "APIV3_BASE_URL=https://apiv3dev.droplinked.com" >> .env
     
     - name: Build, tag, and push image to Amazon ECR
