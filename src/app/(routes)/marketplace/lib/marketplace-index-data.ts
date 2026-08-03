@@ -273,7 +273,17 @@ export async function fetchAdvertiserHub(
 
   const total = Number(dto.total);
   const totalPages = Number(dto.totalPages);
-  const brandLabel = items.find((i) => i.brand)?.brand ?? "";
+  // Prefer the API's top-level `label`: it is NORMALISED server-side, whereas
+  // items[].brand is the raw Impact value and is frequently the merchant's FEED
+  // name rather than a brand ("SharkNinja Product Feed 2025",
+  // "Hickory Farms 2024 ProductsUP (12/5)"). Deriving the heading from the raw
+  // item here would re-introduce exactly the plumbing the backend just stripped
+  // — and put it in this page's <h1> and <title>. Falls back to the item brand
+  // only for an older backend that predates the field.
+  const brandLabel =
+    (typeof dto.label === "string" && dto.label.trim()) ||
+    items.find((i) => i.brand)?.brand ||
+    "";
 
   return {
     advertiserId,
