@@ -55,12 +55,12 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "^1.62.1",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "autoprefixer": "^10.5.2",
+    "autoprefixer": "^10.5.4",
     "eslint": "^8",
     "eslint-config-next": "15.3.0",
     "postcss": "^8.5.18",
