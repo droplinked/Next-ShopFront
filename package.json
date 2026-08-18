@@ -37,7 +37,7 @@
     "casper-js-sdk": "^2.15.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.17.0",
     "formik": "^2.4.5",
     "material-ui-popup-state": "^5.0.10",
     "next": "^15.5.21",
