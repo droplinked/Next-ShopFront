@@ -108,12 +108,20 @@ jobs:
         SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
         SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT_NEXT_SHOPFRONT }}
       run: |
+        # --- Build identity 2026-09-02 ---
+        # Same wiring as main.yml. Kept in step so a dev image is never a build
+        # whose commit cannot be read back off GET /api/health. The Dockerfile
+        # declares these two ARGs in the RUNNER stage (a fresh `FROM`), unlike
+        # the SENTRY_* args above which the BUILDER stage consumes.
+        BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         docker build \
           --build-arg SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
           --build-arg SENTRY_ORG="$SENTRY_ORG" \
           --build-arg SENTRY_PROJECT="$SENTRY_PROJECT" \
           --build-arg SENTRY_RELEASE="$IMAGE_TAG" \
           --build-arg NEXT_PUBLIC_SENTRY_RELEASE="$IMAGE_TAG" \
+          --build-arg BUILD_COMMIT_SHA="$IMAGE_TAG" \
+          --build-arg BUILD_TIME="$BUILT_AT" \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
