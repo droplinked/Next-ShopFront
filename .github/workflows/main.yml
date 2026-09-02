@@ -99,12 +99,32 @@ jobs:
         SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
         SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT_NEXT_SHOPFRONT }}
       run: |
+        # --- Build identity 2026-09-02 ---
+        # Bake the running commit into the image so GET /api/health can report
+        # it without an AWS call. Read back by src/lib/build-info.mjs.
+        #
+        # BUILD_COMMIT_SHA carries the same github.sha as SENTRY_RELEASE above,
+        # but through a DIFFERENT wire on purpose: SENTRY_RELEASE lands in the
+        # builder-stage `.env` that `next build` consumes, and the runner stage
+        # (a fresh `FROM`, copying only .next/standalone + .next/static +
+        # public) never sees it. The Dockerfile declares these two ARGs in the
+        # RUNNER stage, where `node server.js` actually reads process.env.
+        #
+        # BUILD_TIME is a different fact from the commit: a re-deploy of an old
+        # commit must still say when *this image* was built.
+        #
+        # Neither value is a credential. An image built without these args
+        # reports "unknown" and stays healthy — see droplinked-backend
+        # #3705 / #3709.
+        BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         docker build \
           --build-arg SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
           --build-arg SENTRY_ORG="$SENTRY_ORG" \
           --build-arg SENTRY_PROJECT="$SENTRY_PROJECT" \
           --build-arg SENTRY_RELEASE="$IMAGE_TAG" \
           --build-arg NEXT_PUBLIC_SENTRY_RELEASE="$IMAGE_TAG" \
+          --build-arg BUILD_COMMIT_SHA="$IMAGE_TAG" \
+          --build-arg BUILD_TIME="$BUILT_AT" \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV

@@ -83,6 +83,34 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy the public folder.
 COPY --from=builder /app/public ./public
 
+# --- Build identity 2026-09-02 ---
+# Baked into the image and reported on GET /api/health, so "which commit is
+# shop.droplinked.com actually running?" is one unauthenticated curl instead of
+# AWS credentials plus an `aws ecs describe-task-definition`. Fed by
+# `--build-arg` from .github/workflows/{main,dev}.yml (`github.sha`), read back
+# once at module load by src/lib/build-info.mjs.
+#
+# DECLARED IN THE RUNNER STAGE ON PURPOSE. A `FROM` starts a stage with a fresh
+# environment, so the SENTRY_* ARGs above — which live in the `builder` stage
+# because `next build` is what consumes them — are NOT in this stage's
+# `process.env`. Copying that placement here would produce a value present
+# during the build and absent at runtime: inert while looking correct in the
+# Dockerfile. The runner stage is where `node server.js` reads process.env.
+#
+# Placed after the COPYs so a new SHA rewrites one metadata layer rather than
+# invalidating the layers carrying the standalone output.
+#
+# The empty defaults are the fail-soft path: a local `docker build` with no
+# --build-arg sets these to the empty string, build-info.mjs degrades to
+# "unknown", and /api/health still answers 200 with status:"ok".
+#
+# Neither value is a credential — both are safe in an image layer and in an
+# unauthenticated response body.
+ARG BUILD_COMMIT_SHA=""
+ARG BUILD_TIME=""
+ENV BUILD_COMMIT_SHA=${BUILD_COMMIT_SHA} \
+    BUILD_TIME=${BUILD_TIME}
+
 # Expose the port the app runs on (default 80 for Next.js).
 EXPOSE 80
 
