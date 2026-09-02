@@ -65,7 +65,45 @@ jobs:
         # ^7.0.0 stayed at 7.5.0, making this job a permanent no-op.
         # `npm update --package-lock-only` re-resolves within the declared
         # range (7.5.0 -> 7.8.5) and still does NOT write package.json.
-        run: npm update --package-lock-only --legacy-peer-deps
+        #
+        # NO --legacy-peer-deps. That flag tells npm to ignore peerDependencies
+        # altogether, so every refresh DROPS peer-resolved packages from the
+        # lockfile. Measured on this repo, from the same starting lockfile:
+        #   with    --legacy-peer-deps : 10 entries removed (7 top-level)
+        #   without --legacy-peer-deps : 10 entries removed (7 top-level)
+        # Identical removals on this repo today — all 7 are orphans with no
+        # surviving dependent, which is routine pruning. (The clean run also
+        # ADDS 55 entries the flagged run omits: the peer packages npm is
+        # supposed to install.) The flag is removed here prophylactically: it
+        # is a live landmine the moment any dependency grows a peer.
+        #
+        # Read the removals before trusting a refresh: nested duplicates
+        # disappearing (node_modules/X/node_modules/Y) are dedup and fine;
+        # TOP-LEVEL entries vanishing for packages that are peers of a declared
+        # dependency are the bug.
+        run: npm update --package-lock-only
+
+      - name: Normalise the tree so the lockfile is self-consistent
+        # SECOND, INDEPENDENT DEFECT, found while fixing the first.
+        #
+        # `npm update --package-lock-only` re-resolves the entries it moves but
+        # does not re-derive the whole tree, so it can leave the lockfile in a
+        # state `npm ci` REJECTS outright with EUSAGE — measured here as
+        # `Invalid: lock file's ajv@6.15.0 does not satisfy ajv@8.20.0` on
+        # SuperAdmin-Front and `yaml@1.10.3 does not satisfy yaml@2.9.0` on
+        # Next-ShopFront. A refresh PR that cannot be installed is worse than no
+        # refresh at all. This pass re-derives the tree; it still writes only the
+        # lockfile, so ranges cannot widen and a major cannot sneak in.
+        run: npm install --package-lock-only
+
+      - name: Verify the refreshed lockfile actually installs
+        # The load-bearing gate. Everything above is a lockfile edit nobody has
+        # executed; this is the first step that asserts the ARTIFACT. Self-
+        # tested in both directions before being added: it exits 0 on a clean
+        # refresh, and exits 1 naming `Missing: @mantine/core ... from lock
+        # file` on a --legacy-peer-deps refresh. Had it existed, it would have
+        # stopped #397, #388 and shopfront #648 from ever opening.
+        run: npm ci --dry-run
 
       - name: Diff the resolution set
         id: diff
