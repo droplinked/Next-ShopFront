@@ -111,7 +111,44 @@ jobs:
 
     - name: Retrieve current task definition JSON
       run: |
-        aws ecs describe-task-definition --task-definition "${{ env.TASK_DEFINITION }}" --output json > task-def.json
+        set -euo pipefail
+        # Carry forward from the RUNNING revision, not the family.
+        #
+        # `--task-definition <family>` resolves to the LATEST ACTIVE revision,
+        # which is not necessarily the one the service is running. This deploy
+        # describes a revision, mutates it, and registers the result — so the
+        # moment ANY malformed revision is registered by anything, the next
+        # deploy inherits it, registers another, and that becomes the new
+        # latest. Self-perpetuating; it never self-heals.
+        #
+        # This is not hypothetical. On 2026-09-02 a stray registration in the
+        # droplinked-backend prod family (a test fixture with an empty
+        # portMappings) broke that deploy with
+        #
+        #   The container ... did not have a container port 80 defined
+        #
+        # and the error names a symptom three steps downstream of the cause.
+        # This repo has the identical pattern and serves shop.droplinked.com —
+        # every product URL in the public ACP feed. See droplinked-backend
+        # #3695 / #3697.
+        RUNNING_TD="$(aws ecs describe-services \
+          --cluster "${{ env.ECS_CLUSTER }}" \
+          --services "${{ env.ECS_SERVICE }}" \
+          --query 'services[0].taskDefinition' --output text)"
+
+        if [ -z "$RUNNING_TD" ] || [ "$RUNNING_TD" = "None" ]; then
+          echo "::error::could not resolve the running task definition for ${{ env.ECS_SERVICE }}"
+          exit 1
+        fi
+        echo "carrying forward from the RUNNING revision: $RUNNING_TD"
+        aws ecs describe-task-definition --task-definition "$RUNNING_TD" --output json > task-def.json
+
+        PORTS="$(jq '[.taskDefinition.containerDefinitions[0].portMappings // []] | flatten | length' task-def.json)"
+        if [ "$PORTS" -eq 0 ]; then
+          echo "::error::$RUNNING_TD has no portMappings — refusing to carry forward a portless task definition."
+          exit 1
+        fi
+        echo "portMappings present: $PORTS"
 
     - name: Install jq
       run: sudo apt-get install jq
