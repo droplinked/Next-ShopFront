@@ -185,16 +185,24 @@ else
   assert_contains "$ON_BLOCK" "pull_request" \
     "the workflow still triggers on pull_request"
 
-  # 2. The workflow must actually call the classifier under test.
-  assert_contains "$YML" "infra/ci/docs-only-paths.sh" \
-    "the changes job invokes the classifier this suite tests"
+  # 2. The workflow must actually CALL the classifier under test.
+  #
+  #    🚨 ANCHORED to the invocation line, not a substring of the file. The
+  #    header comments name every one of these paths repeatedly, so a
+  #    substring test is satisfied by the PROSE even after the `run:` line
+  #    that actually executes it has been changed or deleted. That exact hole
+  #    let a mutation escape the first draft of this suite (the install line,
+  #    below), so every "the workflow runs X" assertion here is a whole-line
+  #    match on the executable line.
+  assert_line "$YML" '^          DOCS_ONLY="\$\(bash infra/ci/docs-only-paths\.sh ' \
+    "the changes job INVOKES the classifier this suite tests (anchored on the call, not the comment)"
 
   # 3. Both suites must run IN-BAND, inside the changes job, before the
   #    classification is trusted. A suite nobody runs proves nothing.
-  assert_contains "$YML" "infra/ci/__tests__/docs-only-paths.test.sh" \
-    "the changes job self-tests the classifier in-band"
-  assert_contains "$YML" "infra/ci/__tests__/pre-merge-gate-decide.test.sh" \
-    "the changes job self-tests the gate decision in-band"
+  assert_line "$YML" '^          bash infra/ci/__tests__/docs-only-paths\.test\.sh$' \
+    "the changes job self-tests the classifier in-band (anchored on the call)"
+  assert_line "$YML" '^          bash infra/ci/__tests__/pre-merge-gate-decide\.test\.sh$' \
+    "the changes job self-tests the gate decision in-band (anchored on the call)"
 
   # 4. The expensive job must be gated on the NEGATIVE, so a classifier that
   #    emits nothing at all still runs the full build.
@@ -227,8 +235,20 @@ else
   #    anything itself (both `docker build .`). A gate that installs more
   #    permissively than the deploy cannot fail on a dependency conflict that
   #    breaks the deploy — SuperAdmin-Front#410.
-  assert_contains "$BUILD_BLOCK" "npm ci --legacy-peer-deps" \
-    "🚨 the gate installs with 'npm ci --legacy-peer-deps' — the Dockerfile's install, verbatim"
+  #    🚨 ANCHORED WHOLE-LINE, and this one is measured, not guessed: as a
+  #    substring test (`assert_contains "$BUILD_BLOCK" "npm ci
+  #    --legacy-peer-deps"`) this assertion ESCAPED the mutation that swaps the
+  #    gate's install to `npm install --legacy-peer-deps`. The step's own
+  #    COMMENT quotes the Dockerfile line, so the substring was still present
+  #    in the block while the `run:` line that executes had already diverged
+  #    from the deploy. Assert the executable line or assert nothing.
+  assert_line "$BUILD_BLOCK" '^        run: npm ci --legacy-peer-deps --no-audit --no-fund$' \
+    "🚨 the gate INSTALLS with 'npm ci --legacy-peer-deps' — the Dockerfile's install, verbatim (anchored on the run: line)"
+  if printf '%s\n' "$BUILD_BLOCK" | grep -qE '^ *run: npm install'; then
+    bad "🚨 next-build has an 'npm install' run line. The deploy runs 'npm ci --legacy-peer-deps' (Dockerfile:31); npm install resolves a DIFFERENT tree, so the gate would be testing a fiction (SuperAdmin-Front#410)."
+  else
+    ok "🚨 next-build never installs with 'npm install' — only the deploy's 'npm ci'"
+  fi
   DOCKERFILE="${REPO_ROOT}/Dockerfile"
   if [ -f "$DOCKERFILE" ]; then
     if grep -qE '^RUN npm ci --legacy-peer-deps$' "$DOCKERFILE"; then

@@ -155,16 +155,25 @@ else
   assert_line "$GATE_HEADER" '^    needs: \[changes, next-build\]$' \
     "the gate covers BOTH the classifier and the build job"
 
-  assert_contains "$GATE_BLOCK" "infra/ci/pre-merge-gate-decide.sh" \
-    "the gate job runs the decision script this suite tests"
+  # 🚨 ANCHORED on the executable `run:` line, not a substring of the block.
+  # The job's header comment names this script path twice, so a substring test
+  # is satisfied by the PROSE even after the `run:` that actually executes it
+  # has been changed. The equivalent substring assertion on the install line in
+  # docs-only-paths.test.sh let a real mutation escape; this is the same hole,
+  # closed in the same way.
+  assert_line "$GATE_BLOCK" '^        run: bash infra/ci/pre-merge-gate-decide\.sh$' \
+    "the gate job RUNS the decision script this suite tests (anchored on the run: line)"
   assert_not_contains "$GATE_BLOCK" "continue-on-error" \
     "the gate cannot be soft-failed"
 
-  for v in "CHANGES_RESULT: \${{ needs.changes.result }}" \
-    "DOCS_ONLY: \${{ needs.changes.outputs.docs_only }}" \
-    "NEXT_BUILD_RESULT: \${{ needs.next-build.result }}"; do
-    assert_contains "$GATE_BLOCK" "$v" "the gate passes ${v%%:*} from the needs context"
-  done
+  # Anchored per-line too: these are env mappings, and a mapping that only
+  # exists in a comment wires nothing.
+  assert_line "$GATE_BLOCK" '^          CHANGES_RESULT: \$\{\{ needs\.changes\.result \}\}$' \
+    "the gate passes CHANGES_RESULT from the needs context"
+  assert_line "$GATE_BLOCK" '^          DOCS_ONLY: \$\{\{ needs\.changes\.outputs\.docs_only \}\}$' \
+    "the gate passes DOCS_ONLY from the needs context"
+  assert_line "$GATE_BLOCK" '^          NEXT_BUILD_RESULT: \$\{\{ needs\.next-build\.result \}\}$' \
+    "the gate passes NEXT_BUILD_RESULT from the needs context"
 
   # 🚨 The required context must be emitted by EXACTLY ONE workflow. A status
   # context is a bare string: if two workflows both emit `pre-merge-gate`,
