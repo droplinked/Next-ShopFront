@@ -1,0 +1,392 @@
+# Pre-merge checks — the build gate this repo did not have.
+#
+# ═══════════════════════════════════════════════════════════════════════════
+# THE ONE CONTEXT TO REQUIRE IN BRANCH PROTECTION:  pre-merge-gate
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Next-ShopFront is the Next.js SSR storefront behind shop.droplinked.com — it
+# serves all 23,025 product URLs in the public ACP feed and is the platform's
+# most load-bearing SEO / agent surface. Before this workflow, NO pull_request
+# check in this repo ran `next build`, compiled a line of TypeScript, or
+# executed a test. The PR checks were `enforce-source-branch`, `sanity`,
+# `append-draft`, `verify provenance` and CodeQL's `Analyze` — none of which
+# compile the app. Branch protection on `main` required exactly one context,
+# `enforce-source-branch`, which validates the branch NAME.
+#
+# A PR that broke the build merged green; the failure appeared at deploy.
+#
+# ── Why `next-build` is NOT the context to require ────────────────────────
+# It is SKIPPED on a docs-only PR, and a SKIPPED required check never reports
+# a conclusion — GitHub pins it at PENDING forever. `pre-merge-gate` below runs
+# with `if: always()` and is the single always-reported aggregate. Require THAT
+# name. Renaming it silently un-requires the check: the workflow looks fixed,
+# the check never reports again, and every PR wedges at pending. Treat the name
+# as an API — `infra/ci/__tests__/pre-merge-gate-decide.test.sh` asserts it as
+# an anchored whole-line match for exactly this reason.
+#
+# ── Why `next build` runs BEFORE `tsc`, and why a bare cold tsc is a lie ──
+# Measured on main @ a2bd8a9, not assumed. Next generates `next-env.d.ts` and
+# `.next/types/routes.d.ts` DURING `next build`; `next-env.d.ts`'s
+# `/// <reference types="next/image-types/global" />` is what declares the
+# `*.png` / `*.svg` ambient modules this app imports. Neither file is committed
+# (`git ls-files next-env.d.ts` → 0 results), so neither exists on a fresh
+# clone. A cold `tsc --noEmit -p tsconfig.json` on a fresh checkout therefore
+# reports 8 phantom errors in 7 files:
+#
+#   2× TS2307  Cannot find module '@/assets/icons/droplinked.png'
+#              / '@/assets/icons/empty-cart.png'   — both files exist on disk
+#   6× TS2322  Property 'className' does not exist on type
+#              'IntrinsicAttributes'               — SVGR components
+#
+# Run `next build` first and the SAME tsc on the SAME tree reports 0 errors,
+# exit 0. Ordering build → typecheck is load-bearing; inverting it would report
+# a healthy repo as broken, and "fixing" those 8 would be 8 wrong changes.
+#
+# ── Why the install is `npm ci --legacy-peer-deps` ────────────────────────
+# It is what the deploy actually runs. Neither dev.yml nor main.yml installs
+# anything itself — both `docker build .`, and the install is Dockerfile:31
+# inside the `deps` stage:
+#
+#   RUN npm ci --legacy-peer-deps
+#
+# So this gate's install matches the deploy's byte for byte on every
+# resolution-affecting flag. That is not a given: SuperAdmin-Front#410 is
+# exactly the opposite shape — a required `verify` job installing with
+# `npm ci --legacy-peer-deps` while its deploy used strict `npm ci`, so the
+# gate could not fail on a dependency conflict that broke the deploy.
+#
+# Measured on main @ a2bd8a9: bare `npm ci` FAILS here (exit 1, 51
+# "Missing: ... from lock file" entries — the lockfile is peer-incomplete).
+# `npm ci --legacy-peer-deps` succeeds, 840 packages. Repairing the lockfile is
+# a separate change with its own smoke plan because it changes what the shipped
+# image installs. `--no-audit --no-fund` below are output-only and do not
+# affect resolution.
+#
+# ── Why there is NO `paths:` and NO `paths-ignore:` on the trigger ────────
+# A path filter and a required status check are incompatible. When a
+# `paths-ignore` matches, the workflow never STARTS — GitHub never reports the
+# context at all, and a required check that never arrived is treated as
+# PENDING, not failed. It is not a red check the author can fix; it is an
+# ABSENT one, and nothing on the page explains it. An inclusive `paths:` filter
+# is strictly worse: it never reports for the MAJORITY of PRs.
+#
+# This repo already carries both shapes elsewhere — `lockfile-sanity.yml` has
+# an inclusive `paths:`, `audit-signatures.yml` a `paths-ignore:`. Both are
+# harmless only because neither is required. Requiring either would ship the
+# bug. (Do not require `Smoke (manual)` / `Full (manual)` from mobile-test.yml
+# either: that workflow has no `pull_request` trigger at all.)
+#
+# CI minutes on docs-only PRs are still saved — by the `changes` job below,
+# whose rules live in a tested script. Skip the work, never the check.
+
+name: pre-merge-checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+  # Forward-compatibility: if a merge queue is ever enabled, a required check
+  # that does not run on merge_group wedges the queue exactly the way a
+  # paths-ignore wedges a docs PR. One line now, no failure mode later.
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs for the same PR. Never cancel a merge_group run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Decides whether this PR needs the expensive build, replacing the
+  # `paths-ignore` trigger filter this workflow deliberately does not have. It
+  # is the ONLY thing that can make `pre-merge-gate` green without the build
+  # having run, so the rules live in a tested script rather than inline here:
+  #
+  #   infra/ci/docs-only-paths.sh        the classifier (allow-list, AND over
+  #                                      every path, empty set = not docs)
+  #   infra/ci/__tests__/                proves a code-touching change set
+  #                                      cannot be classified docs-only, and
+  #                                      that the gate decision can actually
+  #                                      FAIL
+  #
+  # Both suites run HERE, in-band, BEFORE the classification is trusted — so a
+  # regression in either one fails this job and therefore the gate, rather than
+  # waiting for someone to notice. They take about two seconds.
+  #
+  # Cheap by construction: a checkout, two bash suites and a `case` statement.
+  # No install, no node_modules, no build.
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The `pull_request` event checks out the MERGE commit: HEAD^1 is the
+          # base branch tip, HEAD^2 the PR head, and `git diff HEAD^1 HEAD` is
+          # exactly this PR's change set regardless of how many commits it has
+          # or how stale the branch is. Depth 2 is the minimum that makes HEAD^1
+          # reachable — the default depth 1 would not, and the classifier would
+          # then have to guess.
+          fetch-depth: 2
+
+      # 🚨 The gate proves itself before it is used. A companion gate that has
+      # never been shown to fail is indistinguishable from one that cannot.
+      - name: Self-test the classifier and the gate decision
+        run: |
+          set -euo pipefail
+          bash infra/ci/__tests__/docs-only-paths.test.sh
+          bash infra/ci/__tests__/pre-merge-gate-decide.test.sh
+
+      - name: Classify the changed-file set
+        id: classify
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          # Anything that is not a pull_request (merge_group, workflow_dispatch)
+          # has no PR diff to classify. Fail CLOSED — run the whole suite.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "event '$EVENT_NAME' is not a pull_request; running the full build."
+            echo "docs_only=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git rev-parse --verify --quiet 'HEAD^1' >/dev/null; then
+            echo "::error title=cannot resolve the PR base::HEAD^1 is missing, so the changed-file set cannot be established. Refusing to guess: an unknown diff is not a docs-only diff."
+            exit 1
+          fi
+
+          FILES=()
+          while IFS= read -r -d '' f; do
+            FILES+=("$f")
+          done < <(git diff --name-only -z 'HEAD^1' HEAD)
+
+          echo "changed files (${#FILES[@]}):"
+          if [ "${#FILES[@]}" -gt 0 ]; then
+            printf '  %s\n' "${FILES[@]}"
+          else
+            echo "  <none>"
+          fi
+
+          # `${FILES[@]+...}` so an empty array is passed as ZERO arguments
+          # rather than one empty one. Zero arguments is classified false.
+          DOCS_ONLY="$(bash infra/ci/docs-only-paths.sh ${FILES[@]+"${FILES[@]}"})"
+
+          if [ "$DOCS_ONLY" != "true" ] && [ "$DOCS_ONLY" != "false" ]; then
+            echo "::error title=classifier returned garbage::infra/ci/docs-only-paths.sh printed '$DOCS_ONLY'; expected exactly 'true' or 'false'."
+            exit 1
+          fi
+
+          echo "docs_only=${DOCS_ONLY}"
+          echo "docs_only=${DOCS_ONLY}" >>"$GITHUB_OUTPUT"
+
+          {
+            echo "### pre-merge-checks: change classification"
+            echo
+            echo "- changed files: ${#FILES[@]}"
+            echo "- docs_only: \`${DOCS_ONLY}\`"
+            if [ "$DOCS_ONLY" = "true" ]; then
+              echo "- \`next-build\` is SKIPPED; \`pre-merge-gate\` passes on the docs-only path."
+            else
+              echo "- full build runs; \`pre-merge-gate\` requires \`next-build\` to succeed."
+            fi
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  # The expensive job: install exactly what the Dockerfile installs, build
+  # exactly what the Dockerfile builds, then typecheck and test the result.
+  #
+  # Job NAME is `next-build`, deliberately not `build` or `verify`. `verify` is
+  # already the job id behind `audit-signatures.yml`'s `verify provenance`
+  # context, and a status context is a bare string — two workflows emitting the
+  # same one make branch protection ambiguous about which it is waiting for.
+  # This name is emitted by this workflow and no other.
+  next-build:
+    name: next-build
+    runs-on: ubuntu-latest
+    needs: changes
+    # Docs-only PRs skip install/build/typecheck/test. `!= 'true'` and NOT
+    # `== 'false'`: if the classifier somehow produced no output at all, the
+    # build still runs. Fail closed.
+    if: needs.changes.outputs.docs_only != 'true'
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Node 22 matches the deploy: Dockerfile:6 is `FROM node:22-alpine`,
+          # required by @droplinked_inc/web3@1.0.0 (engines.node >=22). It is
+          # also the floor for `node --test` glob arguments, which
+          # package.json's `test` script relies on.
+          node-version: '22'
+          cache: 'npm'
+
+      - name: install (the Dockerfile's install, verbatim)
+        # 🚨 Dockerfile:31 — `RUN npm ci --legacy-peer-deps`. Matching this is
+        # the whole point: a gate that installs more permissively than the
+        # deploy cannot fail on a dependency conflict that breaks the deploy
+        # (SuperAdmin-Front#410). Bare `npm ci` FAILS on this repo today (51
+        # missing lockfile entries), so `--legacy-peer-deps` is not a
+        # loosening — it is the only install that works, in both places.
+        # `--no-audit --no-fund` are output-only.
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: compiler identity (proves the real tsc, not a decoy)
+        # Never `npx tsc`: npx will happily fetch a registry package of that
+        # name, and a decoy tsc@2.0.4 that exits 0 having compiled nothing was
+        # measured on droplinked-mcp on 2026-09-01. Resolve the binary the
+        # install actually produced, print it, and refuse anything pre-5.x.
+        run: |
+          set -euo pipefail
+          BIN=./node_modules/.bin/tsc
+
+          if [ ! -x "$BIN" ]; then
+            echo "::error::$BIN is missing or not executable — typescript did not install. Refusing to typecheck with an unknown compiler."
+            exit 1
+          fi
+
+          RAW="$("$BIN" --version)"
+          PKG="$(node -p 'require("typescript/package.json").version')"
+          MAJOR="$(node -p 'require("typescript/package.json").version.split(".")[0]')"
+          echo "binary        : $BIN -> $(readlink -f "$BIN")"
+          echo "tsc --version : $RAW"
+          echo "package       : $PKG"
+
+          if [ "$MAJOR" -lt 5 ]; then
+            echo "::error::typescript major $MAJOR is below 5 — the decoy tsc@2.0.4 signature (it exits 0 having compiled nothing). Refusing to run."
+            exit 1
+          fi
+
+      - name: build (HARD GATE — next build, and what generates next-env.d.ts)
+        # This is the gate. A failure here is an undeployable storefront: the
+        # deploy runs this same `npm run build` inside the Dockerfile builder
+        # stage, so a red build here is a red deploy there.
+        #
+        # No Sentry credentials are passed, so this behaves identically on fork
+        # PRs — withSentryConfig warns and skips the source-map upload. No .env
+        # is written either; `next build` succeeds without one (measured: exit
+        # 0, 29 routes, ~32s local).
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
+
+      - name: typecheck (HARD GATE — POST-BUILD, see the header)
+        # Runs AFTER build on purpose. Cold it reports 8 phantom errors; after
+        # the build, 0. Measured on main @ a2bd8a9.
+        #
+        # A compiler that sees no files also exits 0, so probe the program size
+        # before trusting the exit code. `--listFilesOnly` enumerates the
+        # program without type-checking it, so this cannot itself fail on a
+        # type error. Baseline on main @ a2bd8a9: 2,967 files total, 280
+        # outside node_modules. The floor is well below that and well above
+        # zero.
+        run: |
+          set -euo pipefail
+          PROG="${RUNNER_TEMP:-/tmp}/tsc-program.txt"
+          ./node_modules/.bin/tsc --noEmit --listFilesOnly -p tsconfig.json > "$PROG"
+          TOTAL="$(wc -l < "$PROG" | tr -d ' ')"
+          FIRST_PARTY="$(grep -vc '/node_modules/' "$PROG" || true)"
+          echo "tsc program: $TOTAL files total, $FIRST_PARTY outside node_modules"
+
+          if [ "$FIRST_PARTY" -lt 100 ]; then
+            echo "::error::the tsc program contains only $FIRST_PARTY first-party files (expected ~280). The compiler is not seeing the app; a green exit here would mean nothing."
+            exit 1
+          fi
+          rm -f "$PROG"
+
+          ./node_modules/.bin/tsc --noEmit -p tsconfig.json
+
+      - name: test (HARD GATE — node:test smoke suite)
+        # package.json `test`: node --test 'src/__smoke__/*.test.mjs'.
+        # Measured 17 pass / 0 fail / 166ms on main @ a2bd8a9. The file list
+        # lives in package.json, not here, so a local `npm test` and CI run
+        # exactly the same suite.
+        run: npm test
+
+      - name: summary
+        if: always()
+        run: |
+          {
+            echo "### next-build"
+            echo
+            echo "| step | what it proves |"
+            echo "| --- | --- |"
+            echo "| install | \`npm ci --legacy-peer-deps\` — Dockerfile:31, the deploy's install |"
+            echo "| build | \`next build\` — the deploy's build; a failure here is an undeployable storefront |"
+            echo "| typecheck | \`tsc --noEmit\` AFTER the build (cold it reports 8 phantom errors; post-build, 0) |"
+            echo "| test | \`npm test\` — node:test over src/__smoke__/ |"
+            echo
+            echo "Not covered: the Playwright mobile suite (needs a live base URL), \`tests/\` (excluded from the root tsconfig), ESLint as a blocking step (\`next build\` reports it as warnings), runtime behaviour against apiv3."
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # THE ONE CONTEXT TO REQUIRE IN BRANCH PROTECTION:  pre-merge-gate
+  # ═══════════════════════════════════════════════════════════════════════════
+  #
+  # `next-build` cannot be required directly, for exactly the reason the
+  # trigger carries no path filter: it is SKIPPED on a docs-only PR, and a
+  # SKIPPED required check reports no conclusion at all — GitHub pins it at
+  # PENDING forever. Moving the docs filter from the trigger into the body
+  # fixes the workflow-level deadlock and recreates it at the JOB level for
+  # every job the classifier now skips.
+  #
+  # So this job is the single always-reported aggregate over the workflow.
+  # Require THIS name; it is stable, and it is the only context that reports on
+  # every PR including docs-only ones.
+  #
+  # 🚨 The decision is deliberately NOT inline here. It lives in
+  # `infra/ci/pre-merge-gate-decide.sh` so that
+  # `infra/ci/__tests__/pre-merge-gate-decide.test.sh` can drive it through its
+  # entire truth table — above all the cases where it must FAIL (build failed,
+  # build skipped on a code PR, the classifier crashed). A gate only ever
+  # observed passing is indistinguishable from a gate that cannot fail.
+  pre-merge-gate:
+    name: pre-merge-gate
+    runs-on: ubuntu-latest
+    needs: [changes, next-build]
+    # 🚨 LOAD-BEARING. Without it a failed or skipped `needs` job skips THIS
+    # job, and a skipped required check never reports — the permanent-pending
+    # deadlock again, this time on the very context protection pins. Do not
+    # move this onto the steps: a step-level `if: always()` does not keep the
+    # JOB from being skipped.
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: every gating job reported success (or was legitimately skipped)
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+          NEXT_BUILD_RESULT: ${{ needs.next-build.result }}
+        run: bash infra/ci/pre-merge-gate-decide.sh
+
+      - name: summary
+        if: always()
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+          NEXT_BUILD_RESULT: ${{ needs.next-build.result }}
+        run: |
+          set -uo pipefail
+          {
+            echo "### pre-merge-gate"
+            echo
+            echo "| job | result |"
+            echo "| --- | --- |"
+            echo "| changes | \`${CHANGES_RESULT}\` (docs_only=\`${DOCS_ONLY}\`) |"
+            echo "| next-build | \`${NEXT_BUILD_RESULT}\` |"
+            echo
+            echo "Decision logic: \`infra/ci/pre-merge-gate-decide.sh\` — proven in both directions by \`infra/ci/__tests__/pre-merge-gate-decide.test.sh\`."
+          } >>"$GITHUB_STEP_SUMMARY"
