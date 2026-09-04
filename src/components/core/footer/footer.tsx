@@ -5,6 +5,8 @@ import { COMPANY_LINKS, POLICY, POLICY_LINKS, SITE, SITE_ADDRESS_LINE, SOCIAL_LI
 import Link from "next/link";
 import React from "react";
 
+// CI PROOF — DO NOT MERGE. A code-touching but harmless change, used to
+// prove pre-merge-gate runs the FULL build on a code PR and reports SUCCESS.
 /**
  * Site-wide footer (rendered on every page via AppLayout).
  *
