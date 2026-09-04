@@ -230,3 +230,6 @@ export type IPaymentDroplinked = {
     transition("submitting", false);
     router.push(`/checkout/${checkout?.orderID}`);
     ```
+
+<!-- CI PROOF — DO NOT MERGE. Docs-only change used to prove pre-merge-gate
+     reports SUCCESS (not skipped, not pending) on a docs-only PR. -->
