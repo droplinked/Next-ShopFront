@@ -83,7 +83,7 @@ name: pre-merge-checks
 
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, ci/proof-premergegate-base]
     types: [opened, synchronize, reopened, ready_for_review]
   # Forward-compatibility: if a merge queue is ever enabled, a required check
   # that does not run on merge_group wedges the queue exactly the way a
