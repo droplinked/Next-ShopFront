@@ -31,6 +31,39 @@ updates:
       # Declared runtime-first: dependabot assigns a dependency to the first
       # matching group in definition order. Runtime is what ships, so it gets
       # its own stream and is never auto-merged.
+      #
+      # ── react moves as ONE unit, and is declared BEFORE the scope groups ──
+      # react and react-dom enforce an exact-version match on each other at
+      # runtime. Split across two PRs, NEITHER can ever go green: measured
+      # 2026-09-08, #230 (react 19) failed with
+      #   TypeError: Cannot read properties of undefined (reading 'ReactCurrentDispatcher')
+      # and #227 (react-dom 19) failed with
+      #   Error: Incompatible React versions: the "react" and "react-dom"
+      #   packages must have the exact same version.
+      # Each failed BECAUSE the other was not applied, so both churned
+      # indefinitely and neither could ever be merged in either order.
+      #
+      # The scope groups below only cover minor/patch, so a MAJOR react bump
+      # was ungrouped and arrived one package per PR — that ordering, not the
+      # upgrade itself, is what made this unmergeable. This group therefore
+      # names update-types explicitly INCLUDING major, and sets no
+      # dependency-type, because `react` is a production dependency while
+      # `@types/react` is a development one and the pair must not be separated
+      # by scope.
+      #
+      # It must stay FIRST: dependabot assigns to the first matching group, so
+      # moving it below the scope groups would let them claim the minor/patch
+      # react updates again and re-split the pair.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - major
+          - minor
+          - patch
       runtime-minor-and-patch:
         dependency-type: "production"
         update-types:
