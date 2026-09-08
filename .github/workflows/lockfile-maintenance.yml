@@ -31,15 +31,78 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: read   # the gate assertion reads this repo's workflow runs
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      LOCKFILE_CI_DIR: .lockfile-ci/.github/scripts
     steps:
       - uses: actions/checkout@v5
         with:
           ref: dev
+
+      # The scripts this job runs come from the SAME ref as this workflow file,
+      # not from whatever `dev` happens to hold: a workflow and its tooling are
+      # reviewed together and must run together. It also lets a dispatch on a
+      # PR branch exercise that branch's tooling against the real `dev` tree.
+      # Untracked, so the lockfile commit below cannot pick it up.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          path: .lockfile-ci
+          sparse-checkout: .github/scripts
+
+      # ── Identity ──────────────────────────────────────────────────────────
+      # A PR opened with the default GITHUB_TOKEN gets every one of its
+      # pull_request runs created in an APPROVAL-REQUIRED state — conclusion
+      # action_required, zero jobs (GitHub changelog 2026-06-11, "Bot-created
+      # pull requests can run workflows if approved"). That is why every
+      # lockfile PR sat with "no checks reported" and BLOCKED: the runs were
+      # never absent, they were waiting for an approval nobody gave, and GitHub
+      # deletes them after 30 days. Measured 2026-09-08 on 7 PRs in 5 repos.
+      #
+      # So the PR must be opened by an identity GitHub trusts, in this order:
+      #   1. a GitHub App     — vars.CI_BOT_APP_ID + secrets.CI_BOT_APP_PRIVATE_KEY,
+      #                         minted per run and scoped down to this repo
+      #   2. a fine-grained PAT — secrets.CI_BOT_TOKEN (its owner becomes the
+      #                         PR author and cannot approve their own PR)
+      #   3. github.token     — FAIL-OPEN legacy path: the PR still opens, with
+      #                         the approval instructions written into it
+      # vars.CI_BOT_REQUIRED=true turns path 3 into a hard failure; set it once
+      # the App exists so a rotated key fails loudly instead of regressing.
+      # Precedence and policy live in lockfile-pr-identity.sh; its self-test
+      # runs first so the denial path is proven on every run. Tracking:
+      # droplinked-backend#3781.
+      - name: Self-test the identity and gate controls
+        run: |
+          bash "$LOCKFILE_CI_DIR/lockfile-pr-identity.sh" self-test
+          bash "$LOCKFILE_CI_DIR/lockfile-pr-gate-assert.sh" self-test
+
+      - name: Resolve which identity opens the PR
+        id: identity
+        env:
+          # Only presence is needed here, so the secrets themselves stay out of
+          # this step's environment.
+          CI_BOT_APP_ID: ${{ vars.CI_BOT_APP_ID }}
+          CI_BOT_APP_PRIVATE_KEY: ${{ secrets.CI_BOT_APP_PRIVATE_KEY != '' && 'set' || '' }}
+          CI_BOT_TOKEN: ${{ secrets.CI_BOT_TOKEN != '' && 'set' || '' }}
+          CI_BOT_REQUIRED: ${{ vars.CI_BOT_REQUIRED }}
+        run: bash "$LOCKFILE_CI_DIR/lockfile-pr-identity.sh" resolve
+
+      - name: Mint a scoped GitHub App installation token
+        if: steps.identity.outputs.kind == 'app'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.CI_BOT_APP_ID }}
+          private-key: ${{ secrets.CI_BOT_APP_PRIVATE_KEY }}
+          # Scoped DOWN from whatever the App was installed with: this token
+          # only ever opens a PR from a branch github.token already pushed.
+          permission-contents: read
+          permission-pull-requests: write
 
       - uses: actions/setup-node@v7
         with:
@@ -130,8 +193,13 @@ jobs:
 
       - name: Open PR when resolutions moved
         if: steps.diff.outputs.changed == 'true'
+        id: open-pr
         env:
-          GH_TOKEN: ${{ github.token }}
+          # `gh pr create` runs as the trusted identity when one exists. The
+          # branch push stays on github.token deliberately — it raises a push
+          # event nobody needs, and a suppressed one costs nothing.
+          GH_TOKEN: ${{ steps.identity.outputs.kind == 'app' && steps.app-token.outputs.token || steps.identity.outputs.kind == 'pat' && secrets.CI_BOT_TOKEN || github.token }}
+          IDENTITY_KIND: ${{ steps.identity.outputs.kind }}
           MOVED: ${{ steps.diff.outputs.summary }}
         run: |
           set -euo pipefail
@@ -171,6 +239,25 @@ jobs:
             echo "production while the override floor \`^7.5.15\` was already correct — the"
             echo "lockfile was just stale at 7.5.16."
             echo
+            if [ "$IDENTITY_KIND" = github-token ]; then
+              echo "> [!WARNING]"
+              echo "> **The checks on this PR are waiting for approval — not absent.** It was opened"
+              echo "> with the default \`GITHUB_TOKEN\`, so GitHub created every \`pull_request\` run in an"
+              echo "> approval-required state (changelog 2026-06-11). Until a maintainer approves them,"
+              echo "> \`gh pr checks\` says *no checks reported* and the merge box shows BLOCKED."
+              echo ">"
+              echo "> **To approve:** click *Approve and run* on each workflow in the merge box, or run"
+              echo "> the \`gh api … /approve\` commands posted in the first comment. Close/reopen and"
+              echo "> \`@dependabot rebase\` do NOT help. Unapproved runs are deleted after 30 days."
+              echo ">"
+              echo "> Structural fix: configure \`CI_BOT_APP_ID\` + \`CI_BOT_APP_PRIVATE_KEY\` so the PR is"
+              echo "> opened by a trusted identity — droplinked-backend#3781."
+            else
+              echo "> [!NOTE]"
+              echo "> Opened with the \`$IDENTITY_KIND\` CI bot identity, so checks run automatically."
+              echo "> The generating run asserted that at least one \`pull_request\` run started."
+            fi
+            echo
             echo "### Review guidance"
             echo "Ranges cannot widen here, so this is normally safe to merge on green CI."
             echo "Look for anything crossing a MAJOR boundary — that would mean a declared"
@@ -182,6 +269,55 @@ jobs:
             echo '```'
           } > /tmp/pr-body.md
 
-          gh pr create --base dev --head "$BRANCH" \
+          PR_URL="$(gh pr create --base dev --head "$BRANCH" \
             --title "chore(deps): lockfile refresh ($(date -u +%Y-%m-%d))" \
-            --body-file /tmp/pr-body.md
+            --body-file /tmp/pr-body.md)"
+          echo "opened $PR_URL as identity=$IDENTITY_KIND"
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # ── Assert the ARTIFACT ───────────────────────────────────────────────
+      # A PR existing is not a PR being gated. Measured 2026-09-08: every gate
+      # run on these PRs was created within 4s of `gh pr create`, and every one
+      # was action_required with zero jobs — the run LIST looked healthy while
+      # `gh pr checks` said "no checks reported". So this reads the CONCLUSIONS.
+      # With a trusted identity anything but `gated` fails the job (the App or
+      # PAT is misconfigured and must be said so, not discovered at review).
+      # With github.token it warns and posts the exact approve commands on the
+      # PR, so the rescue is a paste rather than a search.
+      - name: Assert the PR is gated
+        if: steps.diff.outputs.changed == 'true'
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.open-pr.outputs.sha }}
+          IDENTITY_KIND: ${{ steps.identity.outputs.kind }}
+        run: bash "$LOCKFILE_CI_DIR/lockfile-pr-gate-assert.sh" wait "$GITHUB_REPOSITORY" "$HEAD_SHA" "$IDENTITY_KIND" 90
+
+      - name: Post the approve commands on the PR
+        if: always() && steps.gate.outputs.verdict == 'awaiting-approval'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.open-pr.outputs.url }}
+          PENDING: ${{ steps.gate.outputs.pending }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Checks are waiting for a maintainer's approval"
+            echo
+            echo "This PR was opened with the default \`GITHUB_TOKEN\`, so its \`pull_request\` runs were"
+            echo "created in an approval-required state (GitHub changelog 2026-06-11). Approve them with"
+            echo "one call each, or click *Approve and run* in the merge box:"
+            echo
+            echo '```sh'
+            while IFS=$'\t' read -r id name; do
+              if [ -n "$id" ]; then
+                echo "gh api -X POST repos/$GITHUB_REPOSITORY/actions/runs/$id/approve   # $name"
+              fi
+            done <<<"$PENDING"
+            echo '```'
+            echo
+            echo "Close/reopen and \`@dependabot rebase\` do not help. Unapproved runs are deleted after"
+            echo "30 days. Structural fix: droplinked-backend#3781."
+          } > /tmp/approve-comment.md
+          gh pr comment "$PR_URL" --body-file /tmp/approve-comment.md
