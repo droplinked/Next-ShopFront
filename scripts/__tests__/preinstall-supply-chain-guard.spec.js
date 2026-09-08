@@ -68,6 +68,41 @@ describe('preinstall-supply-chain-guard scanLockfile', () => {
     }
   });
 
+  test('allows stream-json 1.x/2.x but blocks 3.x+ (jayson requires the removed CJS entry points)', () => {
+    const allowed = {
+      packages: {
+        'node_modules/stream-json': { name: 'stream-json', version: '1.9.1' },
+        'node_modules/x/node_modules/stream-json': {
+          name: 'stream-json',
+          version: '2.1.0',
+        },
+      },
+    };
+    assert.deepEqual(scanLockfile(allowed), []);
+
+    const blocked = {
+      packages: {
+        'node_modules/stream-json-patched': {
+          name: 'stream-json',
+          version: '3.5.0',
+        },
+        'node_modules/stream-json-latest': {
+          name: 'stream-json',
+          version: '3.6.0',
+        },
+        'node_modules/stream-json-future': {
+          name: 'stream-json',
+          version: '4.0.0',
+        },
+      },
+    };
+    const blocks = scanLockfile(blocked);
+    assert.equal(blocks.length, 3);
+    for (const b of blocks) {
+      assert.match(b.reason, /jayson/);
+    }
+  });
+
   test('blocks bare droplinked-* names (squatters)', () => {
     const lock = {
       packages: {

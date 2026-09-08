@@ -18,6 +18,18 @@
  *     injection). 4.17.x and 4.18.x (up to 4.18.1) are allowed.
  *     Anything above 4.18.1 needs re-vetting.
  *
+ *   - stream-json at 3.x or newer
+ *     GHSA-528h-pc64-c93x (medium, DoS) is patched only in stream-json 3.5.0,
+ *     but 3.x is a hard break for our only consumer. `jayson` (pulled in by
+ *     @solana/web3.js) does `require('stream-json/streamers/StreamValues')` and
+ *     `require('stream-json/utils/Verifier')`; stream-json 3.x deleted both
+ *     paths, is ESM-only (`"type": "module"`) and requires Node >=22, while
+ *     jayson is CommonJS. Forcing 3.x was measured to make `require('jayson')`
+ *     fail with MODULE_NOT_FOUND. jayson 4.3.0 (latest) still declares
+ *     `stream-json: ^1.9.1`, so there is no consumer-side fix yet. Lift this
+ *     ceiling only once jayson ships a stream-json 3.x-compatible release, or
+ *     once we migrate off @solana/web3.js v1.
+ *
  *   - `fs` at `0.0.1-security`
  *     Typo-squat security-placeholder published by npm to occupy the `fs`
  *     namespace. Real Node.js `fs` is a built-in and never appears in a lockfile.
@@ -51,6 +63,16 @@ const POISON_EXACT = [
 ];
 
 const POISON_VERSION_RANGES = [
+  {
+    name: 'stream-json',
+    test: (v) => {
+      const m = /^(\d+)\./.exec(v);
+      if (!m) return false;
+      return Number(m[1]) >= 3;
+    },
+    reason:
+      'stream-json 3.x deleted the streamers/StreamValues and utils/Verifier entry points that jayson (via @solana/web3.js) requires, and is ESM-only / Node>=22 while jayson is CommonJS — forcing it breaks require("jayson") with MODULE_NOT_FOUND; keep 1.x until jayson supports stream-json 3.x (see GHSA-528h-pc64-c93x)',
+  },
   {
     name: 'lodash',
     test: (v) => {
