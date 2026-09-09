@@ -27,7 +27,13 @@
  * BE dependency (already live, @Public, no auth):
  *   apiv3.droplinked.com/shop/:shopUrl/product/:productSlug/structured-data
  *
- * ISR: 5 minutes (revalidate = 300). Fully 5xx-safe (notFound() on null).
+ * ISR: 5 minutes (revalidate = 300).
+ *
+ * STATUS CODES (2026-09-09): `absent` (apiv3 404) → a REAL HTTP 404 — it used
+ * to stream as HTTP 200 "Product not found" because the parent segment's
+ * `loading.tsx` flushed the shell first (see `../../page.tsx`). `unavailable`
+ * (429 / 5xx / network) → throw → HTTP 5xx via `../../error.tsx`, never a
+ * 404, so a throttled crawl can no longer read as "product gone".
  */
 
 import { notFound } from "next/navigation";
@@ -43,6 +49,7 @@ import { POD_POLICY, POLICY } from "@/lib/site";
 import { isPodProduct } from "@/lib/pod";
 import { titleCaseHandle } from "@/lib/utils/handle/handle";
 import { UNIFIED_PDP_ENABLED } from "@/lib/variables/variables";
+import { throwIfUnavailable } from "@/lib/upstream/fetch-upstream";
 import { getInteractiveProduct } from "../../lib/product-data";
 import ProductExperience from "../../components/ProductExperience";
 import styles from "./description.module.css";
@@ -62,12 +69,16 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { productId: merchant, slug } = await params;
-  const data = await fetchStructuredData(merchant, slug);
+  const result = await fetchStructuredData(merchant, slug);
+  // Throttled / down: throw (→ error.tsx, HTTP 5xx) rather than emit a
+  // "Product not found" title a crawler would read as "gone".
+  throwIfUnavailable("product structured-data", result);
 
-  if (!data) {
-    return { title: "Product not found | droplinked" };
+  if (result.outcome === "absent") {
+    return { title: "Product not found | droplinked", robots: { index: false } };
   }
 
+  const data = result.body;
   const view = toProductView(data);
   // Canonical = the SERVED url, host-consistent with the GMC feed link.
   const canonicalUrl = buildServedUrl(merchant, slug);
@@ -107,11 +118,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
   const { productId: merchant, slug } = await params;
-  const data = await fetchStructuredData(merchant, slug);
+  const result = await fetchStructuredData(merchant, slug);
 
-  if (!data) {
+  // ABSENT (unknown shop / slug) → a REAL HTTP 404. This used to stream as a
+  // 200 "Product not found" because the parent segment's `loading.tsx`
+  // flushed the shell before this check ran; that boundary now lives inside
+  // the `/<productId>` page only, so nothing is sent before this decision.
+  // UNAVAILABLE (429 / 5xx / network) → throw → `../../error.tsx`, HTTP 5xx.
+  throwIfUnavailable("product structured-data", result);
+  if (result.outcome === "absent") {
     notFound();
   }
+  const data = result.body;
 
   const view = toProductView(data);
   const heroImage = view.images[0];

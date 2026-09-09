@@ -14,9 +14,10 @@
  * Googlebot / GMC's landing-page check must see a real product here, or
  * the feed is suspended for Misrepresentation (content-less apex shell).
  *
- * If the endpoint returns 404 / 5xx / an unrecognised payload, the fetch
- * returns null and the page falls through to notFound() — fully 5xx-safe,
- * mirroring src/app/m/[slug]/lib/discovery-profile.ts.
+ * OUTCOMES, NOT NULLS (2026-09-09): a 404 is `absent` (→ notFound, a real
+ * 404). A 429 / 5xx / network failure is `unavailable` and the page throws —
+ * a throttled crawl must never be served (or cached) as "product gone".
+ * See `@/lib/upstream/upstream-outcome.mjs`.
  *
  * ★ HOST NORMALISATION: the endpoint returns canonical/url/@id/offers.url
  * on the bare `https://<shopUrl>/...` or `https://droplinked.com/...` host.
@@ -25,6 +26,8 @@
  * and the eventual GMC feed-link host are ALL consistent — no mismatch that
  * would re-trigger a Misrepresentation review.
  */
+
+import { fetchUpstreamJson, type UpstreamResult } from "@/lib/upstream/fetch-upstream";
 
 const APIV3_BASE = "https://apiv3.droplinked.com";
 
@@ -229,47 +232,41 @@ export function toProductView(data: StructuredData): ProductView {
 }
 
 /**
- * Fetches the structured-data payload for a (merchant, productSlug) pair.
- * Returns null on network error, 404, 5xx, or an unrecognised payload.
- * Never throws — callers should fall through to notFound() on null.
+ * Fetches the structured-data payload for a (merchant, productSlug) pair and
+ * returns an OUTCOME (see `@/lib/upstream/fetch-upstream`):
  *
- * Server fetch, no auth (@Public endpoint), ISR-cached for 5 minutes.
+ *   ok           the parsed, host-normalised payload
+ *   absent       404 — unknown shop or slug: the page calls `notFound()`
+ *   unavailable  429 / 5xx / network / unrecognised body: the page THROWS, so
+ *                a throttled crawl is an uncached error, never a 404
+ *
+ * Never throws. Server fetch, no auth (@Public endpoint), cached 5 minutes
+ * (Next stores only 200s, so a failure is never remembered).
  */
 export async function fetchStructuredData(
   merchant: string,
   productSlug: string
-): Promise<StructuredData | null> {
+): Promise<UpstreamResult<StructuredData>> {
   const url = `${APIV3_BASE}/shop/${encodeURIComponent(
     merchant
   )}/product/${encodeURIComponent(productSlug)}/structured-data`;
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      next: { revalidate: 300 },
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "droplinked-shopfront/1.0 (GMC-landing-page)",
-      },
-    });
-  } catch {
-    // Network error (DNS, timeout, etc.) — treat as not-found, never throw.
-    return null;
-  }
+  const result = await fetchUpstreamJson(url, {
+    next: { revalidate: 300 },
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "droplinked-shopfront/1.0 (GMC-landing-page)",
+    },
+  });
+  if (result.outcome !== "ok") return result;
 
-  if (!response.ok) {
-    // 404 = unknown shop/slug; 5xx = backend down — notFound() either way.
-    return null;
+  const parsed = parseStructuredData(result.body, merchant, productSlug);
+  if (!parsed) {
+    // A 200 that is not a Product payload is a contract break upstream, not
+    // a missing product — never a cached 404.
+    return { outcome: "unavailable", status: result.status, reason: "unrecognised payload" };
   }
-
-  let raw: unknown;
-  try {
-    raw = await response.json();
-  } catch {
-    return null;
-  }
-
-  return parseStructuredData(raw, merchant, productSlug);
+  return { outcome: "ok", status: result.status, body: parsed };
 }
 
 // Export internal parser for unit-testing without a real HTTP call.
