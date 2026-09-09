@@ -23,12 +23,16 @@
  * floor → null → the page calls `notFound()` (a real 404, never a shell), so a
  * crawler never indexes a thin marketplace page.
  *
- * If the endpoint 404s / 5xx / returns an unrecognised payload, the fetch
- * returns null and the page falls through to `notFound()` — fully 5xx-safe,
- * mirroring the sibling product page's structured-data loader.
+ * OUTCOMES, NOT NULLS (2026-09-09): a 404 from the endpoint is `absent` and
+ * the page 404s (cacheable — the item is gone). A 429 / 5xx / network failure
+ * is `unavailable` and the page THROWS instead, because a `notFound()` on a
+ * throttle was being cached as a real 404 for an hour and re-crawled as
+ * "gone" (GSC: 573 × "Not found (404)", validation FAILED, for items that
+ * exist). See `@/lib/upstream/upstream-outcome.mjs`.
  */
 
 import { SITE, SITE_URL } from "@/lib/site";
+import { fetchUpstreamJson, type UpstreamResult } from "@/lib/upstream/fetch-upstream";
 
 /** apiv3 base — overridable for dev/preview; defaults to the prod API host. */
 const APIV3_BASE = (
@@ -229,49 +233,53 @@ export function buildMarketplaceJsonLd(view: MarketplaceView): Record<string, un
 }
 
 /**
- * Fetch + validate + quality-gate the marketplace item. Returns the view model
- * (renderable) or null (not-found / 4xx / 5xx / unrecognised / below the quality
- * floor). Never throws — the page falls through to notFound() on null.
+ * Fetch + validate + quality-gate the marketplace item. Returns an OUTCOME:
  *
- * Server fetch, no auth (@Public endpoint), ISR-cached 5 minutes. Both this and
- * generateMetadata call it with identical options, so Next dedupes to ONE fetch.
+ *   ok           the renderable view model
+ *   absent       apiv3 said the item does not exist / is gated (404), or the
+ *                row is below the indexability floor — the page calls
+ *                `notFound()`: a real, cacheable 404
+ *   unavailable  429 / 5xx / network / malformed body — the page THROWS so
+ *                Next serves an uncached error, never a 404 (see
+ *                `@/lib/upstream/fetch-upstream`)
+ *
+ * Never throws. Server fetch, no auth (@Public endpoint). Both this and
+ * generateMetadata call it with identical options, so Next dedupes to ONE
+ * fetch per render.
  */
 export async function fetchMarketplaceItem(
   advertiserId: string,
   itemId: string,
   slug: string
-): Promise<MarketplaceView | null> {
+): Promise<UpstreamResult<MarketplaceView>> {
   const url = `${APIV3_BASE}/v2/marketplace/${encodeURIComponent(
     advertiserId
   )}/${encodeURIComponent(itemId)}`;
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      // 1h cache — matches the page ISR window + the apiv3 endpoint's
-      // Cache-Control: max-age=3600. Cost guardrail: minimizes origin fetches
-      // as the marketplace corpus scales.
-      next: { revalidate: 3600 },
-      headers: {
-        Accept: "application/json",
-        "User-Agent": `${SITE.name}-shopfront/1.0 (marketplace-pdp)`,
-      },
-    });
-  } catch {
-    return null; // network error → not-found, never throw
+  const result = await fetchUpstreamJson(url, {
+    // 1h cache — matches the page ISR window + the apiv3 endpoint's
+    // Cache-Control: max-age=3600. Cost guardrail: minimizes origin fetches
+    // as the marketplace corpus scales. (Next only stores 200s here.)
+    next: { revalidate: 3600 },
+    headers: {
+      Accept: "application/json",
+      "User-Agent": `${SITE.name}-shopfront/1.0 (marketplace-pdp)`,
+    },
+  });
+  if (result.outcome !== "ok") return result;
+
+  const raw = result.body;
+  // A 200 whose body is not a PDP DTO is an upstream contract break, not a
+  // missing product — do not let it become a cached 404.
+  if (!isMarketplacePdpDto(raw)) {
+    return { outcome: "unavailable", status: result.status, reason: "unrecognised payload" };
   }
+  // Anti-spam quality floor: deliberately absent (same rule as the sitemap).
+  if (!isRenderable(raw)) return { outcome: "absent", status: result.status };
 
-  if (!response.ok) return null; // 404 = unknown/gated; 5xx = backend down
-
-  let raw: unknown;
-  try {
-    raw = await response.json();
-  } catch {
-    return null;
-  }
-
-  if (!isMarketplacePdpDto(raw)) return null;
-  if (!isRenderable(raw)) return null; // anti-spam quality floor
-
-  return toMarketplaceView(raw, advertiserId, itemId, slug);
+  return {
+    outcome: "ok",
+    status: result.status,
+    body: toMarketplaceView(raw, advertiserId, itemId, slug),
+  };
 }

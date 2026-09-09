@@ -30,6 +30,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE, SITE_URL } from "@/lib/site";
+import { throwIfUnavailable } from "@/lib/upstream/fetch-upstream";
 import { fetchMarketplaceIndex } from "./lib/marketplace-index-data";
 
 export const revalidate = 3600;
@@ -43,8 +44,9 @@ const DESCRIPTION =
 
 export async function generateMetadata(): Promise<Metadata> {
   const index = await fetchMarketplaceIndex();
-  if (!index) {
-    return { title: "Marketplace not found | droplinked" };
+  throwIfUnavailable("marketplace index", index);
+  if (index.outcome === "absent") {
+    return { title: "Marketplace not found | droplinked", robots: { index: false } };
   }
 
   return {
@@ -64,10 +66,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MarketplaceIndexPage() {
-  const index = await fetchMarketplaceIndex();
-  if (!index) {
+  const result = await fetchMarketplaceIndex();
+  // absent (flag off / no supply) → real 404; unavailable (429 / 5xx /
+  // network) → throw, never a cached 404.
+  throwIfUnavailable("marketplace index", result);
+  if (result.outcome === "absent") {
     notFound();
   }
+  const index = result.body;
 
   const totalItems = index.advertisers.reduce((n, a) => n + a.itemCount, 0);
 

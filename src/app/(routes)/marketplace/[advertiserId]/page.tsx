@@ -32,6 +32,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE, SITE_URL } from "@/lib/site";
+import { throwIfUnavailable } from "@/lib/upstream/fetch-upstream";
 import {
   advertiserHubPath,
   fetchAdvertiserHub,
@@ -81,12 +82,14 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { advertiserId } = await params;
   const page = readPage((await searchParams).page);
-  const hub = await fetchAdvertiserHub(advertiserId, page);
+  const result = await fetchAdvertiserHub(advertiserId, page);
+  throwIfUnavailable("marketplace hub", result);
 
-  if (!hub) {
-    return { title: "Retailer not found | droplinked" };
+  if (result.outcome === "absent") {
+    return { title: "Retailer not found | droplinked", robots: { index: false } };
   }
 
+  const hub = result.body;
   const title = hubTitle(hub);
   const description = hubDescription(hub);
 
@@ -112,11 +115,15 @@ export default async function MarketplaceAdvertiserHubPage({
 }: PageProps) {
   const { advertiserId } = await params;
   const page = readPage((await searchParams).page);
-  const hub = await fetchAdvertiserHub(advertiserId, page);
+  const result = await fetchAdvertiserHub(advertiserId, page);
 
-  if (!hub) {
+  // absent (flag off / not allowlisted / out of range) → real 404;
+  // unavailable (429 / 5xx / network) → throw, never a cached 404.
+  throwIfUnavailable("marketplace hub", result);
+  if (result.outcome === "absent") {
     notFound();
   }
+  const hub = result.body;
 
   const canonical = hubCanonical(advertiserId, hub.page);
   const hubBase = advertiserHubPath(advertiserId);

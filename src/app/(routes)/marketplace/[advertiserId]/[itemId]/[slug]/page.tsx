@@ -18,19 +18,26 @@
  * the sibling dynamic `[productId]` route (Next.js resolves the static segment
  * first) — no slug-name collision.
  *
- * QUALITY GATE: `fetchMarketplaceItem` returns null for a not-found / gated /
- * 5xx / thin item (same indexability floor as the backend + sitemap), and this
- * page then calls `notFound()` — a real 404, never a shell.
+ * QUALITY GATE: `fetchMarketplaceItem` is `absent` for a not-found / gated /
+ * thin item (same indexability floor as the backend + sitemap), and this page
+ * then calls `notFound()` — a real 404, never a shell.
+ *
+ * NOT A 404: a 429 / 5xx / network failure is `unavailable` and this page
+ * THROWS (→ `../../../error.tsx`, HTTP 5xx, never cached). Measured
+ * 2026-09-09: `notFound()` on a throttle was cached for an hour under
+ * `public, s-maxage=3600` and re-crawled as "gone" — GSC "Not found (404):
+ * 573, validation FAILED" for items that return 200 when fetched serially.
  *
  * Data source (apiv3, @Public, no auth):
  *   GET /v2/marketplace/:advertiserId/:itemId
- * ISR: revalidate hourly. Fully 5xx-safe (notFound() on null).
+ * ISR: revalidate hourly.
  */
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE, SITE_URL } from "@/lib/site";
+import { throwIfUnavailable } from "@/lib/upstream/fetch-upstream";
 import { MARKETPLACE_PDP_CTA_ENABLED } from "@/lib/variables/variables";
 import {
   buildMarketplaceJsonLd,
@@ -55,12 +62,16 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { advertiserId, itemId, slug } = await params;
-  const view = await fetchMarketplaceItem(advertiserId, itemId, slug);
+  const result = await fetchMarketplaceItem(advertiserId, itemId, slug);
+  // Throttled / down: the page throws too — one uncached error, not a cached
+  // "not found" title that reads as "gone" to a crawler.
+  throwIfUnavailable("marketplace item", result);
 
-  if (!view) {
-    return { title: "Product not found | droplinked" };
+  if (result.outcome === "absent") {
+    return { title: "Product not found | droplinked", robots: { index: false } };
   }
 
+  const view = result.body;
   const soldBy = view.retailerName ? ` — ${view.retailerName}` : "";
   const title = `${view.title}${soldBy} | droplinked`;
   const description = metaDescription(view);
@@ -102,11 +113,18 @@ function metaDescription(view: MarketplaceView): string {
 
 export default async function MarketplaceProductPage({ params }: PageProps) {
   const { advertiserId, itemId, slug } = await params;
-  const view = await fetchMarketplaceItem(advertiserId, itemId, slug);
+  const result = await fetchMarketplaceItem(advertiserId, itemId, slug);
 
-  if (!view) {
+  // ABSENT (apiv3 404 / below the indexability floor) → a real 404 that ISR
+  // may cache: the item is gone. UNAVAILABLE (429 / 5xx / network) → throw:
+  // Next serves an uncached error and keeps the last good page on a failed
+  // background revalidation. The old `notFound()`-on-anything turned a
+  // throttled crawl into an hour-long cached 404 for items that exist.
+  throwIfUnavailable("marketplace item", result);
+  if (result.outcome === "absent") {
     notFound();
   }
+  const view = result.body;
 
   // Siblings from the same retailer — the PDP -> PDP link edge that did not
   // exist. This ALSO decides whether the breadcrumb links out: `related` is
