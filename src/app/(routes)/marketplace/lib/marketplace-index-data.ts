@@ -54,9 +54,15 @@
  * The same property is what makes it safe to add breadcrumb links on the PDP:
  * the PDP renders them only when this fetch SUCCEEDED, so we can never emit an
  * internal link to a page the backend is currently 404ing.
+ *
+ * OUTCOMES, NOT NULLS (2026-09-09): only a 404 / empty index is `absent`
+ * (→ notFound). A 429 / 5xx / network failure is `unavailable` and the page
+ * throws, so a throttled crawl can no longer be cached as a real 404 for an
+ * hour. See `@/lib/upstream/upstream-outcome.mjs`.
  */
 
 import { SITE, SITE_URL } from "@/lib/site";
+import { fetchUpstreamJson, type UpstreamResult } from "@/lib/upstream/fetch-upstream";
 
 /** apiv3 base — overridable for dev/preview; defaults to the prod API host. */
 const APIV3_BASE = (
@@ -157,44 +163,46 @@ function advertiserLabel(brand: unknown): string {
   return b || "Partner retailer";
 }
 
-/** Shared, never-throwing JSON GET. Null on network error / non-2xx / bad JSON. */
-async function getJson(url: string): Promise<unknown | null> {
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      // 1h — matches the page ISR window and the endpoint's own
-      // Cache-Control: max-age=3600.
-      next: { revalidate: 3600 },
-      headers: {
-        Accept: "application/json",
-        "User-Agent": `${SITE.name}-shopfront/1.0 (marketplace-index)`,
-      },
-    });
-  } catch {
-    return null; // network error -> not-found, never throw
-  }
-  if (!response.ok) return null; // 404 = disabled/not allowlisted; 5xx = down
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
+/**
+ * Shared, never-throwing JSON GET returning an OUTCOME (see
+ * `@/lib/upstream/fetch-upstream`): `absent` for a 404 (flag off / not
+ * allowlisted — a deliberate, cacheable 404), `unavailable` for 429 / 5xx /
+ * network / bad JSON (must never become a cached 404).
+ */
+function getJson(url: string): Promise<UpstreamResult<unknown>> {
+  return fetchUpstreamJson(url, {
+    // 1h — matches the page ISR window and the endpoint's own
+    // Cache-Control: max-age=3600.
+    next: { revalidate: 3600 },
+    headers: {
+      Accept: "application/json",
+      "User-Agent": `${SITE.name}-shopfront/1.0 (marketplace-index)`,
+    },
+  });
+}
+
+/** A 200 whose body is not the shape we asked for is a contract break, not a 404. */
+function unrecognised(status: number): UpstreamResult<never> {
+  return { outcome: "unavailable", status, reason: "unrecognised payload" };
 }
 
 // ---- fetchers ----
 
 /**
- * The advertiser index. Returns null when the endpoint is disabled, empty, or
- * unreachable — the page then calls `notFound()` rather than rendering an
- * empty grid, because an empty index page is a soft-404 and putting one in the
- * corpus is worse than not having the page at all.
+ * The advertiser index. `absent` when the endpoint is disabled or has no
+ * supply — the page then calls `notFound()` rather than rendering an empty
+ * grid, because an empty index page is a soft-404 and putting one in the
+ * corpus is worse than not having the page at all. `unavailable` when apiv3
+ * could not answer — the page throws instead (never a cached 404).
  */
-export async function fetchMarketplaceIndex(): Promise<MarketplaceIndexView | null> {
-  const raw = await getJson(`${APIV3_BASE}/v2/marketplace`);
-  if (!raw || typeof raw !== "object") return null;
+export async function fetchMarketplaceIndex(): Promise<UpstreamResult<MarketplaceIndexView>> {
+  const result = await getJson(`${APIV3_BASE}/v2/marketplace`);
+  if (result.outcome !== "ok") return result;
+  const raw = result.body;
+  if (!raw || typeof raw !== "object") return unrecognised(result.status);
 
   const list = (raw as Record<string, unknown>).advertisers;
-  if (!Array.isArray(list)) return null;
+  if (!Array.isArray(list)) return unrecognised(result.status);
 
   const advertisers: MarketplaceAdvertiserSummary[] = [];
   for (const entry of list) {
@@ -214,7 +222,7 @@ export async function fetchMarketplaceIndex(): Promise<MarketplaceIndexView | nu
     });
   }
 
-  if (advertisers.length === 0) return null;
+  if (advertisers.length === 0) return { outcome: "absent", status: result.status };
 
   // Largest catalogues first: the highest-value crawl paths appear before the
   // fold, and the ordering is stable across renders (ids break ties).
@@ -223,29 +231,35 @@ export async function fetchMarketplaceIndex(): Promise<MarketplaceIndexView | nu
       b.itemCount - a.itemCount || a.advertiserId.localeCompare(b.advertiserId)
   );
 
-  return { advertisers, total: advertisers.length };
+  return {
+    outcome: "ok",
+    status: result.status,
+    body: { advertisers, total: advertisers.length },
+  };
 }
 
 /**
- * One advertiser's indexable items, paginated. Null when disabled, not
- * allowlisted, out of range, or unreachable — all indistinguishable by design,
- * so this cannot be used to read the allowlist.
+ * One advertiser's indexable items, paginated. `absent` when disabled, not
+ * allowlisted, or out of range — indistinguishable by design, so this cannot
+ * be used to read the allowlist. `unavailable` when apiv3 could not answer.
  */
 export async function fetchAdvertiserHub(
   advertiserId: string,
   page = 1
-): Promise<MarketplaceHubView | null> {
+): Promise<UpstreamResult<MarketplaceHubView>> {
   const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
   const url =
     `${APIV3_BASE}/v2/marketplace/${encodeURIComponent(advertiserId)}` +
     `?page=${safePage}&pageSize=${HUB_PAGE_SIZE}`;
 
-  const raw = await getJson(url);
-  if (!raw || typeof raw !== "object") return null;
+  const result = await getJson(url);
+  if (result.outcome !== "ok") return result;
+  const raw = result.body;
+  if (!raw || typeof raw !== "object") return unrecognised(result.status);
 
   const dto = raw as Record<string, unknown>;
   const list = dto.items;
-  if (!Array.isArray(list)) return null;
+  if (!Array.isArray(list)) return unrecognised(result.status);
 
   const items: MarketplaceHubItem[] = [];
   for (const entry of list) {
@@ -269,7 +283,7 @@ export async function fetchAdvertiserHub(
     });
   }
 
-  if (items.length === 0) return null;
+  if (items.length === 0) return { outcome: "absent", status: result.status };
 
   const total = Number(dto.total);
   const totalPages = Number(dto.totalPages);
@@ -286,13 +300,17 @@ export async function fetchAdvertiserHub(
     "";
 
   return {
-    advertiserId,
-    page: safePage,
-    pageSize: HUB_PAGE_SIZE,
-    total: Number.isFinite(total) ? Math.trunc(total) : items.length,
-    totalPages: Number.isFinite(totalPages) ? Math.max(1, Math.trunc(totalPages)) : 1,
-    label: advertiserLabel(brandLabel),
-    items,
+    outcome: "ok",
+    status: result.status,
+    body: {
+      advertiserId,
+      page: safePage,
+      pageSize: HUB_PAGE_SIZE,
+      total: Number.isFinite(total) ? Math.trunc(total) : items.length,
+      totalPages: Number.isFinite(totalPages) ? Math.max(1, Math.trunc(totalPages)) : 1,
+      label: advertiserLabel(brandLabel),
+      items,
+    },
   };
 }
 
@@ -303,13 +321,17 @@ export async function fetchAdvertiserHub(
  * to the hub page's own page-1 request, so both resolve to ONE fetch-cache
  * entry. The cost of this rail across the whole corpus is one origin request
  * per advertiser per hour, not one per PDP.
+ *
+ * Decorative, so FAIL-OPEN on every non-ok outcome: a throttled hub fetch
+ * must cost the PDP its sibling rail, never the whole page.
  */
 export async function fetchPdpSiblings(
   advertiserId: string,
   excludeItemId: string
 ): Promise<{ hub: MarketplaceHubView; siblings: MarketplaceHubItem[] } | null> {
-  const hub = await fetchAdvertiserHub(advertiserId, 1);
-  if (!hub) return null;
+  const result = await fetchAdvertiserHub(advertiserId, 1);
+  if (result.outcome !== "ok") return null;
+  const hub = result.body;
   const siblings = hub.items
     .filter((i) => i.itemId !== excludeItemId)
     .slice(0, PDP_SIBLING_COUNT);
