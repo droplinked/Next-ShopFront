@@ -82,7 +82,21 @@ test('every advertised path is served by a real page.tsx (route groups collapsed
 
 test('the served host pinned here is the SITE_URL the app really uses', () => {
   const src = fs.readFileSync(SITE_TS, 'utf8');
-  assert.match(src, new RegExp(`SITE_URL = "${SERVED.replace(/[.]/g, '\\.')}"`));
+  // Exact substring, NOT a regex built from a hostname.
+  //
+  // The previous form hand-escaped only dots (`SERVED.replace(/[.]/g, '\\.')`),
+  // which CodeQL flagged twice as high severity: js/incomplete-hostname-regexp
+  // and js/incomplete-sanitization. Both are right. Escaping one metacharacter
+  // class by hand is a loop you keep losing, and here it also weakened the very
+  // property this test exists to prove — an unescaped `.` matches any character,
+  // so `shop.droplinked.com` would also match `shopXdroplinkedYcom`. A test
+  // asserting we are on the RIGHT host must not accept a wrong one.
+  //
+  // `includes` needs no escaping, cannot drift, and is strictly more precise.
+  assert.ok(
+    src.includes(`SITE_URL = "${SERVED}"`),
+    `site.ts must pin SITE_URL to ${SERVED}`,
+  );
 });
 
 test('every built entry is on the served origin; the root follows the catalog flag', () => {
