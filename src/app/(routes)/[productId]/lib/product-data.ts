@@ -22,13 +22,22 @@
  * `purchaseAvailable` / `media`) the interactive client subtree consumes — so
  * even a successful fetch would null-deref during hydration.
  *
- * This loader is FAIL-OPEN and NEVER throws:
+ * This loader NEVER throws:
  *   1. Try the legacy shop-scoped endpoint — unchanged behavior on single-shop
  *      deployments where NEXT_PUBLIC_API_KEY IS set.
  *   2. Fall back to the PUBLIC product-v2 endpoint (no auth, cross-shop) and
  *      adapt the V2 payload into the legacy `IProduct` shape the page renders.
- *   3. Return null on total failure → the page falls through to `notFound()`
- *      (a real 404 page, never a black screen).
+ *   3. Return an OUTCOME (`@/lib/upstream/fetch-upstream`), combined across
+ *      the sources by `@/lib/upstream/combine-outcomes.mjs`:
+ *        ok           → render
+ *        absent       → the page answers a REAL HTTP 404 (decided before any
+ *                       byte is sent — see page.tsx)
+ *        unavailable  → the page throws → error.tsx, HTTP 5xx, never a 404
+ *      (2026-09-09: this used to be `IProduct | null`, so a throttled apiv3
+ *      and a missing product were the same `null`, and the page turned both
+ *      into a streamed 200 "not found" shell with `noindex`.)
+ *      `getInteractiveProduct` keeps the old `IProduct | null` contract for
+ *      the fail-open caller (the unified PDP on the slug route).
  *
  * BE dependency (droplinked-backend):
  *   GET {APIV3}/product-v2/public/:id  (@Public, no x-shop-id)
@@ -37,6 +46,8 @@
 
 import { fetchInstance } from '@/lib/fetchInstance';
 import { SITE } from '@/lib/site';
+import { fetchUpstreamJson, type UpstreamResult } from '@/lib/upstream/fetch-upstream';
+import { combineSourceAnswers } from '@/lib/upstream/combine-outcomes.mjs';
 import { variantIDs } from '@/lib/variables/variables';
 import {
   IProduct,
@@ -174,40 +185,45 @@ export function adaptProductV2ToLegacy(v2: V2Product): IProduct {
 
 // ---- fetch (never throws) ------------------------------------------------
 
-async function fetchPublicProductV2(
-  productId: string,
-  base: string = APIV3_BASE,
-): Promise<V2Product | null> {
-  const url = `${base}/product-v2/public/${encodeURIComponent(productId)}`;
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      next: { revalidate: 300 },
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': `${SITE.name}-shopfront/1.0 (interactive-pdp)`,
-      },
-    });
-  } catch {
-    return null; // network error → not-found, never throw
-  }
-  if (!response.ok) return null; // 404 = unknown/gated, 5xx = backend down
+const HEADERS = {
+  Accept: 'application/json',
+  'User-Agent': `${SITE.name}-shopfront/1.0 (interactive-pdp)`,
+};
 
-  let raw: unknown;
-  try {
-    raw = await response.json();
-  } catch {
-    return null;
-  }
-
-  // Unwrap the TransformInterceptor envelope { statusCode, message, data } when
-  // present; otherwise treat the payload as the product itself.
+/**
+ * Unwrap the TransformInterceptor envelope `{ statusCode, message, data }`
+ * when present; otherwise treat the payload as the product itself.
+ */
+function unwrapV2(raw: unknown): V2Product | null {
   const outer = raw as { data?: unknown };
   const payload =
     outer && typeof outer === 'object' && outer.data && typeof outer.data === 'object'
       ? outer.data
       : raw;
   return payload && typeof payload === 'object' ? (payload as V2Product) : null;
+}
+
+/**
+ * GET the public product-v2 record as an OUTCOME. Never throws.
+ *   ok           a product-shaped payload
+ *   absent       apiv3 404 (unknown / gated) or 400 (not an ObjectId)
+ *   unavailable  429 / 5xx / network / a 2xx that is not a product
+ */
+async function fetchPublicProductV2(
+  productId: string,
+  base: string = APIV3_BASE,
+): Promise<UpstreamResult<V2Product>> {
+  const url = `${base}/product-v2/public/${encodeURIComponent(productId)}`;
+  const result = await fetchUpstreamJson(url, {
+    next: { revalidate: 300 },
+    headers: HEADERS,
+  });
+  if (result.outcome !== 'ok') return result;
+  const product = unwrapV2(result.body);
+  if (!product) {
+    return { outcome: 'unavailable', status: result.status, reason: 'unrecognised payload' };
+  }
+  return { outcome: 'ok', status: result.status, body: product };
 }
 
 /**
@@ -224,40 +240,53 @@ function isSellable(p: IProduct | null | undefined): boolean {
   return !!p && Array.isArray(p.skuIDs) && p.skuIDs.length > 0;
 }
 
+/** One source's answer, in the shape `combineSourceAnswers` ranks. */
+type SourceAnswer =
+  | { outcome: 'ok'; status: number; body: IProduct; complete: boolean }
+  | Exclude<UpstreamResult<never>, { outcome: 'ok' }>;
+
+function v2Answer(result: UpstreamResult<V2Product>): SourceAnswer {
+  if (result.outcome !== 'ok') return result;
+  const product = adaptProductV2ToLegacy(result.body);
+  return { outcome: 'ok', status: result.status, body: product, complete: isSellable(product) };
+}
+
 /**
- * Resolve the interactive PDP product, fail-open. Tries the legacy shop-scoped
- * endpoint first (single-shop deployments), then the public cross-shop
- * product-v2 endpoint (aggregate root). The FIRST SELLABLE result wins;
- * sku-less partials are kept only as a last resort so the page still renders
- * something identifiable. Returns null when no source knows the product →
- * page calls notFound(). NEVER throws.
+ * Resolve the interactive PDP product across every source, as an OUTCOME.
+ * Never throws.
+ *
+ * Source order (unchanged): the legacy shop-scoped endpoint, then the public
+ * cross-shop product-v2 endpoint, then — on a dev deploy only — prod's
+ * product-v2. The FIRST SELLABLE answer wins; sku-less partials are kept only
+ * as a last resort so the page still renders something identifiable. What is
+ * new is what happens when nothing renders: a source that was throttled or
+ * down makes the whole result `unavailable` (the page answers 5xx, uncached);
+ * only when every source that answered said "no such product" is the result
+ * `absent` (the page answers a real 404).
  */
-export async function getInteractiveProduct(productId: string): Promise<IProduct | null> {
-  // Best non-sellable answer seen so far (title-only partials etc.).
-  let partial: IProduct | null = null;
+export async function resolveInteractiveProduct(
+  productId: string,
+): Promise<UpstreamResult<IProduct>> {
+  const answers: SourceAnswer[] = [];
 
   // 1. Legacy shop-scoped endpoint. On the aggregate root this throws
-  //    "Unauthorized!" (no x-shop-id) — swallow and fall through. On dev this
-  //    endpoint can answer with a PARTIAL product (no skus) — do not let it
-  //    shadow the full payload from the sources below.
+  //    "Unauthorized!" before any request (no x-shop-id) — swallow and fall
+  //    through. It also throws on any non-2xx, with no status to classify, so
+  //    a throw here is "no answer", not an outcome: today's fail-open stays.
+  //    On dev this endpoint can answer with a PARTIAL product (no skus) — do
+  //    not let it shadow the full payload from the sources below.
   try {
     const legacy = await fetchInstance(`products/${productId}`);
     if (legacy && typeof legacy === 'object' && Array.isArray((legacy as IProduct).skuIDs)) {
       const p = legacy as IProduct;
-      if (isSellable(p)) return p;
-      partial = partial ?? p;
+      answers.push({ outcome: 'ok', status: 200, body: p, complete: isSellable(p) });
     }
   } catch {
     /* no shop identity on the aggregate root, or route/product missing */
   }
 
   // 2. Public cross-shop product-v2 endpoint (no auth), adapted to legacy shape.
-  const v2 = await fetchPublicProductV2(productId);
-  if (v2) {
-    const p = adaptProductV2ToLegacy(v2);
-    if (isSellable(p)) return p;
-    partial = partial ?? p;
-  }
+  answers.push(v2Answer(await fetchPublicProductV2(productId)));
 
   // 3. Dev-preview cross-host fallback. The per-product SEO landing page sources
   //    its structured-data from PROD apiv3 (hardcoded in structured-data.ts), so
@@ -265,17 +294,22 @@ export async function getInteractiveProduct(productId: string): Promise<IProduct
   //    dev host above and the unified PDP would fail open to the static teaser —
   //    making the feature un-previewable on dev. Retry against PROD so the dev
   //    preview can render prod products' interactive body. No-op on prod, where
-  //    APIV3_BASE already IS prod (the two are equal → skipped). Still fail-open.
+  //    APIV3_BASE already IS prod (the two are equal → skipped).
   if (APIV3_BASE !== APIV3_PROD) {
-    const prodV2 = await fetchPublicProductV2(productId, APIV3_PROD);
-    if (prodV2) {
-      const p = adaptProductV2ToLegacy(prodV2);
-      if (isSellable(p)) return p;
-      partial = partial ?? p;
-    }
+    answers.push(v2Answer(await fetchPublicProductV2(productId, APIV3_PROD)));
   }
 
-  // Nothing sellable anywhere — render the best partial rather than a 404
-  // (the product exists; it just has no purchasable variants right now).
-  return partial;
+  return combineSourceAnswers(answers);
+}
+
+/**
+ * The fail-open view of `resolveInteractiveProduct`: the product, or null
+ * for BOTH absent and unavailable. Kept for the caller that has something
+ * better than an error to fall back to (the unified PDP on
+ * `/<shop>/product/<slug>` renders its static teaser instead). A page whose
+ * only alternative is a status code must use `resolveInteractiveProduct`.
+ */
+export async function getInteractiveProduct(productId: string): Promise<IProduct | null> {
+  const result = await resolveInteractiveProduct(productId);
+  return result.outcome === 'ok' ? result.body : null;
 }

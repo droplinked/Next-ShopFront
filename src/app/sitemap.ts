@@ -1,68 +1,34 @@
 /**
- * sitemap.ts — Next.js App Router sitemap generator.
+ * sitemap.ts — `GET /sitemap.xml` for the host this app is served on
+ * (`SITE_URL`, https://shop.droplinked.com).
  *
- * Fetches the list of opted-in merchants from the discovery-profile
- * index endpoint and includes each /m/<slug> route.
+ * The rules live in `@/lib/seo/storefront-sitemap.mjs` (plain ESM so
+ * `npm test` exercises them); this file is the Next.js adapter. It lists the
+ * storefront's own static routes only — shop homes and products are
+ * advertised by droplinked-backend's sitemap plane, which `/robots.txt`
+ * points at (see that module's header for why the split is deliberate).
  *
- * If the index endpoint is not yet live, the sitemap gracefully falls
- * back to static routes only — never blocks the build.
+ * Every entry is host-checked at this boundary: a `<loc>` on any other
+ * origin is dropped and logged, never served (2026-09-09: this route served
+ * two `https://droplinked.com` URLs and nothing else).
  */
 
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
+import { ROOT_CATALOG_ENABLED } from "@/lib/variables/variables";
+import { buildStorefrontSitemap, partitionByHost } from "@/lib/seo/storefront-sitemap.mjs";
 
-const BASE_URL = "https://droplinked.com";
-const APIV3_BASE = "https://apiv3.droplinked.com";
-
-/**
- * Fetches the list of opted-in merchant slugs.
- * Returns an empty array if the endpoint is not yet live (404/500).
- */
-async function fetchOptedInMerchantSlugs(): Promise<string[]> {
-  try {
-    const res = await fetch(`${APIV3_BASE}/v2/merchants/discovery-index`, {
-      next: { revalidate: 3600 }, // 1-hour cache for sitemap builds
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "droplinked-sitemap/1.0",
-      },
-    });
-
-    if (!res.ok) return [];
-
-    const data = await res.json();
-    if (!Array.isArray(data?.slugs)) return [];
-
-    return (data.slugs as unknown[])
-      .filter((s): s is string => typeof s === "string" && s.length > 0);
-  } catch {
-    return [];
+export default function sitemap(): MetadataRoute.Sitemap {
+  const entries = buildStorefrontSitemap({
+    baseUrl: SITE_URL,
+    rootCatalogEnabled: ROOT_CATALOG_ENABLED,
+  });
+  const { kept, rejected } = partitionByHost(entries, SITE_URL);
+  if (rejected.length > 0) {
+    console.error(
+      `[sitemap] dropped ${rejected.length} entr${rejected.length === 1 ? "y" : "ies"} not on ${SITE_URL}:`,
+      rejected.map((e) => e.url)
+    );
   }
-}
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: `${BASE_URL}/`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
-    },
-    {
-      url: `${BASE_URL}/claim-your-shop`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-  ];
-
-  const merchantSlugs = await fetchOptedInMerchantSlugs();
-
-  const merchantRoutes: MetadataRoute.Sitemap = merchantSlugs.map((slug) => ({
-    url: `${BASE_URL}/m/${encodeURIComponent(slug)}`,
-    lastModified: new Date(),
-    changeFrequency: "daily" as const,
-    priority: 0.7,
-  }));
-
-  return [...staticRoutes, ...merchantRoutes];
+  return kept;
 }
