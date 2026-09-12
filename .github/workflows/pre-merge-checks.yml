@@ -144,7 +144,6 @@ jobs:
           bash infra/ci/__tests__/docs-only-paths.test.sh
           bash infra/ci/__tests__/pre-merge-gate-decide.test.sh
           bash infra/ci/__tests__/peer-conflict-ratchet.test.sh
-          bash infra/ci/__tests__/eslint-report.test.sh
 
       - name: Classify the changed-file set
         id: classify
@@ -330,6 +329,18 @@ jobs:
           rm -f "$PROG"
 
           ./node_modules/.bin/tsc --noEmit -p tsconfig.json
+
+      # 🚨 This suite runs HERE, not in `changes`, and the placement is the
+      # finding. `changes` is deliberately install-free — "a checkout, two
+      # bash suites and a case statement" — and this suite drives the REAL
+      # ESLint over the REAL tree, so without node_modules it cannot render a
+      # verdict at all. It does not quietly skip those cases: its
+      # MIN_ASSERTIONS floor fired on the first CI run (11 of 20 assertions
+      # made) and failed the job. That is the floor working, and it is why the
+      # suite lives after the install rather than being softened to survive
+      # a tree it cannot measure.
+      - name: Self-test the eslint reporter (both directions, before it is trusted)
+        run: bash infra/ci/__tests__/eslint-report.test.sh
 
       # REPORT-ONLY on findings, HARD on the linter being dead. Next-ShopFront#287.
       #

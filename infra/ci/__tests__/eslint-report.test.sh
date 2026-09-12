@@ -37,7 +37,7 @@ PKG="${REPO_ROOT}/package.json"
 # Raise this when you add an assertion. Lower it only alongside a deliberately
 # retired one, in the same PR. It is what stops this file from silently
 # becoming a suite that asserts nothing while still printing PASSED.
-MIN_ASSERTIONS=20
+MIN_ASSERTIONS=21
 
 PASS=0
 FAIL=0
@@ -191,9 +191,22 @@ if [ -n "$GATE_LINE" ]; then
 else
   bad "no workflow step runs infra/ci/eslint-report.mjs — the reporter is decorative, which is the #287 defect again"
 fi
-grep -qE 'bash infra/ci/__tests__/eslint-report\.test\.sh' "$WORKFLOW" \
-  && ok "this suite itself runs in the workflow" \
-  || bad "this suite does not run in CI — it proves nothing about any real run"
+# 🚨 AND it must run after the install. This suite drives the real ESLint
+# over the real tree; in an install-free job it cannot render a verdict, which
+# is exactly what happened on the first CI run of #287 (11 of 20 assertions,
+# floor fired, job red). Pin the ordering here where the message is useful.
+SELFTEST_LINE="$(grep -nE '^        run: bash infra/ci/__tests__/eslint-report\.test\.sh$' "$WORKFLOW" | head -1)"
+if [ -n "$SELFTEST_LINE" ]; then
+  ok "this suite itself runs in the workflow"
+  INSTALL_LINE="$(grep -nE '^        run: npm ci --legacy-peer-deps --no-audit --no-fund$' "$WORKFLOW" | head -1)"
+  if [ -n "$INSTALL_LINE" ] && [ "${INSTALL_LINE%%:*}" -lt "${SELFTEST_LINE%%:*}" ]; then
+    ok "it runs AFTER the install (line ${INSTALL_LINE%%:*} < ${SELFTEST_LINE%%:*}) — it needs node_modules to measure anything"
+  else
+    bad "the self-test runs before the install; without node_modules it cannot render a verdict and its assertion floor will fail the job"
+  fi
+else
+  bad "this suite does not run in CI — it proves nothing about any real run"
+fi
 
 echo
 echo "----"
