@@ -254,9 +254,14 @@ jobs:
       # This step is the only thing in the repository that can say so. It runs
       # AFTER the install on purpose (an uninstalled tree reports no conflicts
       # and would look clean — the baseline's `nodeFloor` is the control that
-      # makes that a failure rather than a pass), and it is deliberately NOT
-      # `continue-on-error`: a new unmet peer edge is a merge blocker, and the
+      # makes that a failure rather than a pass), and it is deliberately not
+      # soft-failed: a new unmet peer edge is a merge blocker, and the
       # way past it is a baseline entry with a written reason, not a bypass.
+      #
+      # (This step is deliberately hard. `docs-only-paths.test.sh` asserts that
+      # no step in this job is soft-failed, by searching the job body for the
+      # soft-fail key as a literal string — which is why this comment does not
+      # spell it out. That assertion caught this very comment on its first run.)
       - name: peer-conflict ratchet (HARD GATE — see infra/ci/peer-conflict-baseline.json)
         run: node infra/ci/peer-conflict-ratchet.mjs
 
