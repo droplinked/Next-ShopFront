@@ -372,6 +372,47 @@ jobs:
 
           ./node_modules/.bin/tsc --noEmit -p tsconfig.json
 
+      # 🚨 This suite runs HERE, not in `changes`, and the placement is the
+      # finding. `changes` is deliberately install-free — "a checkout, two
+      # bash suites and a case statement" — and this suite drives the REAL
+      # ESLint over the REAL tree, so without node_modules it cannot render a
+      # verdict at all. It does not quietly skip those cases: its
+      # MIN_ASSERTIONS floor fired on the first CI run (11 of 20 assertions
+      # made) and failed the job. That is the floor working, and it is why the
+      # suite lives after the install rather than being softened to survive
+      # a tree it cannot measure.
+      - name: Self-test the eslint reporter (both directions, before it is trusted)
+        run: bash infra/ci/__tests__/eslint-report.test.sh
+
+      # REPORT-ONLY on findings, HARD on the linter being dead. Next-ShopFront#287.
+      #
+      # Until this step existed, ESLint covered ZERO files here and every
+      # signal said healthy: `.eslintrc.json` against eslint@10 exits 1 having
+      # linted nothing, NO workflow invoked lint (0 hits over 10 workflow
+      # files; control: 5 mention npm), and `next build` above prints the very
+      # same crash as a non-fatal warning and completes exit 0. The `summary`
+      # step below used to list "ESLint as a blocking step" under Not covered.
+      #
+      # It is deliberately NOT a findings gate yet. The measured backlog on dev
+      # @ 21956bf is 10 errors / 31 warnings over 273 files, all 10 from
+      # eslint-plugin-react-hooks@7 rules that post-date the last working
+      # linter here. Gating on that in the landing change reds every open PR
+      # against an untriaged backlog, and people then re-run without reading —
+      # which is how a real failure gets waved through. The count is printed
+      # every run with a delta against infra/ci/eslint-baseline.json so the
+      # ratchet is a deliberate follow-up.
+      #
+      # 🚨 What it DOES fail on is the control being dead: ESLint unable to
+      # run, or matching fewer files than `fileFloor`. Those are not lint
+      # findings, they are the absence of linting — the #287 defect itself.
+      # Do not soften this step. `docs-only-paths.test.sh` asserts that no
+      # step in this job carries the soft-fail key, as a literal string over
+      # the whole job body — which is why this comment does not spell it out
+      # either; it caught this very comment on its first run.
+      # `eslint-report.test.sh` asserts the same thing again, locally.
+      - name: eslint-report (REPORT-ONLY findings; HARD on a dead linter — #287)
+        run: node infra/ci/eslint-report.mjs
+
       - name: test (HARD GATE — node:test smoke suite)
         # package.json `test`: node --test 'src/__smoke__/*.test.mjs'.
         # Measured 17 pass / 0 fail / 166ms on main @ a2bd8a9. The file list
@@ -392,8 +433,9 @@ jobs:
             echo "| build | \`next build\` — the deploy's build; a failure here is an undeployable storefront |"
             echo "| typecheck | \`tsc --noEmit\` AFTER the build (cold it reports 8 phantom errors; post-build, 0) |"
             echo "| test | \`npm test\` — node:test over src/__smoke__/ |"
+            echo "| eslint-report | ESLint actually runs (#287). Findings are REPORT-ONLY; a dead linter or a tree below \`fileFloor\` is a hard failure |"
             echo
-            echo "Not covered: the Playwright mobile suite (needs a live base URL), \`tests/\` (excluded from the root tsconfig), ESLint as a blocking step (\`next build\` reports it as warnings), runtime behaviour against apiv3."
+            echo "Not covered: the Playwright mobile suite (needs a live base URL), \`tests/\` (excluded from the root tsconfig), ESLint findings as a merge blocker (report-only by design — see #287; a dead linter IS blocking), runtime behaviour against apiv3."
           } >>"$GITHUB_STEP_SUMMARY"
 
   # ═══════════════════════════════════════════════════════════════════════════

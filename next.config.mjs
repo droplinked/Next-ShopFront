@@ -35,6 +35,29 @@ const cspReportOnly = [
 ].join('; ')
 
 const nextConfig = {
+    // ── ESLint is owned by the gate, not by the build. Next-ShopFront#287 ──
+    // This PRESERVES what the build already did; it does not relax anything.
+    //
+    // Before #287 `next build` did run ESLint — and ESLint exploded on the
+    // eslintrc config that eslint@10 no longer accepts. Next caught that,
+    // printed it as a NON-FATAL warning, and completed exit 0:
+    //
+    //   ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions
+    //
+    // So the build has been green-with-zero-lint-coverage for as long as
+    // eslint@10 has been pinned (#229, 2026-09-08). Giving the build a config
+    // it can actually load would, WITHOUT this flag, silently convert `next
+    // build` into a hard lint gate over a 10-error backlog nobody has triaged
+    // — reddening the deploy and every open PR as a side effect of fixing the
+    // config. That is the opposite of the change #287 is making.
+    //
+    // Lint now has one owner with one severity policy:
+    // `infra/ci/eslint-report.mjs`, run by pre-merge-checks.yml. Findings are
+    // reported with the count; a linter that CANNOT RUN is a hard failure
+    // there. Making findings block is a deliberate follow-up on that step,
+    // not a side effect here.
+    eslint: { ignoreDuringBuilds: true },
+
     // Dockerfile (runner stage) copies /app/.next/standalone — require Next.js
     // to emit that directory at build time. Without this, every LIVE deploy
     // fails at `COPY --from=builder /app/.next/standalone ./` (issue #38).

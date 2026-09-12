@@ -1,0 +1,12 @@
+{
+  "$comment": "Read by infra/ci/eslint-report.mjs. `fileFloor` is the ONLY hard assertion: a linter that stops matching files exits clean and is indistinguishable from a clean repo, so the floor is what makes those two different. `observed` is the measurement taken when lint was first made to run at all (Next-ShopFront#287) and is REPORT-ONLY — the run prints the delta against it and never fails on it. Promoting that delta to a gate is the follow-up, and it needs the 10-error backlog triaged first, not a flag flip. Raise fileFloor when you add source; lower it only alongside a deliberate deletion, in the same PR, with the reason.",
+  "fileFloor": 250,
+  "observed": {
+    "measuredOn": "2026-09-12, dev @ 21956bf, eslint 10.10.0, node 22.18.0",
+    "scanned": 273,
+    "filesWithProblems": 27,
+    "errors": 10,
+    "warnings": 31,
+    "note": "All 10 errors are eslint-plugin-react-hooks@7 React-Compiler rules that did not exist when this repo last had a working linter: 9x react-hooks/set-state-in-effect, 1x react-hooks/preserve-manual-memoization. The 31 warnings are 14x react-hooks/exhaustive-deps, 16x unused eslint-disable directive (mostly `react/no-danger`, a rule core-web-vitals never enabled, so those disables were always dead), 1x import/no-anonymous-default-export."
+  }
+}
