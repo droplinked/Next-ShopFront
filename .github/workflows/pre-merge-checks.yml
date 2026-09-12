@@ -265,6 +265,24 @@ jobs:
       - name: peer-conflict ratchet (HARD GATE — see infra/ci/peer-conflict-baseline.json)
         run: node infra/ci/peer-conflict-ratchet.mjs
 
+      # 🚨 HARD GATE — runtime dependencies nothing imports. Next-ShopFront#288.
+      #
+      # On 2026-09-12 five `dependencies` were found to be imported by ZERO
+      # files: ethers, casper-js-sdk, @uauth/js, @solana/spl-token and
+      # @mui/icons-material. They carried every copy of `elliptic` and the only
+      # copy of `stream-json` in the tree — both open Dependabot alerts — and
+      # were the entire reason for upgrade PRs #232, #264 and #267 and the
+      # #266/#267 peer lock. Nothing here could have said they were unused, and
+      # nothing would have noticed one coming back.
+      #
+      # This needs no node_modules (it reads package.json and the source tree),
+      # but it runs here so a single job owns the dependency verdicts. The
+      # allowlist is a ratchet: an exemption needs a written reason, and an
+      # exempted package that acquires an importer fails until its entry is
+      # deleted.
+      - name: dependency-importer ratchet (HARD GATE — see infra/ci/dependency-importer-allowlist.json)
+        run: node infra/ci/dependency-importer-ratchet.mjs
+
       - name: compiler identity (proves the real tsc, not a decoy)
         # Never `npx tsc`: npx will happily fetch a registry package of that
         # name, and a decoy tsc@2.0.4 that exits 0 having compiled nothing was
