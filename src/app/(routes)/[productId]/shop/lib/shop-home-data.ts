@@ -35,6 +35,7 @@
 import { SITE, SITE_URL } from "@/lib/site";
 import type { CatalogProduct } from "@/lib/catalog/marketplace-catalog-data";
 import { fetchUpstreamJson, type UpstreamResult } from "@/lib/upstream/fetch-upstream";
+import { CATALOG } from "@/lib/seo/shop-home-indexability.mjs";
 import { htmlToText } from "../../product/[slug]/lib/sanitize-html";
 
 /** apiv3 base — overridable for dev/preview; defaults to the prod API host. */
@@ -46,6 +47,9 @@ const APIV3_BASE = (
 export const SHOP_PAGE_SIZE = 48;
 
 // ---- view model ----
+
+/** @see CATALOG in `@/lib/seo/shop-home-indexability.mjs`. */
+export type CatalogProvenance = (typeof CATALOG)[keyof typeof CATALOG];
 
 export interface ShopHomeView {
   shopUrl: string;
@@ -59,6 +63,14 @@ export interface ShopHomeView {
   pageSize: number;
   total: number;
   totalPages: number;
+  /**
+   * Where `total` came from. `"counted"` only when the product-list call
+   * answered `ok` — a list 4xx degrades to an empty grid below, which makes a
+   * bare `total === 0` ambiguous. The SEO indexability rule
+   * (`@/lib/seo/shop-home-indexability.mjs`) reads THIS, never `total` alone,
+   * so an uncounted catalogue can never produce a `noindex`.
+   */
+  catalog: CatalogProvenance;
   products: CatalogProduct[];
   /** schema.org Store JSON-LD, host-normalised to the served URL. */
   storeJsonLd: Record<string, unknown>;
@@ -248,11 +260,18 @@ export async function fetchShopHome(
 
   // The shop exists (Store said so). A 4xx from the product list is "no
   // grid", not "no shop" — an honest empty catalogue is a 200.
+  //
+  // But "no grid because the list 4xx'd" and "no grid because the shop really
+  // has nothing" are DIFFERENT facts, and the SEO layer must not confuse them:
+  // only the second may ever produce a `noindex`. `catalog` carries that
+  // distinction out of here instead of letting `total: 0` swallow it.
   let grid: ProductPage = { products: [], total: 0, totalPages: 1 };
+  let catalog: CatalogProvenance = CATALOG.UNCOUNTED;
   if (listResult.outcome === "ok") {
     const parsed = parseProductPage(shopUrl, listResult.body);
     if (!parsed) return unrecognised(listResult.status);
     grid = parsed;
+    catalog = CATALOG.COUNTED;
   }
 
   // Past the last page: absent, like the marketplace hub. Page 1 of an empty
@@ -285,6 +304,7 @@ export async function fetchShopHome(
       pageSize: SHOP_PAGE_SIZE,
       total: grid.total,
       totalPages: grid.totalPages,
+      catalog,
       products: grid.products,
       storeJsonLd,
     },

@@ -41,6 +41,7 @@ import { throwIfUnavailable } from "@/lib/upstream/fetch-upstream";
 import ProductExperience from "./components/ProductExperience";
 import { resolveInteractiveProduct } from "./lib/product-data";
 import { fetchShopHome, readPage } from "./shop/lib/shop-home-data";
+import { shopHomeRobots } from "@/lib/seo/shop-home-indexability.mjs";
 import ShopHome from "./shop/components/ShopHome";
 
 interface PageProps {
@@ -93,7 +94,16 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       description,
       images: shop.logoUrl ? [shop.logoUrl] : [],
     },
-    robots: { index: true, follow: true },
+    // `index` ONLY on positive, counted evidence the shop has products. A shop
+    // whose product list answered `ok` with a real total of zero is a thin
+    // page — a raw database handle as its <h1> over an empty grid — and that
+    // is the shape that cost the legacy Merchant Center account. An
+    // `unavailable` list can never reach here (throwIfUnavailable above turns
+    // it into a 5xx), and the rule itself fails OPEN on anything that is not a
+    // counted zero, so a throttled crawl can never delist a working shop.
+    // `follow` stays true: an empty shop still links somewhere worth crawling.
+    // See `@/lib/seo/shop-home-indexability.mjs`.
+    robots: shopHomeRobots(shop),
   };
 }
 
