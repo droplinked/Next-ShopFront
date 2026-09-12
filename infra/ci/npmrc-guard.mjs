@@ -17,33 +17,43 @@
 // overrides flags that were chosen deliberately, per-site, for measured
 // reasons — and the override is invisible at every call site.
 //
-// The concrete case this exists for is `legacy-peer-deps=true`, which the
-// sibling repo droplinked-shopfront adopted in its #693. Adopting it HERE was
-// measured on dev @ 21956bf (npm 10.9.3, node 22.18.0) and is the wrong move:
+// ⭐ The install flag and the lockfile-GENERATION flag are not the same
+// decision, and .npmrc cannot tell them apart. The deploy installs with
+// `--legacy-peer-deps` (Dockerfile:31) and must. Nothing here should generate
+// a lockfile with it. One line in .npmrc silently converts the second into
+// the first — that is the concrete case this guard exists for, and it is the
+// change droplinked-shopfront#693 made for reasons that do not hold here.
 //
-//   committed lockfile, `npm ci`                    890 packages, 3 unmet edges
-//   committed lockfile, `npm ci --legacy-peer-deps` 890 packages, 3 unmet edges
-//   regenerate in place (no flag)                   0-line lockfile diff
-//   clean regen WITH legacy-peer-deps=true          839 packages, 8 unmet edges
+// Measured on dev @ 21956bf, npm 10.9.3, node 22.18.0, in three isolated
+// checkouts of the same commit:
 //
-// The last row drops 70 lockfile entries — including
-// `@droplinked_inc/wallet-connection` and `@droplinked_inc/web3-kit`, the
-// declared peers of the first-party runtime package `@droplinked_inc/web3` —
-// and trips `peer-conflict-ratchet.mjs` with 5 new keys. `next build` and
-// `npm test` stay GREEN on that tree, which is the whole problem: it changes
-// what ships and no gate in this repository can see it.
+//   INSTALL-time, from the committed lockfile
+//     npm ci                                             890 packages, 3 unmet edges
+//     npm ci --legacy-peer-deps                          890 packages, 3 unmet edges
+//
+//   GENERATION-time, in place, from the committed lockfile
+//     npm install --package-lock-only                    978 entries, byte-identical
+//     npm install --package-lock-only --force            978 entries, byte-identical
+//     npm install --package-lock-only --legacy-peer-deps 927 entries, 51 DROPPED
+//
+// The 51 removals are peer entries and their subtrees:
+// @droplinked_inc/wallet-connection and @droplinked_inc/web3-kit (declared
+// peers of the first-party runtime package @droplinked_inc/web3), webpack
+// (peer of @sentry/webpack-plugin, taking its 38-package closure with it),
+// and fastestsmallesttextencoderdecoder (peer of @solana/codecs-strings).
+// The ratchet reports 4 NEW unmet edges on that tree. `next build`,
+// `tsc --noEmit` and `npm test` all stay GREEN.
+//
+// 🚨 A peer disappearing takes its whole subtree with it, so the damage reads
+// as routine pruning in a lockfile diff. 41 of the 51 are top-level entries
+// and only 4 of them are the actual peers.
 //
 // It also breaks two controls that are bare ON PURPOSE, both documented in
 // `lockfile-maintenance.yml`: the `npm update/install --package-lock-only`
-// refresh steps (the flag makes every refresh drop peer-resolved packages)
-// and the `npm ci --dry-run` verification (a strict install is the entire
-// point — under the flag it can no longer report `Missing: … from lock file`).
-//
-// 🚨 The conditions #693 fixed DO NOT HOLD HERE, which is why the same change
-// has the opposite sign. There, Dependabot's `npm install --force
-// --package-lock-only` DIVERGED from the workflow's install and re-minted
-// `"peer": true` nodes on every rebase. Here, regeneration in place is
-// byte-identical to the committed lockfile and the two installs agree exactly.
+// refresh steps and the `npm ci --dry-run` verification, whose entire value
+// is being a STRICT install that can report `Missing: … from lock file`.
+// That workflow now runs the ratchet after every refresh (#294), which is the
+// assertion that a regeneration did not lose peer entries.
 //
 // ── What this guard does NOT do ──────────────────────────────────────────
 // It does not forbid change. It forbids UNRECORDED change: add the key to

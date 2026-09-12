@@ -26,7 +26,7 @@ WORKFLOW="${REPO_ROOT}/.github/workflows/pre-merge-checks.yml"
 MAINT="${REPO_ROOT}/.github/workflows/lockfile-maintenance.yml"
 
 # Raise when you add an assertion; lower only alongside a retired one.
-MIN_ASSERTIONS=16
+MIN_ASSERTIONS=18
 
 PASS=0; FAIL=0
 ok()  { printf '  ok   %s\n' "$1"; PASS=$((PASS + 1)); }
@@ -94,6 +94,24 @@ fi
 grep -qE '^        run: npm ci --dry-run$' "$MAINT" \
   && ok "lockfile-maintenance still verifies with a STRICT npm ci --dry-run" \
   || bad "the strict dry-run verification is gone — the flag's damage would be unobservable"
+
+# 🚨 `npm ci --dry-run` proves the refreshed lockfile INSTALLS. It cannot
+# prove the lockfile still CONTAINS what it should — a tree that quietly lost
+# 51 peer entries installs perfectly. The ratchet after the refresh is the
+# assertion that a regeneration did not lose peer entries (#294), and it must
+# run AFTER a real install because it reads the installed tree, not the file.
+RATCHET_LINE="$(grep -nE '^          node infra/ci/peer-conflict-ratchet\.mjs$' "$MAINT" | head -1)"
+if [ -n "$RATCHET_LINE" ]; then
+  ok "lockfile-maintenance runs the peer-conflict ratchet after the refresh"
+  MAINT_INSTALL="$(grep -nE '^          npm ci --legacy-peer-deps --no-audit --no-fund$' "$MAINT" | head -1)"
+  if [ -n "$MAINT_INSTALL" ] && [ "${MAINT_INSTALL%%:*}" -lt "${RATCHET_LINE%%:*}" ]; then
+    ok "it installs for real BEFORE the ratchet (line ${MAINT_INSTALL%%:*} < ${RATCHET_LINE%%:*})"
+  else
+    bad "the ratchet in lockfile-maintenance does not run after a real install — it would scan an empty tree"
+  fi
+else
+  bad "lockfile-maintenance does not run the ratchet after refreshing — a refresh that drops peer entries still opens a PR"
+fi
 
 echo "── the workflow actually runs the guard ──────────────────────────────"
 if grep -qE '^        run: node infra/ci/npmrc-guard\.mjs$' "$WORKFLOW"; then
