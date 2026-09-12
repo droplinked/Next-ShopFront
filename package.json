@@ -21,7 +21,7 @@
     "test:mobile:install": "playwright install --with-deps chromium webkit"
   },
   "dependencies": {
-    "@droplinked_inc/web3": "^1.0.0",
+    "@droplinked_inc/web3": "^3.0.1",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@mui/joy": "^5.0.0-beta.27",
