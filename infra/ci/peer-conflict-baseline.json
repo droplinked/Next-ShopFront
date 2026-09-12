@@ -1,0 +1,18 @@
+{
+  "$comment": "Unmet dependency edges this repository has decided to live with under --legacy-peer-deps. Read by infra/ci/peer-conflict-ratchet.mjs: any edge NOT here fails the build; any entry here that is no longer observed also fails until it is removed. Regenerate with `node infra/ci/peer-conflict-ratchet.mjs --write-baseline` and then WRITE THE NOTE — an entry without a reason is a conflict nobody decided about. Measured on dev @ c54f050, npm 10.9.3, node 22.18.0, after `npm ci --legacy-peer-deps --no-audit`: 3 unmet edges over 890 installed packages, collapsing to these 3 keys. Next-ShopFront#285.",
+  "nodeFloor": 800,
+  "entries": {
+    "eslint-config-next -> eslint@^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9 [peer/INVALID]": {
+      "since": "2026-09-12",
+      "note": "eslint-plugin-import, nested under eslint-config-next@16.3.4, peers eslint <= 9 against the eslint@10.10.0 this repo installs (#229 bumped eslint 8 -> 10 on 2026-09-08). It is inert today rather than dangerous, because ESLint already lints ZERO files here for a different reason: the config is a legacy `.eslintrc.json` and eslint 10 requires flat config. Measured on dev @ c54f050 — `npm run lint` exits 1 with `Invalid Options: Unknown options: useEslintrc, extensions, resolvePluginsRelativeTo, rulePaths, ignorePath, reportUnusedDisableDirectives`, and `next build` prints the same crash as a non-fatal warning and completes exit 0. NO workflow runs lint (grep over .github/workflows: 0 hits; control: 5 of them mention npm), so nothing reports it. Retired by migrating to eslint.config.mjs flat config, which is also what makes these three edges meaningful again."
+    },
+    "eslint-config-next -> eslint@^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9 [peer/INVALID]": {
+      "since": "2026-09-12",
+      "note": "eslint-plugin-jsx-a11y, same nest and same cause as the eslint-plugin-import entry above. Same retirement: the flat-config migration."
+    },
+    "eslint-config-next -> eslint@^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7 [peer/INVALID]": {
+      "since": "2026-09-12",
+      "note": "eslint-plugin-react, same nest and same cause as the two entries above. Note the range differs by a patch floor (^9.7), which is why this is its own key rather than a duplicate — the key deliberately carries the SPEC so two plugins asking for different things stay distinguishable. Same retirement: the flat-config migration."
+    }
+  }
+}

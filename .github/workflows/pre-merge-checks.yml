@@ -143,6 +143,7 @@ jobs:
           set -euo pipefail
           bash infra/ci/__tests__/docs-only-paths.test.sh
           bash infra/ci/__tests__/pre-merge-gate-decide.test.sh
+          bash infra/ci/__tests__/peer-conflict-ratchet.test.sh
 
       - name: Classify the changed-file set
         id: classify
@@ -241,6 +242,24 @@ jobs:
         # `--no-audit --no-fund` are output-only.
         run: npm ci --legacy-peer-deps --no-audit --no-fund
 
+      # 🚨 HARD GATE — the conflicts `--legacy-peer-deps` hides. Next-ShopFront#285.
+      #
+      # The install above matches the Dockerfile byte for byte, and that
+      # install does not enforce peer ranges. So a bump whose peers exclude
+      # what is installed reaches this point green, and every step below it
+      # stays green too: measured 2026-09-12 on the merge result of #267,
+      # `@mui/icons-material@9` against `@mui/material@5` installs, builds,
+      # typechecks and passes `npm test`.
+      #
+      # This step is the only thing in the repository that can say so. It runs
+      # AFTER the install on purpose (an uninstalled tree reports no conflicts
+      # and would look clean — the baseline's `nodeFloor` is the control that
+      # makes that a failure rather than a pass), and it is deliberately NOT
+      # `continue-on-error`: a new unmet peer edge is a merge blocker, and the
+      # way past it is a baseline entry with a written reason, not a bypass.
+      - name: peer-conflict ratchet (HARD GATE — see infra/ci/peer-conflict-baseline.json)
+        run: node infra/ci/peer-conflict-ratchet.mjs
+
       - name: compiler identity (proves the real tsc, not a decoy)
         # Never `npx tsc`: npx will happily fetch a registry package of that
         # name, and a decoy tsc@2.0.4 that exits 0 having compiled nothing was
@@ -322,6 +341,7 @@ jobs:
             echo "| step | what it proves |"
             echo "| --- | --- |"
             echo "| install | \`npm ci --legacy-peer-deps\` — Dockerfile:31, the deploy's install |"
+            echo "| peer-conflict ratchet | every unmet dependency edge \`--legacy-peer-deps\` hides, against \`infra/ci/peer-conflict-baseline.json\` (#285) |"
             echo "| build | \`next build\` — the deploy's build; a failure here is an undeployable storefront |"
             echo "| typecheck | \`tsc --noEmit\` AFTER the build (cold it reports 8 phantom errors; post-build, 0) |"
             echo "| test | \`npm test\` — node:test over src/__smoke__/ |"
