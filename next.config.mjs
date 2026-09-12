@@ -56,6 +56,21 @@ const nextConfig = {
     // reported with the count; a linter that CANNOT RUN is a hard failure
     // there. Making findings block is a deliberate follow-up on that step,
     // not a side effect here.
+    // ⚠️ Next 16 removed `next lint`, and with it this key: the build now prints
+    // `Unrecognized key(s) in object: 'eslint'` as a WARNING and carries on
+    // (measured 2026-09-12 on 16.3.4 — exit 0, 29 routes). The key STAYS
+    // anyway, and deliberately:
+    //
+    //   • `infra/ci/__tests__/eslint-report.test.sh` asserts its presence, as
+    //     the #287 control that `next build` cannot quietly become a hard lint
+    //     gate over an untriaged 10-error backlog. Deleting the key to silence
+    //     a cosmetic warning would delete that control as a side effect of a
+    //     dependency bump — the exact shape of failure #287 exists to prevent.
+    //   • It is still live on the webpack path (`next build --webpack`) and on
+    //     any revert of this upgrade. Removing it would make a revert red.
+    //
+    // Retiring it is a deliberate follow-up that moves the control and the key
+    // together, not a line item in a `next` bump.
     eslint: { ignoreDuringBuilds: true },
 
     // Dockerfile (runner stage) copies /app/.next/standalone — require Next.js
@@ -117,6 +132,32 @@ const nextConfig = {
                 ],
             },
         ];
+    },
+    // ── SVG-as-React-component, for BOTH bundlers ───────────────────────────
+    //
+    // `src/assets/AppIcons.ts` imports 16 `.svg` files and exports them as
+    // COMPONENTS (`<AppIcons.Cart />`). That only works because @svgr/webpack
+    // rewrites each import into a React component; Next's built-in SVG
+    // handling would hand back a static-image object instead, and every icon
+    // call site would crash at render.
+    //
+    // 🚨 Next 16 builds with TURBOPACK by default, and Turbopack does not read
+    // the `webpack()` hook. Left alone, the hook below stays in the file,
+    // stays correct, and stops being consulted — a config that reads as
+    // configured while doing nothing. `turbopack.rules` is the same rule for
+    // the bundler that now runs.
+    //
+    // BOTH are kept on purpose: the webpack hook still serves `next dev
+    // --webpack` and `next build --webpack`, which remain supported escape
+    // hatches in 16. They are two spellings of one decision, not two
+    // decisions — change them together.
+    turbopack: {
+        rules: {
+            '*.svg': {
+                loaders: ['@svgr/webpack'],
+                as: '*.js',
+            },
+        },
     },
     webpack(config, options) {
         config.module.rules.push({
