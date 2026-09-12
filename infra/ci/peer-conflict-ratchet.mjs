@@ -27,9 +27,15 @@
 // gate here, and the reason is mechanical, not political. Two reasons, both
 // measured on `dev` @ c54f050, npm 10.9.3, node 22.18.0:
 //
-//   1. Bare `npm ci` already FAILS on this repo (the lockfile is
-//      peer-incomplete; see the `next-build` header). A gate that is red on an
-//      untouched `dev` is not a gate.
+//   1. ⚠️ CORRECTED 2026-09-12 (#294). This reason used to read "Bare `npm ci`
+//      already FAILS on this repo (the lockfile is peer-incomplete)". It does
+//      not: on dev @ 21956bf both `npm ci` and `npm ci --legacy-peer-deps`
+//      exit 0 with exactly 890 packages. The lockfile was repaired after that
+//      measurement was taken. Reason 2 below is now the ONLY mechanical
+//      reason a strict `npm ci` cannot serve as the gate, and it is
+//      sufficient — but this file's premise is one reason weaker than it
+//      claimed, and a stale measurement that nobody re-took is the same
+//      failure mode the ratchet itself exists to prevent.
 //   2. npm's resolver stops at the FIRST conflict it hits — ERESOLVE reports
 //      one pair — and this tree has three before any PR is applied.
 //

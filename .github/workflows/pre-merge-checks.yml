@@ -55,12 +55,21 @@
 # `npm ci --legacy-peer-deps` while its deploy used strict `npm ci`, so the
 # gate could not fail on a dependency conflict that broke the deploy.
 #
-# Measured on main @ a2bd8a9: bare `npm ci` FAILS here (exit 1, 51
-# "Missing: ... from lock file" entries — the lockfile is peer-incomplete).
-# `npm ci --legacy-peer-deps` succeeds, 840 packages. Repairing the lockfile is
-# a separate change with its own smoke plan because it changes what the shipped
-# image installs. `--no-audit --no-fund` below are output-only and do not
-# affect resolution.
+# ⚠️ CORRECTED 2026-09-12 (#294). This block used to read: "Measured on main
+# @ a2bd8a9: bare `npm ci` FAILS here (exit 1, 51 'Missing: ... from lock
+# file' entries — the lockfile is peer-incomplete)." That is NO LONGER TRUE
+# and the lockfile has since been repaired. Re-measured on dev @ 21956bf, npm
+# 10.9.3, node 22.18.0:
+#
+#   npm ci                      exit 0, 890 packages
+#   npm ci --legacy-peer-deps   exit 0, 890 packages   (identical tree)
+#
+# `npm ci` installs the lockfile rather than resolving, so with a complete
+# lockfile the flag cannot change the result — it only decides whether npm
+# VALIDATES peer ranges while doing it. Keeping the flag here is therefore
+# still correct, but for the stated reason only (it is Dockerfile:31, verbatim)
+# and NOT because a bare install would fail. Do not reason from the old claim.
+# `--no-audit --no-fund` are output-only and do not affect resolution.
 #
 # ── Why there is NO `paths:` and NO `paths-ignore:` on the trigger ────────
 # A path filter and a required status check are incompatible. When a
@@ -144,6 +153,21 @@ jobs:
           bash infra/ci/__tests__/docs-only-paths.test.sh
           bash infra/ci/__tests__/pre-merge-gate-decide.test.sh
           bash infra/ci/__tests__/peer-conflict-ratchet.test.sh
+          bash infra/ci/__tests__/npmrc-guard.test.sh
+
+      # A one-line .npmrc change alters what every install in the repo
+      # resolves — Dockerfile:31, this gate, lockfile-maintenance.yml's
+      # deliberately-bare refresh steps, and Dependabot's updater — with no
+      # command line anywhere to show it. Measured on dev @ 21956bf:
+      # `legacy-peer-deps=true` takes the tree from 890 packages / 3 unmet
+      # peer edges to 839 / 8, dropping two first-party peers, while
+      # `next build`, `tsc` and `npm test` all stay GREEN. Next-ShopFront#294.
+      #
+      # Runs HERE rather than in next-build: it reads one text file, needs no
+      # install, and is worth knowing before a 30-minute build. It also means
+      # a docs-only PR that edits .npmrc is still screened.
+      - name: npmrc-guard (resolution-affecting settings must be on the record)
+        run: node infra/ci/npmrc-guard.mjs
 
       - name: Classify the changed-file set
         id: classify

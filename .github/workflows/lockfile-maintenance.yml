@@ -168,6 +168,45 @@ jobs:
         # stopped #397, #388 and shopfront #648 from ever opening.
         run: npm ci --dry-run
 
+      # 🚨 THE REFRESH MUST NOT LOSE PEER ENTRIES. Next-ShopFront#294.
+      #
+      # `npm ci --dry-run` above proves the refreshed lockfile INSTALLS. It
+      # cannot prove the lockfile still contains what it should: a tree that
+      # quietly lost packages installs perfectly.
+      #
+      # The refresh steps are bare on purpose (see their comments), but the
+      # flag can still arrive from `.npmrc`, from a Dependabot config, or from
+      # a hand-run `npm install --legacy-peer-deps` whose result someone
+      # commits. Measured on dev @ 21956bf, starting from the COMMITTED
+      # lockfile, `npm install --package-lock-only --legacy-peer-deps`:
+      #
+      #   lockfile   978 -> 927 entries   (51 dropped, 0 added; 41 top-level)
+      #   installs   890 -> 839 packages
+      #   ratchet    3 baselined edges -> 7, of which 4 are NEW peer/MISSING:
+      #              @droplinked_inc/wallet-connection, @droplinked_inc/web3-kit,
+      #              webpack (via @sentry/webpack-plugin),
+      #              fastestsmallesttextencoderdecoder (via @solana/codecs-strings)
+      #
+      # 38 of the 41 top-level removals are webpack's transitive closure
+      # (@webassemblyjs/*, terser, tapable, watchpack, enhanced-resolve, …) —
+      # a peer disappearing takes its whole subtree with it, which is why the
+      # count looks like routine pruning in a diff and is not.
+      #
+      # The step above this one already tells a HUMAN to "read the removals
+      # before trusting a refresh". This is that instruction, executed. It
+      # reuses the ratchet from #286 rather than reimplementing the check: the
+      # tool already enumerates every unmet edge and already has a baseline of
+      # the three conflicts this repo has decided to live with.
+      #
+      # It installs for real (the ratchet reads an installed tree via
+      # arborist, not the lockfile) and with the DEPLOY's flag, so what it
+      # scans is what the deploy would ship.
+      - name: the refreshed lockfile did not lose peer entries (HARD GATE — #294)
+        run: |
+          set -euo pipefail
+          npm ci --legacy-peer-deps --no-audit --no-fund
+          node infra/ci/peer-conflict-ratchet.mjs
+
       - name: Diff the resolution set
         id: diff
         run: |
