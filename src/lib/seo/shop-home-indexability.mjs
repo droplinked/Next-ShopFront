@@ -48,9 +48,48 @@
  *   Both would delist working shops. Product count is the only signal that
  *   actually tracks "is there anything on this page".
  *
+ * THE SECOND CONDITION — an email address in the handle (added 2026-09-12)
+ * ------------------------------------------------------------------------
+ * A shop home whose handle IS a customer's email address publishes that
+ * address in the URL, and Google indexes the URL whatever the page says.
+ * Measured on PROD, anonymous, no auth: `shop.droplinked.com/yg300211@
+ * gmail.com` served HTTP 200 with `index, follow`, and apiv3's
+ * `/shop/{handle}/structured-data` repeated the address in four more fields.
+ * droplinked-backend #3848 closed the write sinks and its sibling substitutes
+ * the NAME on the serving path — neither removes the handle, and neither
+ * un-indexes what Google already has. This does.
+ *
+ * It is a separate condition, not a refinement of the emptiness one, because
+ * the two rest on different kinds of evidence:
+ *
+ *   emptiness  — an OBSERVATION of an upstream call, which a throttle can
+ *                corrupt, so it must be gated on `catalog === COUNTED`.
+ *   the handle — a FACT about the URL this request arrived on. It is already
+ *                in `params`; no fetch, no outcome, nothing a rate limit can
+ *                manufacture. There is nothing to fail open FROM.
+ *
+ * So this condition applies to a STOCKED shop too. A shop with 40 products
+ * and a customer's email address in its URL still must not be indexed under
+ * that URL — the thin-page argument does not apply, but the privacy one does,
+ * and the privacy one does not care how much stock is behind it.
+ *
+ * The predicate is the narrowest thing that is unambiguously an address, and
+ * is a deliberate transcription of `publicShopNameIsEmailShaped` in
+ * droplinked-backend `src/modules/shop/utils/public-shop-name.ts` (that module
+ * is the source of truth; this is its ESM twin because the two run in
+ * different repos and runtimes). Whole trimmed string, anchored both ends,
+ * exactly one `@`, no whitespace, a dotted domain whose last label is 2+ ASCII
+ * letters. Everything a real handle might plausibly do with an `@` therefore
+ * stays indexed, byte-identical: live handles `nass2001@` and `abba@` have no
+ * domain and are NOT addresses, and the 2026-09-02 non-ASCII delisting class
+ * (`椰子`, `tuấn linh-…`) has no `@` at all.
+ *
  * SCOPE: this governs what the page EMITS from here on. It is not a delisting
  * sweep and it does not touch already-indexed URLs — retroactive treatment of
- * the ~5,400 live URLs is an operator decision with SEO consequences.
+ * the ~5,400 live URLs is an operator decision with SEO consequences. What it
+ * DOES do is let Google drop the email-handled pages it has already crawled,
+ * which is the only part of that retroactive question that is unambiguously
+ * safe: it renames nothing, redirects nothing and breaks no inbound link.
  *
  * Plain ESM on purpose: this repo's `npm test` is Node's built-in runner with
  * no TypeScript transform, and the rule is exercised by
@@ -88,12 +127,45 @@ export function shopHomeIsEmpty(shop) {
 }
 
 /**
+ * Anchored, whole-string, single-`@`, no-whitespace, dotted-domain.
+ *
+ * `[^\s@]+` for the local part and for each domain label means a second `@`
+ * anywhere fails the match, and `\s` anywhere fails the match — both on
+ * purpose: a handle that merely CONTAINS an `@` is not an address.
+ */
+const EMAIL_SHAPED_HANDLE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)*\.[A-Za-z]{2,}$/;
+
+/**
+ * True only when the WHOLE handle is an email address.
+ *
+ * Takes the handle, never the shop's display name: droplinked-backend now
+ * substitutes an email NAME on the serving path, so by the time this page
+ * renders, the name is already clean and the handle is the only surviving
+ * copy. Reading the name here would silently stop working the day that
+ * substitution ships.
+ *
+ * @param {unknown} handle the `shopUrl` segment this request arrived on
+ * @returns {boolean}
+ */
+export function shopHandleIsEmailShaped(handle) {
+  if (typeof handle !== 'string') return false;
+  return EMAIL_SHAPED_HANDLE.test(handle.trim());
+}
+
+/**
  * The `robots` directive for a shop home, in Next's Metadata shape.
  *
- * @param {{ catalog?: unknown, total?: unknown }} shop
+ * Two independent reasons to withhold `index`, both emitting `follow: true`:
+ *   1. the handle is a customer's email address (privacy — applies at ANY
+ *      stock level, and needs no upstream evidence); or
+ *   2. the shop is COUNTED empty (thin page — positive evidence only).
+ *
+ * @param {{ shopUrl?: unknown, catalog?: unknown, total?: unknown }} shop
  * @returns {{ index: boolean, follow: boolean }}
  */
 export function shopHomeRobots(shop) {
+  const handle = shop && typeof shop === 'object' ? shop.shopUrl : undefined;
+  if (shopHandleIsEmailShaped(handle)) return { index: false, follow: true };
   return shopHomeIsEmpty(shop)
     ? { index: false, follow: true }
     : { index: true, follow: true };
