@@ -1,6 +1,6 @@
 {
-  "$comment": "Unmet dependency edges this repository has decided to live with under --legacy-peer-deps. Read by infra/ci/peer-conflict-ratchet.mjs: any edge NOT here fails the build; any entry here that is no longer observed also fails until it is removed. Regenerate with `node infra/ci/peer-conflict-ratchet.mjs --write-baseline` and then WRITE THE NOTE — an entry without a reason is a conflict nobody decided about. Measured on dev @ c54f050, npm 10.9.3, node 22.18.0, after `npm ci --legacy-peer-deps --no-audit`: 3 unmet edges over 890 installed packages, collapsing to these 3 keys. Next-ShopFront#285.",
-  "nodeFloor": 800,
+  "$comment": "Unmet dependency edges this repository has decided to live with under --legacy-peer-deps. Read by infra/ci/peer-conflict-ratchet.mjs: any edge NOT here fails the build; any entry here that is no longer observed also fails until it is removed. Regenerate with `node infra/ci/peer-conflict-ratchet.mjs --write-baseline` and then WRITE THE NOTE — an entry without a reason is a conflict nobody decided about. Measured on this branch, npm 10.9.3, node 22.18.0, after `npm ci --legacy-peer-deps --no-audit`: 3 unmet edges over 764 installed packages, collapsing to these 3 keys (unchanged from the 890-package tree on dev @ c54f050 that first set this file). nodeFloor moved 800 -> 680 because removing five unimported dependencies took the tree 890 -> 764; the floor is the empty-scan control, not a conflict entry, and it tracks the tree. Next-ShopFront#285.",
+  "nodeFloor": 680,
   "entries": {
     "eslint-config-next -> eslint@^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9 [peer/INVALID]": {
       "since": "2026-09-12",

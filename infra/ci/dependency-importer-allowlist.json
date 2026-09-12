@@ -1,0 +1,43 @@
+{
+  "$comment": "Runtime dependencies that no source file imports by name, and the reason each one is still a dependency. Read by infra/ci/dependency-importer-ratchet.mjs: a dependency with no importer and no entry here FAILS the build; an entry here that acquires an importer, or that is no longer a dependency, ALSO fails until it is deleted. The list is a ratchet — it may shrink, never grow silently. Measured on the branch that removed ethers / casper-js-sdk / @uauth/js / @solana/spl-token / @mui/icons-material: 274 source files, 28 runtime dependencies. Next-ShopFront#288.",
+  "fileFloor": 200,
+  "controls": [
+    "react",
+    "next",
+    "@mui/material"
+  ],
+  "entries": {
+    "@emotion/react": {
+      "reason": "Peer of @mui/material and @mui/styled-engine (^11.5.0), and the styling engine MUI v5 actually renders through. Marked optional in MUI's peerDependenciesMeta only because @mui/styled-engine-sc is the alternative; this repo uses the emotion engine, so removing it breaks every MUI component at runtime while every static check stays green. Retired if MUI is dropped or switched to styled-components.",
+      "requiredBy": "@mui/material, @mui/styled-engine (peerDependencies)"
+    },
+    "@emotion/styled": {
+      "reason": "Peer of @mui/material and @mui/styled-engine (^11.3.0), same engine as @emotion/react above and the same failure mode if removed. The two are installed and upgraded as a pair. Retired with @emotion/react.",
+      "requiredBy": "@mui/material, @mui/styled-engine (peerDependencies)"
+    },
+    "react-dom": {
+      "reason": "Non-optional peer of both next (^18.2.0 || ^19) and @mui/material (^17 || ^18 || ^19). It is React's DOM renderer — Next.js imports it, application code never needs to. Removing it is an undeployable build. Retired never, while this is a React web app.",
+      "requiredBy": "next, @mui/material (peerDependencies)"
+    },
+    "sharp": {
+      "reason": "Next.js image pipeline. Declared by next as an optionalDependency (^0.34.3 || ^0.35.3) and pinned at the root deliberately so the Dockerfile resolves the libvips native binaries for the runner platform rather than whatever npm picks (Dockerfile:15 and :28 record the yarn-era mismatch this prevents). next/image loads it; no source file does. Retired only if the image pipeline stops running in-process.",
+      "requiredBy": "next (optionalDependencies) + Dockerfile native-binary resolution"
+    },
+    "@mui/joy": {
+      "reason": "UNUSED — zero importers, no runtime requirer, kept out of the 2026-09-12 removal only to hold that PR to its measured scope. This is debt, not a justification. Retired by Next-ShopFront#289, which should delete it.",
+      "requiredBy": "nothing — tracked for removal in Next-ShopFront#289"
+    },
+    "@tanstack/react-query": {
+      "reason": "UNUSED — zero importers, no provider mounted anywhere in the tree, no runtime requirer. Data fetching here goes through src/lib/fetchInstance.ts. Debt, not a justification. Retired by Next-ShopFront#289, which should delete it.",
+      "requiredBy": "nothing — tracked for removal in Next-ShopFront#289"
+    },
+    "axios": {
+      "reason": "UNUSED — zero importers. src/lib/dpp/services.ts says so in a comment: 'Next-ShopFront has no shared axios instance'. The root override axios@^1.16.0 constrains transitive copies and is unaffected by removing the direct dependency. Debt, not a justification. Retired by Next-ShopFront#289, which should delete it.",
+      "requiredBy": "nothing — tracked for removal in Next-ShopFront#289"
+    },
+    "buffer": {
+      "reason": "UNUSED — zero importers. It was the browser Buffer polyfill for the web3 stack that this branch removed, and next.config.mjs declares no resolve.fallback that would pull it in. Debt, not a justification. Retired by Next-ShopFront#289, which should delete it.",
+      "requiredBy": "nothing — tracked for removal in Next-ShopFront#289"
+    }
+  }
+}
