@@ -420,6 +420,36 @@ jobs:
         # exactly the same suite.
         run: npm test
 
+      # 🚨 HARD GATE — the indexability rule, ON THE RENDERED DOCUMENT.
+      # Next-ShopFront#298.
+      #
+      # `src/__smoke__/shop-home-indexability.smoke.test.mjs` (run by `npm
+      # test` above) drives the PURE MODULE and the page's source text. It
+      # stays green through every way the directive can fail to REACH the
+      # document: a Next major changing how `Metadata.robots` serialises,
+      # `generateMetadata` no longer being called for this route, the shop
+      # branch falling through to the product branch (which returns `{}`), or
+      # the `robots:` key simply being deleted. Each of those ships a
+      # storefront that invites Google to index a customer's email address
+      # while every test in this repository passes.
+      #
+      # This step starts a fixture apiv3 on the `APIV3_BASE_URL` seam, runs a
+      # real `next start` over the build this job just produced, and reads the
+      # robots meta out of the HTTP RESPONSE BODY. It asserts a failing case
+      # AND a clean case in the same run — an email-handled shop WITH stock is
+      # `noindex, follow`, an ordinary stocked shop is `index, follow` — plus
+      # the fail-open case (an UNCOUNTED catalogue must never delist a shop:
+      # the 2026-09-08 throttle class) and a counted-empty case.
+      #
+      # `--self-test` re-runs every case against a deliberately WRONG
+      # expectation, and once against HTML with the meta tag stripped, and
+      # fails unless the probe reports failure on all of them: a probe that
+      # cannot fail proves nothing. It prints the kill count every run.
+      - name: rendered-robots probe (HARD GATE — robots meta on real `next start` HTML)
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: node infra/ci/rendered-robots-probe.mjs --self-test
+
       - name: summary
         if: always()
         run: |
@@ -434,8 +464,9 @@ jobs:
             echo "| typecheck | \`tsc --noEmit\` AFTER the build (cold it reports 8 phantom errors; post-build, 0) |"
             echo "| test | \`npm test\` — node:test over src/__smoke__/ |"
             echo "| eslint-report | ESLint actually runs (#287). Findings are REPORT-ONLY; a dead linter or a tree below \`fileFloor\` is a hard failure |"
+            echo "| rendered-robots probe | the shop-home robots directive in the HTML a real \`next start\` serves — failing case + clean case + fail-open case, mutation-proven (#298) |"
             echo
-            echo "Not covered: the Playwright mobile suite (needs a live base URL), \`tests/\` (excluded from the root tsconfig), ESLint findings as a merge blocker (report-only by design — see #287; a dead linter IS blocking), runtime behaviour against apiv3."
+            echo "Not covered: the Playwright mobile suite (needs a live base URL), \`tests/\` (excluded from the root tsconfig), ESLint findings as a merge blocker (report-only by design — see #287; a dead linter IS blocking), runtime behaviour against the REAL apiv3 (the rendered-robots probe drives a fixture on the APIV3_BASE_URL seam, not production)."
           } >>"$GITHUB_STEP_SUMMARY"
 
   # ═══════════════════════════════════════════════════════════════════════════
