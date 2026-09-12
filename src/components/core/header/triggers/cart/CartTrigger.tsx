@@ -36,7 +36,10 @@ const CartTrigger = () => {
   return (
     <AppDialog
       aria-labelledby="cart-dialog-title"
-      TransitionComponent={Transition}
+      // MUI v6 removed `TransitionComponent` in favour of the `slots` API;
+      // `slots.transition` is the same slot with the same contract, so the
+      // left-slide entrance this dialog has always had is unchanged.
+      slots={{ transition: Transition }}
       slotProps={{ backdrop: { timeout: 500, sx: { backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(0.5px)' } } }}
       sx={{
         '& .MuiDialog-paper': {
