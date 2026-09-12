@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CATALOG,
+  shopHandleIsEmailShaped,
   shopHomeIsEmpty,
   shopHomeRobots,
 } from '../lib/seo/shop-home-indexability.mjs';
@@ -194,4 +195,124 @@ test('the rule is slug-blind: non-ASCII and spaced shops are judged only on stoc
       shopUrl
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// An email address in the HANDLE — the privacy condition, added 2026-09-12
+// ---------------------------------------------------------------------------
+
+/**
+ * Measured on PROD, anonymous, no auth, browser UA:
+ *   GET https://shop.droplinked.com/yg300211%40gmail.com  HTTP 200, index, follow
+ * The handle is the customer's own email address, and Google was invited to
+ * index it. These cases pin that it no longer is.
+ */
+const EMAIL_HANDLES = [
+  'yg300211@gmail.com',
+  'mamo.team@droplinked.com',
+  'malikoe3334@gmail.com',
+];
+
+test('DENY: an email-shaped handle is noindex even when the shop is STOCKED', () => {
+  for (const shopUrl of EMAIL_HANDLES) {
+    // The emptiness rule alone would have indexed every one of these.
+    assert.equal(shopHomeIsEmpty({ shopUrl, catalog: CATALOG.COUNTED, total: 40 }), false, shopUrl);
+    assert.deepEqual(
+      shopHomeRobots({ shopUrl, catalog: CATALOG.COUNTED, total: 40 }),
+      { index: false, follow: true },
+      shopUrl
+    );
+    // ...and it must disagree with the pre-#282 rule, or the drill does not bite.
+    assert.notEqual(
+      shopHomeRobots({ shopUrl, catalog: CATALOG.COUNTED, total: 40 }).index,
+      legacyRobots().index,
+      shopUrl
+    );
+  }
+});
+
+test('DENY: the handle condition needs NO upstream evidence — it holds while throttled', () => {
+  // The emptiness condition must fail OPEN on an uncounted catalogue. The
+  // handle condition must NOT: there is no observation to corrupt, the handle
+  // came in on the URL. A throttle must never *re-index* a leaking page.
+  for (const shopUrl of EMAIL_HANDLES) {
+    assert.deepEqual(
+      shopHomeRobots({ shopUrl, catalog: CATALOG.UNCOUNTED, total: 0 }),
+      { index: false, follow: true },
+      shopUrl
+    );
+  }
+});
+
+test('follow stays TRUE on the privacy noindex — we suppress a page, not the link graph', () => {
+  for (const shopUrl of EMAIL_HANDLES) {
+    assert.equal(shopHomeRobots({ shopUrl, catalog: CATALOG.COUNTED, total: 3 }).follow, true, shopUrl);
+  }
+});
+
+/**
+ * What the handle condition REJECTS that currently works: the answer must be
+ * nothing. Each of these is a live or plausible handle shape that contains an
+ * `@` or otherwise looks address-ish, and every one must stay indexable when
+ * it has stock. `nass2001@` and `abba@` are REAL slugs on the live estate —
+ * they were the two that made the sibling's "251 email-shaped URLs" count two
+ * too high.
+ */
+test('ALLOW: a handle that is not a whole email address is judged only on stock', () => {
+  const notAddresses = [
+    'nass2001@',                              // live: trailing @, no domain
+    'abba@',                                  // live: trailing @, no domain
+    '@thebrand',                              // no domain
+    'shop@home',                              // no dot in the domain
+    'a@b@c.com',                              // two @
+    'hi@.com',                                // empty domain label
+    'droplinked.com',                         // a bare domain is not an address
+    '椰子',                                    // 2026-09-02 delisting class
+    'tuấn linh-694419ba21fb9912776dae4b',     // 2026-09-02 delisting class
+    'hyped dogs-6928aa82',                    // spaced
+    'roomours',                               // ordinary control
+  ];
+  for (const shopUrl of notAddresses) {
+    assert.deepEqual(
+      shopHomeRobots({ shopUrl, catalog: CATALOG.COUNTED, total: 7 }),
+      { index: true, follow: true },
+      `stocked: ${shopUrl}`
+    );
+    // ...and the emptiness rule is untouched for them.
+    assert.deepEqual(
+      shopHomeRobots({ shopUrl, catalog: CATALOG.COUNTED, total: 0 }),
+      { index: false, follow: true },
+      `empty: ${shopUrl}`
+    );
+    assert.deepEqual(
+      shopHomeRobots({ shopUrl, catalog: CATALOG.UNCOUNTED, total: 0 }),
+      { index: true, follow: true },
+      `throttled: ${shopUrl}`
+    );
+  }
+});
+
+test('the handle predicate is exported and total-blind', () => {
+  assert.equal(shopHandleIsEmailShaped('yg300211@gmail.com'), true);
+  assert.equal(shopHandleIsEmailShaped('  yg300211@gmail.com  '), true);
+  assert.equal(shopHandleIsEmailShaped('nass2001@'), false);
+  assert.equal(shopHandleIsEmailShaped(undefined), false);
+  assert.equal(shopHandleIsEmailShaped(null), false);
+  assert.equal(shopHandleIsEmailShaped(42), false);
+});
+
+test('a missing / non-object shop still fails open', () => {
+  for (const shop of [undefined, null, 'yg300211@gmail.com', 42]) {
+    assert.deepEqual(shopHomeRobots(shop), { index: true, follow: true });
+  }
+});
+
+test('the page already passes the handle through — shopUrl is on the view model', () => {
+  const src = readFileSync(
+    fileURLToPath(new URL('../app/(routes)/[productId]/shop/lib/shop-home-data.ts', import.meta.url)),
+    'utf8'
+  );
+  assert.ok(src.includes('shopUrl: string;'), 'ShopHomeView must carry shopUrl');
+  // control: the file is the right one
+  assert.ok(src.includes('catalog: CatalogProvenance;'));
 });
